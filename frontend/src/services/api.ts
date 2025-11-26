@@ -10,14 +10,20 @@ import {
   User,
 } from '../types';
 
-const TOKEN_KEY = 'clientepro:token';
+const TOKEN_KEY = 'Clientepro:token';
+
+// Base da API: pega do .env em produção e cai pra '/api' em dev/local
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== ''
+    ? import.meta.env.VITE_API_URL
+    : '/api';
 
 export const getStoredToken = () => localStorage.getItem(TOKEN_KEY);
 export const storeToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
 });
 
 api.interceptors.request.use((config) => {
