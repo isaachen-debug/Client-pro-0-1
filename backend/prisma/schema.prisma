@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  trialStart   DateTime?     @default(now())
+  trialEnd     DateTime?
+  planStatus   String        @default("TRIAL")
+  isActive     Boolean       @default(true)
+  companyName  String?
+  primaryColor String?       @default("#22c55e")
+  avatarUrl    String?
+  appointments Appointment[]
+  customers    Customer[]
+  transactions Transaction[]
+}
+
+model Customer {
+  id           String          @id @default(uuid())
+  userId       String
+  name         String
+  email        String?
+  phone        String?
+  address      String?
+  serviceType  String?
+  notes        String?
+  status       String          @default("ACTIVE")
+  defaultPrice Float?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  appointments Appointment[]
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id                       String        @id @default(uuid())
+  userId                   String
+  customerId               String
+  date                     DateTime
+  startTime                String
+  endTime                  String?
+  price                    Float
+  status                   String        @default("AGENDADO")
+  isRecurring              Boolean       @default(false)
+  recurrenceRule           String?
+  notes                    String?
+  startedAt                DateTime?
+  finishedAt               DateTime?
+  estimatedDurationMinutes Int?
+  invoiceNumber            String?
+  invoiceToken             String?       @unique
+  invoiceSentAt            DateTime?
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+  customer                 Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user                     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions             Transaction[]
+}
+
+model Transaction {
+  id            String       @id @default(uuid())
+  userId        String
+  appointmentId String?
+  type          String
+  status        String
+  amount        Float
+  dueDate       DateTime
+  paidAt        DateTime?
+  createdAt     DateTime     @default(now())
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([appointmentId, type])
+}

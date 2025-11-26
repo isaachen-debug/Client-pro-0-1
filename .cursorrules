@@ -1,0 +1,108 @@
+# ClientePro - Regras do Projeto
+
+## Stack Tecnológico
+
+### Backend
+- Node.js + Express + TypeScript
+- Prisma ORM com SQLite
+- API RESTful
+
+### Frontend
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- Axios para HTTP
+- Recharts para gráficos
+- date-fns para datas
+- Lucide React para ícones
+
+## Padrões de Código
+
+### Backend
+- Usar async/await para operações assíncronas
+- Validar dados de entrada nas rotas
+- Retornar erros consistentes com status HTTP adequados
+- Usar Prisma para todas as operações de banco
+- Sempre incluir try/catch em rotas
+
+### Frontend
+- Componentes funcionais com hooks
+- TypeScript strict mode
+- Tailwind para todos os estilos
+- Responsivo mobile-first
+- Loading states para requests
+- Error handling apropriado
+
+## Estrutura de Pastas
+
+```
+backend/
+  src/
+    routes/      # Rotas da API
+    db.ts        # Cliente Prisma
+    server.ts    # Setup Express
+  prisma/
+    schema.prisma
+    seed.ts
+
+frontend/
+  src/
+    api/         # Cliente HTTP
+    components/  # Componentes reutilizáveis
+    pages/       # Páginas principais
+    types/       # Interfaces TypeScript
+    App.tsx
+    main.tsx
+```
+
+## Convenções de Nomes
+
+- Componentes: PascalCase (Dashboard.tsx)
+- Hooks: camelCase com prefixo use (useAgendamentos)
+- Tipos: PascalCase (Cliente, Agendamento)
+- Funções: camelCase (fetchClientes)
+- Constantes: UPPER_SNAKE_CASE
+- Arquivos de rotas: camelCase (clientes.ts)
+
+## Cores do Sistema
+
+- Primary: Green (#22c55e)
+- Success: Green
+- Warning: Orange
+- Error: Red
+- Info: Blue
+- Neutral: Gray
+
+## Status
+
+### Agendamento
+- AGENDADO (azul)
+- CONCLUIDO (verde)
+- CANCELADO (vermelho)
+
+### Pagamento
+- PENDENTE (laranja)
+- PAGO (verde)
+
+## API Endpoints
+
+- GET /api/clientes
+- POST /api/clientes
+- GET /api/agendamentos
+- POST /api/agendamentos
+- PATCH /api/agendamentos/:id/status
+- GET /api/cobrancas
+- PATCH /api/cobrancas/:id/pagar
+- GET /api/dashboard
+- GET /api/financeiro
+
+## Considerações de UX
+
+- Feedback visual para ações
+- Confirmações para ações destrutivas
+- Loading states durante requests
+- Mensagens de erro amigáveis
+- Layout responsivo
+- Acessibilidade (ARIA labels)
+
