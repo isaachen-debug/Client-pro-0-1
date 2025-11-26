@@ -25,7 +25,7 @@ const ensureCustomerOwnership = async (customerId: string, userId: string) => {
 router.get('/', async (req, res) => {
   try {
     const { date, customerId, status } = req.query;
-    const where: Prisma.AppointmentWhereInput = {
+    const where: any = {
       userId: req.user!.id,
     };
 

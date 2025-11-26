@@ -45,14 +45,30 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-5xl grid gap-10 lg:grid-cols-2 items-center">
+    <div className="min-h-screen bg-gradient-to-b from-[#f0f2f5] via-white to-[#eaf6f0] flex items-center justify-center px-4 py-10 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-10 left-10 w-72 h-72 bg-primary-200/30 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 right-0 w-64 h-64 bg-primary-300/20 rounded-full blur-3xl" />
+      </div>
+      <div className="w-full max-w-5xl grid gap-10 lg:grid-cols-2 items-center relative">
         <div className="text-center lg:text-left space-y-4">
-          <div className="text-4xl lg:text-5xl font-bold text-primary-600">Construa com o Client Pro</div>
-          <p className="text-gray-700 text-lg lg:text-xl max-w-lg">
-            Cadastre sua equipe, organize finanças e entregue serviços impecáveis. Comece em poucos minutos
-            e ganhe 30 dias grátis.
-          </p>
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/80 border border-white shadow-sm text-primary-600 text-xs font-semibold backdrop-blur">
+            Comece em menos de 3 minutos
+          </div>
+          <div className="space-y-2">
+            <p className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">Crie sua conta Client Pro</p>
+            <p className="text-gray-600 text-base lg:text-lg max-w-lg mx-auto lg:mx-0">
+              Gestão de clientes, agenda e financeiro acessível em qualquer dispositivo. Perfeito para quem opera em campo.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-left">
+            {['30 dias grátis', 'Sem cartão agora', 'Equipe ilimitada', 'Suporte em português'].map((item) => (
+              <div key={item} className="flex items-center space-x-3 bg-white/80 rounded-2xl px-4 py-3 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-primary-500" />
+                <p className="text-sm text-gray-700">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="w-full max-w-md justify-self-center">
           <div className="bg-white rounded-2xl shadow-[0_12px_24px_rgba(0,0,0,0.12)] p-6 space-y-4">
@@ -108,7 +124,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center px-4 py-3 bg-[#42b72a] text-white rounded-lg font-semibold hover:bg-[#36a420] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center px-4 py-3 bg-[#22c55e] text-white rounded-lg font-semibold hover:bg-[#1aa454] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? 'Criando conta...' : 'Criar conta'}
               </button>

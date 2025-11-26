@@ -24,9 +24,10 @@ router.use(authenticate);
 router.get('/', async (req, res) => {
   try {
     const { search, status } = req.query;
-    const filters: Prisma.CustomerWhereInput = {
+    const filters: any = {
       userId: req.user!.id,
     };
+    
 
     if (status && status !== 'ALL' && isValidStatus(status)) {
       filters.status = status;
