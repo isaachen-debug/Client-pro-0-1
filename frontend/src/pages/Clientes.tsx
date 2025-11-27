@@ -4,6 +4,7 @@ import { appointmentsApi, customersApi } from '../services/api';
 import { Appointment, AppointmentStatus, Customer, CustomerStatus } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseDateFromInput } from '../utils/date';
 
 type CustomerFormState = {
   name: string;
@@ -257,8 +258,8 @@ const Clientes = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -409,6 +410,85 @@ const Clientes = () => {
             <div className="text-center py-12">
               <p className="text-gray-500">Nenhum cliente encontrado</p>
             </div>
+          )}
+        </div>
+        <div className="md:hidden p-4 space-y-3">
+          {clientes.map((cliente) => (
+            <div key={cliente.id} className="border border-gray-100 rounded-2xl p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-base font-semibold text-gray-900">{cliente.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {cliente.serviceType ?? 'Tipo de serviço não informado'}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE_CLASSES[cliente.status]}`}
+                >
+                  {STATUS_LABELS[cliente.status]}
+                </span>
+              </div>
+              {cliente.email && <p className="text-sm text-gray-500">{cliente.email}</p>}
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-center space-x-2">
+                  <Phone size={16} className="text-gray-400" />
+                  <span>{cliente.phone || 'Sem telefone'}</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <MapPin size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                  <span>{cliente.address || 'Sem endereço cadastrado'}</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleViewHistory(cliente)}
+                  className="flex-1 min-w-[140px] inline-flex items-center justify-center px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Histórico
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openEditModal(cliente)}
+                  className="flex-1 min-w-[120px] inline-flex items-center justify-center px-3 py-2 text-sm font-medium border border-primary-100 text-primary-600 rounded-lg hover:bg-primary-50"
+                >
+                  Editar
+                </button>
+                {cliente.status !== 'PAUSED' && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(cliente, 'PAUSED')}
+                    disabled={statusActionId === cliente.id}
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 rounded-lg disabled:opacity-60"
+                  >
+                    {statusActionId === cliente.id ? 'Atualizando...' : 'Pausar'}
+                  </button>
+                )}
+                {cliente.status !== 'ACTIVE' && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(cliente, 'ACTIVE')}
+                    disabled={statusActionId === cliente.id}
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-green-50 text-green-700 rounded-lg disabled:opacity-60"
+                  >
+                    {statusActionId === cliente.id ? 'Atualizando...' : 'Reativar'}
+                  </button>
+                )}
+                {cliente.status !== 'INACTIVE' && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(cliente, 'INACTIVE')}
+                    disabled={statusActionId === cliente.id}
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-red-50 text-red-600 rounded-lg disabled:opacity-60"
+                  >
+                    {statusActionId === cliente.id ? 'Atualizando...' : 'Ex-cliente'}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+          {!loading && clientes.length === 0 && (
+            <p className="text-center text-gray-500 py-8">Nenhum cliente encontrado</p>
           )}
         </div>
       </div>
@@ -624,7 +704,7 @@ const HistoryModal = ({ customer, appointments, loading, onClose }: HistoryModal
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {format(new Date(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      {format(parseDateFromInput(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </p>
                     <p className="text-sm text-gray-500">
                       {appointment.startTime} — R$ {appointment.price.toFixed(2)}

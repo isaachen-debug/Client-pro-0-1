@@ -44,7 +44,7 @@ const Layout = () => {
 
   const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/start', icon: PlayCircle, label: 'Start' },
+    { path: '/start', icon: PlayCircle, label: 'Today' },
     { path: '/clientes', icon: Users, label: 'Clientes' },
     { path: '/agenda', icon: Calendar, label: 'Agenda' },
     { path: '/semana', icon: CalendarDays, label: 'Semana' },

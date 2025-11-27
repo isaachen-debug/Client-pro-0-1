@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, Appointment as AppointmentModel } from '@prisma/client';
 import prisma from '../db';
 import { authenticate } from '../middleware/auth';
 import { randomBytes } from 'crypto';
@@ -10,6 +10,106 @@ router.use(authenticate);
 
 const withCustomer = {
   include: { customer: true },
+};
+
+const parseYmdParts = (value?: string | null) => {
+  if (!value || typeof value !== 'string') return null;
+  const [yearStr, monthStr, dayStr] = value.split('-');
+  const year = Number(yearStr);
+  const monthIndex = Number(monthStr) - 1;
+  const day = Number(dayStr);
+  if ([year, monthIndex, day].some((part) => Number.isNaN(part) || !Number.isFinite(part))) {
+    return null;
+  }
+  return { year, monthIndex, day };
+};
+
+const buildDateAtUtcNoon = (value: string) => {
+  const parts = parseYmdParts(value);
+  if (!parts) return null;
+  const { year, monthIndex, day } = parts;
+  return new Date(Date.UTC(year, monthIndex, day, 12, 0, 0, 0));
+};
+
+const buildUtcDayRange = (value: string) => {
+  const parts = parseYmdParts(value);
+  if (!parts) return null;
+  const { year, monthIndex, day } = parts;
+  const start = new Date(Date.UTC(year, monthIndex, day, 0, 0, 0, 0));
+  const end = new Date(Date.UTC(year, monthIndex, day, 23, 59, 59, 999));
+  return { start, end };
+};
+
+const RECURRENCE_MAX_OCCURRENCES = 4;
+
+const getRecurrenceIntervalDays = (rule?: string | null) => {
+  if (!rule) return null;
+  const normalized = rule.toUpperCase();
+  if (normalized.includes('FREQ=WEEKLY') && normalized.includes('INTERVAL=2')) {
+    return 14;
+  }
+  if (normalized.includes('FREQ=WEEKLY')) {
+    return 7;
+  }
+  return null;
+};
+
+const getDayRange = (date: Date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
+
+const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
+  if (!appointment.isRecurring) return;
+
+  const intervalDays = getRecurrenceIntervalDays(appointment.recurrenceRule);
+  if (!intervalDays) return;
+
+  const tasks: Prisma.PrismaPromise<any>[] = [];
+
+  for (let i = 1; i <= RECURRENCE_MAX_OCCURRENCES; i += 1) {
+    const nextDate = new Date(appointment.date);
+    nextDate.setDate(nextDate.getDate() + intervalDays * i);
+    const { start, end } = getDayRange(nextDate);
+
+    const exists = await prisma.appointment.count({
+      where: {
+        userId: appointment.userId,
+        customerId: appointment.customerId,
+        date: { gte: start, lte: end },
+        startTime: appointment.startTime,
+      },
+    });
+
+    if (exists > 0) {
+      continue;
+    }
+
+    tasks.push(
+      prisma.appointment.create({
+        data: {
+          userId: appointment.userId,
+          customerId: appointment.customerId,
+          date: nextDate,
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+          price: appointment.price,
+          status: 'AGENDADO',
+          notes: appointment.notes,
+          estimatedDurationMinutes: appointment.estimatedDurationMinutes,
+          isRecurring: false,
+          recurrenceRule: null,
+        },
+      }),
+    );
+  }
+
+  if (tasks.length) {
+    await prisma.$transaction(tasks);
+  }
 };
 
 const ensureCustomerOwnership = async (customerId: string, userId: string) => {
@@ -38,17 +138,13 @@ router.get('/', async (req, res) => {
     }
 
     if (date && typeof date === 'string') {
-      const parsedDate = new Date(date);
-      if (Number.isNaN(parsedDate.getTime())) {
+      const range = buildUtcDayRange(date);
+      if (!range) {
         return res.status(400).json({ error: 'Data inválida. Use o formato yyyy-mm-dd.' });
       }
-      parsedDate.setHours(0, 0, 0, 0);
-      const end = new Date(parsedDate);
-      end.setHours(23, 59, 59, 999);
-
       where.date = {
-        gte: parsedDate,
-        lte: end,
+        gte: range.start,
+        lte: range.end,
       };
     }
 
@@ -103,11 +199,15 @@ router.get('/week', async (req, res) => {
       return res.status(400).json({ error: 'Informe startDate (yyyy-mm-dd).' });
     }
 
-    const start = new Date(startDate as string);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
+    const range = buildUtcDayRange(startDate as string);
+    if (!range) {
+      return res.status(400).json({ error: 'Data inválida. Use o formato yyyy-mm-dd.' });
+    }
+
+    const start = range.start;
+    const end = new Date(range.start);
+    end.setUTCDate(end.getUTCDate() + 6);
+    end.setUTCHours(23, 59, 59, 999);
 
     const appointments = await prisma.appointment.findMany({
       where: {
@@ -195,11 +295,16 @@ router.post('/', async (req, res) => {
       throw error;
     }
 
+    const appointmentDate = buildDateAtUtcNoon(date);
+    if (!appointmentDate) {
+      return res.status(400).json({ error: 'Data inválida. Use o formato yyyy-mm-dd.' });
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         userId,
         customerId,
-        date: new Date(date),
+        date: appointmentDate,
         startTime,
         endTime,
         price: parseFloat(price),
@@ -213,6 +318,8 @@ router.post('/', async (req, res) => {
       },
       include: { customer: true },
     });
+
+    await scheduleRecurringAppointments(appointment);
 
     res.status(201).json(appointment);
   } catch (error) {
@@ -247,11 +354,20 @@ router.put('/:id', async (req, res) => {
       }
     }
 
+    let nextDate: Date | undefined;
+    if (date) {
+      const built = buildDateAtUtcNoon(date);
+      if (!built) {
+        return res.status(400).json({ error: 'Data inválida. Use o formato yyyy-mm-dd.' });
+      }
+      nextDate = built;
+    }
+
     const updated = await prisma.appointment.updateMany({
       where: { id: req.params.id, userId: req.user!.id },
       data: {
         customerId,
-        date: date ? new Date(date) : undefined,
+        date: nextDate,
         startTime,
         endTime,
         price: price !== undefined ? parseFloat(price) : undefined,

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { invoicesApi } from '../services/api';
 import type { Invoice as InvoiceType } from '../services/api';
+import { parseDateFromInput } from '../utils/date';
 
 const statusClassMap: Record<string, string> = {
   PAGO: 'bg-green-100 text-green-700',
@@ -67,7 +68,7 @@ const Invoice = () => {
     );
   }
 
-  const formattedDate = format(new Date(invoice.date), "dd 'de' MMMM yyyy", { locale: ptBR });
+  const formattedDate = format(parseDateFromInput(invoice.date), "dd 'de' MMMM yyyy", { locale: ptBR });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-10 px-4 print:bg-white">

@@ -3,7 +3,8 @@ import { appointmentsApi } from '../services/api';
 import { Appointment } from '../types';
 import { differenceInMinutes, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle } from 'lucide-react';
+import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone } from 'lucide-react';
+import { parseDateFromInput } from '../utils/date';
 
 const statusStyles: Record<string, string> = {
   AGENDADO: 'bg-gray-100 text-gray-700',
@@ -148,13 +149,13 @@ const handleCancel = async (id: string) => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-5 md:space-y-8">
       <div>
         <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">
-          Start
+          Today
         </p>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Começar o dia
+          Today
         </h1>
         <p className="text-sm md:text-base text-gray-600 mt-2 max-w-2xl">
           Veja os serviços marcados para hoje, inicie as limpezas e acompanhe seu
@@ -169,7 +170,7 @@ const handleCancel = async (id: string) => {
       )}
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         <SummaryCard
           title="Serviços hoje"
           value={summary.totalAppointmentsToday}
@@ -197,7 +198,7 @@ const handleCancel = async (id: string) => {
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -226,7 +227,7 @@ const handleCancel = async (id: string) => {
             {appointments.map((appointment) => (
               <div
                 key={appointment.id}
-                className="border border-gray-200 rounded-lg p-4 flex flex-col gap-3"
+                className="border border-gray-100 rounded-2xl p-4 flex flex-col gap-3 shadow-sm"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div>
@@ -235,7 +236,7 @@ const handleCancel = async (id: string) => {
                     </h3>
                     <p className="text-sm text-gray-500">
                       {appointment.customer.serviceType ?? 'Serviço'} •{' '}
-                      {format(new Date(appointment.date), "EEEE',' dd MMM", {
+                      {format(parseDateFromInput(appointment.date), "EEEE',' dd MMM", {
                         locale: ptBR,
                       })}{' '}
                       às {appointment.startTime}
@@ -253,7 +254,30 @@ const handleCancel = async (id: string) => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm text-gray-600">
                   <div className="flex items-center space-x-2">
                     <MapPin size={16} className="text-gray-400 flex-shrink-0" />
-                    <span>{appointment.customer.address ?? 'Endereço não informado'}</span>
+                    {appointment.customer.address ? (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          appointment.customer.address,
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:underline"
+                      >
+                        {appointment.customer.address}
+                      </a>
+                    ) : (
+                      <span>Endereço não informado</span>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone size={16} className="text-gray-400 flex-shrink-0" />
+                    {appointment.customer.phone ? (
+                      <a href={`tel:${appointment.customer.phone}`} className="text-primary-600 hover:underline">
+                        {appointment.customer.phone}
+                      </a>
+                    ) : (
+                      <span>Telefone não informado</span>
+                    )}
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Horário:</span>{' '}
@@ -365,13 +389,13 @@ type SummaryCardProps = {
 };
 
 const SummaryCard = ({ title, value, icon }: SummaryCardProps) => (
-  <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center space-x-4">
-    <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center">
+  <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 flex items-center space-x-4 shadow-sm">
+    <div className="w-11 h-11 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600">
       {icon}
     </div>
     <div>
       <p className="text-sm text-gray-500">{title}</p>
-      <p className="text-xl font-semibold text-gray-900">{value}</p>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
     </div>
   </div>
 );

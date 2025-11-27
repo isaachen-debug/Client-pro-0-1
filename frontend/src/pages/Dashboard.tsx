@@ -5,6 +5,7 @@ import { dashboardApi } from '../services/api';
 import { DashboardOverview } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseDateFromInput } from '../utils/date';
 
 const Dashboard = () => {
   const [data, setData] = useState<DashboardOverview | null>(null);
@@ -42,16 +43,17 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-5 md:space-y-6">
       {/* Header */}
-      <div>
+      <div className="space-y-1">
+        <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">Overview</p>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Total de Ganhos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-gray-600">Receita do mês</span>
             <div className="p-2 bg-green-50 rounded-lg">
@@ -67,7 +69,7 @@ const Dashboard = () => {
         </div>
 
         {/* Pagamentos Pendentes */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-gray-600">Pagamentos Pendentes</span>
             <div className="p-2 bg-orange-50 rounded-lg">
@@ -83,7 +85,7 @@ const Dashboard = () => {
         </div>
 
         {/* Clientes Ativos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-gray-600">Clientes Ativos</span>
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -99,7 +101,7 @@ const Dashboard = () => {
         </div>
 
         {/* Serviços Agendados */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-gray-600">Serviços agendados</span>
             <div className="p-2 bg-purple-50 rounded-lg">
@@ -116,9 +118,9 @@ const Dashboard = () => {
       </div>
 
       {/* Charts and Upcoming */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Gráfico */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Receita semanal do mês</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data.revenueByWeek}>
@@ -139,7 +141,7 @@ const Dashboard = () => {
         </div>
 
         {/* Próximos Agendamentos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Próximos Agendamentos</h3>
           <p className="text-sm text-gray-500 mb-4">
             Você tem {data.upcomingAppointments.length} agendamentos futuros.
@@ -157,7 +159,7 @@ const Dashboard = () => {
                     {appointment.customer.name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {format(new Date(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
+                    {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
                     {appointment.startTime}
                   </p>
                 </div>
