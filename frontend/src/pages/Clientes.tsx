@@ -189,6 +189,50 @@ const Clientes = () => {
     setHistoryAppointments([]);
   };
 
+  const handleExportClientes = () => {
+    if (clientes.length === 0) {
+      alert('Não há clientes para exportar.');
+      return;
+    }
+
+    const headers = [
+      'Nome',
+      'E-mail',
+      'Telefone',
+      'Endereço',
+      'Tipo de serviço',
+      'Status',
+      'Preço padrão',
+    ];
+
+    const rows = clientes.map((cliente) => [
+      cliente.name ?? '',
+      cliente.email ?? '',
+      cliente.phone ?? '',
+      cliente.address ?? '',
+      cliente.serviceType ?? '',
+      STATUS_LABELS[cliente.status],
+      cliente.defaultPrice !== undefined ? cliente.defaultPrice.toFixed(2).replace('.', ',') : '',
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((value) => `"${value.replace(/"/g, '""')}"`).join(';'))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `clientes_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -200,15 +244,26 @@ const Clientes = () => {
   return (
     <div className="p-4 md:p-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Clientes</h1>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus size={20} />
-          <span>Adicionar Cliente</span>
-        </button>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Clientes</h1>
+          <p className="text-sm text-gray-500 mt-1">Total de clientes: {clientes.length}</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={handleExportClientes}
+            className="flex items-center justify-center space-x-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <span>Exportar CSV</span>
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Adicionar Cliente</span>
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -595,6 +650,7 @@ const Clientes = () => {
                     <input
                       type="number"
                       step="0.01"
+                      placeholder="Ex: 150,00"
                       value={formData.defaultPrice}
                       onChange={(e) => setFormData({ ...formData, defaultPrice: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"

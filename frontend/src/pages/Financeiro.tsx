@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 const Financeiro = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState('ultimos30dias');
+  const [periodo, setPeriodo] = useState('mesAtual');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);

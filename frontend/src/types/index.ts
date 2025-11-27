@@ -43,6 +43,7 @@ export interface Appointment {
   status: AppointmentStatus;
   isRecurring: boolean;
   recurrenceRule?: string;
+  recurrenceSeriesId?: string | null;
   notes?: string;
   startedAt?: string;
   finishedAt?: string;

@@ -166,6 +166,7 @@ const CreateModal = ({
                   type="number"
                   step="0.01"
                   required
+                  placeholder="Ex: 150,00"
                   value={formData.price}
                   onChange={(e) =>
                     setFormData((prev) => ({

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { appointmentsApi } from '../services/api';
 import { Appointment } from '../types';
-import { differenceInMinutes, format } from 'date-fns';
+import { differenceInMinutes, format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone } from 'lucide-react';
-import { parseDateFromInput } from '../utils/date';
+import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 
 const statusStyles: Record<string, string> = {
   AGENDADO: 'bg-gray-100 text-gray-700',
@@ -35,10 +35,11 @@ const Start = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    fetchAppointments(selectedDate);
+  }, [selectedDate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -48,15 +49,15 @@ const Start = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (date: Date) => {
     try {
       setLoading(true);
-      const data = await appointmentsApi.listToday();
+      const data = await appointmentsApi.listByDate(formatDateToYMD(date));
       setAppointments(data);
       setError('');
     } catch (err) {
       console.error(err);
-      setError('Não foi possível carregar os serviços de hoje.');
+      setError('Não foi possível carregar os serviços do dia selecionado.');
     } finally {
       setLoading(false);
     }
@@ -88,15 +89,15 @@ const Start = () => {
     }
   };
 
-const handleCancel = async (id: string) => {
-  try {
-    const data = await appointmentsApi.changeStatus(id, 'CANCELADO');
-    updateAppointment(data);
-  } catch (err) {
-    console.error(err);
-    setError('Não foi possível cancelar este serviço.');
-  }
-};
+  const handleCancel = async (id: string) => {
+    try {
+      const data = await appointmentsApi.changeStatus(id, 'CANCELADO');
+      updateAppointment(data);
+    } catch (err) {
+      console.error(err);
+      setError('Não foi possível cancelar este serviço.');
+    }
+  };
 
   const summary = useMemo(() => {
     const toMinutes = (start?: string, end?: string, fallback?: number) => {
@@ -140,6 +141,12 @@ const handleCancel = async (id: string) => {
     );
   };
 
+  const selectedDateLabel = isSameDay(selectedDate, new Date())
+    ? 'Hoje'
+    : isSameDay(selectedDate, addDays(new Date(), 1))
+      ? 'Amanhã'
+      : format(selectedDate, "dd 'de' MMMM", { locale: ptBR });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -152,15 +159,41 @@ const handleCancel = async (id: string) => {
     <div className="p-4 md:p-8 space-y-5 md:space-y-8">
       <div>
         <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">
-          Today
+          Agenda diária
         </p>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Today
+          {isSameDay(selectedDate, new Date())
+            ? 'Hoje'
+            : isSameDay(selectedDate, addDays(new Date(), 1))
+              ? 'Amanhã'
+              : format(selectedDate, "EEEE',' dd 'de' MMMM", { locale: ptBR })}
         </h1>
         <p className="text-sm md:text-base text-gray-600 mt-2 max-w-2xl">
-          Veja os serviços marcados para hoje, inicie as limpezas e acompanhe seu
-          progresso em tempo real.
+          Deslize pelas datas para conferir os serviços do dia e acompanhe o progresso em tempo real.
         </p>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+        {Array.from({ length: 5 }).map((_, index) => {
+          const dateChip = addDays(new Date(), index);
+          const isActive = isSameDay(dateChip, selectedDate);
+          const label = isSameDay(dateChip, new Date())
+            ? 'Hoje'
+            : isSameDay(dateChip, addDays(new Date(), 1))
+              ? 'Amanhã'
+              : format(dateChip, 'dd/MM');
+          return (
+            <button
+              key={dateChip.toISOString()}
+              onClick={() => setSelectedDate(dateChip)}
+              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-colors ${
+                isActive ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {error && (
@@ -170,7 +203,7 @@ const handleCancel = async (id: string) => {
       )}
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         <SummaryCard
           title="Serviços hoje"
           value={summary.totalAppointmentsToday}
@@ -202,7 +235,7 @@ const handleCancel = async (id: string) => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Serviços de hoje
+              Serviços de {selectedDateLabel.toLowerCase()}
             </h2>
             <p className="text-sm text-gray-500">
               Organize sua rota e acompanhe o status de cada atendimento.
@@ -210,7 +243,7 @@ const handleCancel = async (id: string) => {
           </div>
           <button
             type="button"
-            onClick={fetchAppointments}
+            onClick={() => fetchAppointments(selectedDate)}
             className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
           >
             <RefreshCw size={16} />
@@ -220,18 +253,18 @@ const handleCancel = async (id: string) => {
 
         {appointments.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
-            Nenhum serviço agendado para hoje.
+            Nenhum serviço agendado para {selectedDateLabel.toLowerCase()}.
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {appointments.map((appointment) => (
               <div
                 key={appointment.id}
-                className="border border-gray-100 rounded-2xl p-4 flex flex-col gap-3 shadow-sm"
+                className="border border-gray-100 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 shadow-sm"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                       {appointment.customer.name}
                     </h3>
                     <p className="text-sm text-gray-500">
@@ -251,7 +284,7 @@ const handleCancel = async (id: string) => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm text-gray-600">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-gray-600">
                   <div className="flex items-center space-x-2">
                     <MapPin size={16} className="text-gray-400 flex-shrink-0" />
                     {appointment.customer.address ? (
@@ -389,13 +422,13 @@ type SummaryCardProps = {
 };
 
 const SummaryCard = ({ title, value, icon }: SummaryCardProps) => (
-  <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 flex items-center space-x-4 shadow-sm">
-    <div className="w-11 h-11 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600">
+  <div className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center space-x-3 shadow-sm">
+    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600 text-sm">
       {icon}
     </div>
     <div>
-      <p className="text-sm text-gray-500">{title}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-xs uppercase tracking-wide text-gray-500">{title}</p>
+      <p className="text-lg sm:text-xl font-bold text-gray-900">{value}</p>
     </div>
   </div>
 );

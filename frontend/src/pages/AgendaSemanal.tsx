@@ -11,6 +11,20 @@ import EditModal from '../components/appointments/EditModal';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
 
+const isSameSeries = (a: Appointment, b: Appointment) => {
+  if (a.customerId !== b.customerId) return false;
+  if (a.recurrenceSeriesId && b.recurrenceSeriesId) {
+    return a.recurrenceSeriesId === b.recurrenceSeriesId;
+  }
+  if (a.recurrenceRule && b.recurrenceRule) {
+    return a.recurrenceRule === b.recurrenceRule;
+  }
+  const sameStart = a.startTime === b.startTime;
+  const samePrice = a.price === b.price;
+  const recurringFlag = a.isRecurring || b.isRecurring;
+  return sameStart && samePrice && recurringFlag;
+};
+
 const AgendaSemanal = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [agendamentos, setAgendamentos] = useState<Appointment[]>([]);
@@ -88,13 +102,50 @@ const AgendaSemanal = () => {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: AppointmentStatus) => {
+  const deleteSeriesAndRefresh = async (appointment: Appointment) => {
+    setSaving(true);
     try {
+      await appointmentsApi.deleteSeries(appointment.id);
+      await fetchAgendamentos();
+      return true;
+    } catch (error) {
+      console.error('Erro ao remover série recorrente:', error);
+      const confirmFallback = window.confirm(
+        'Não foi possível remover automaticamente. Deseja remover todos os agendamentos deste cliente com o mesmo horário?',
+      );
+      if (!confirmFallback) {
+        return false;
+      }
+      try {
+        const customerAppointments = await appointmentsApi.listByCustomer(appointment.customerId);
+        const sameSeriesAppointments = customerAppointments.filter((item) =>
+          isSameSeries(item, appointment),
+        );
+        await Promise.all(sameSeriesAppointments.map((item) => appointmentsApi.remove(item.id)));
+        await fetchAgendamentos();
+        return true;
+      } catch (fallbackError) {
+        console.error('Erro no fallback de remoção:', fallbackError);
+        alert('Ainda não foi possível remover a série completa. Tente novamente.');
+        return false;
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStatusChange = async (appointment: Appointment, newStatus: AppointmentStatus) => {
+    try {
+      if (newStatus === 'CANCELADO') {
+        const removed = await deleteSeriesAndRefresh(appointment);
+        if (removed) return;
+      }
+
       const wantsInvoice =
         newStatus === 'CONCLUIDO' &&
         window.confirm('Deseja enviar a cobrança por e-mail/copiar o link da fatura agora?');
       const updated = await appointmentsApi.changeStatus(
-        id,
+        appointment.id,
         newStatus,
         wantsInvoice ? { sendInvoice: true } : undefined,
       );
@@ -174,7 +225,7 @@ const AgendaSemanal = () => {
         status: editForm.status,
       });
       if (shouldPromptInvoice) {
-        await handleStatusChange(editingAppointment.id, 'CONCLUIDO');
+        await handleStatusChange(editingAppointment, 'CONCLUIDO');
       } else {
         await fetchAgendamentos();
       }
@@ -191,11 +242,22 @@ const AgendaSemanal = () => {
     if (!editingAppointment) return;
     try {
       setSaving(true);
-      await handleStatusChange(editingAppointment.id, status);
+      await handleStatusChange(editingAppointment, status);
       setShowEditModal(false);
       setEditingAppointment(null);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    if (!editingAppointment) return;
+    const confirmed = window.confirm('Deseja remover todos os agendamentos desta série recorrente?');
+    if (!confirmed) return;
+    const removed = await deleteSeriesAndRefresh(editingAppointment);
+    if (removed) {
+      setShowEditModal(false);
+      setEditingAppointment(null);
     }
   };
 
@@ -488,7 +550,7 @@ const AgendaSemanal = () => {
                           <button
                             onClick={(event) => {
                               event.stopPropagation();
-                              handleStatusChange(ag.id, 'EM_ANDAMENTO');
+                                handleStatusChange(ag, 'EM_ANDAMENTO');
                             }}
                             className="flex-1 text-xs px-2 py-1 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 transition-colors"
                           >
@@ -497,7 +559,7 @@ const AgendaSemanal = () => {
                           <button
                             onClick={(event) => {
                               event.stopPropagation();
-                              handleStatusChange(ag.id, 'CONCLUIDO');
+                                handleStatusChange(ag, 'CONCLUIDO');
                             }}
                             className="flex-1 text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
                           >
@@ -506,7 +568,7 @@ const AgendaSemanal = () => {
                           <button
                             onClick={(event) => {
                               event.stopPropagation();
-                              handleStatusChange(ag.id, 'CANCELADO');
+                                handleStatusChange(ag, 'CANCELADO');
                             }}
                             className="flex-1 text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
                           >
@@ -519,7 +581,7 @@ const AgendaSemanal = () => {
                           <button
                             onClick={(event) => {
                               event.stopPropagation();
-                              handleStatusChange(ag.id, 'CONCLUIDO');
+                                handleStatusChange(ag, 'CONCLUIDO');
                             }}
                             className="flex-1 text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
                           >
@@ -528,7 +590,7 @@ const AgendaSemanal = () => {
                           <button
                             onClick={(event) => {
                               event.stopPropagation();
-                              handleStatusChange(ag.id, 'CANCELADO');
+                                handleStatusChange(ag, 'CANCELADO');
                             }}
                             className="flex-1 text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
                           >
@@ -613,6 +675,8 @@ const AgendaSemanal = () => {
           }}
           onSubmit={handleUpdate}
           onQuickStatus={handleQuickStatus}
+          canDeleteSeries
+          onDeleteSeries={handleDeleteSeries}
         />
       )}
     </div>

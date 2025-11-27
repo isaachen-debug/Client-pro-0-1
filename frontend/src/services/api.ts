@@ -203,6 +203,12 @@ export const appointmentsApi = {
     const { data } = await api.patch<Appointment>(`/appointments/${id}/finish`);
     return data;
   },
+  async deleteSeries(id: string) {
+    await api.delete(`/appointments/${id}/series`);
+  },
+  async remove(id: string) {
+    await api.delete(`/appointments/${id}`);
+  },
 };
 
 export const transactionsApi = {

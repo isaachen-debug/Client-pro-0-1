@@ -98,10 +98,11 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
           endTime: appointment.endTime,
           price: appointment.price,
           status: 'AGENDADO',
+          recurrenceSeriesId: appointment.recurrenceSeriesId ?? appointment.id,
+          recurrenceRule: appointment.recurrenceRule,
           notes: appointment.notes,
           estimatedDurationMinutes: appointment.estimatedDurationMinutes,
           isRecurring: false,
-          recurrenceRule: null,
         },
       }),
     );
@@ -300,6 +301,8 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Data inválida. Use o formato yyyy-mm-dd.' });
     }
 
+    const recurrenceSeriesId = isRecurring ? randomBytes(8).toString('hex') : null;
+
     const appointment = await prisma.appointment.create({
       data: {
         userId,
@@ -311,6 +314,7 @@ router.post('/', async (req, res) => {
         status: status || 'AGENDADO',
         isRecurring: isRecurring ?? false,
         recurrenceRule,
+        recurrenceSeriesId,
         notes,
         estimatedDurationMinutes: estimatedDurationMinutes
           ? parseInt(estimatedDurationMinutes, 10)
@@ -516,6 +520,64 @@ router.patch('/:id/finish', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erro ao finalizar serviço.' });
+  }
+});
+
+router.delete('/:id/series', async (req, res) => {
+  try {
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: req.params.id, userId: req.user!.id },
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ error: 'Agendamento não encontrado.' });
+    }
+
+    const baseWhere: Prisma.AppointmentWhereInput = {
+      userId: req.user!.id,
+    };
+
+    let where: Prisma.AppointmentWhereInput | null = null;
+
+    if (appointment.recurrenceSeriesId) {
+      where = { ...baseWhere, recurrenceSeriesId: appointment.recurrenceSeriesId };
+    } else if (appointment.recurrenceRule) {
+      where = {
+        ...baseWhere,
+        customerId: appointment.customerId,
+        startTime: appointment.startTime,
+        recurrenceRule: appointment.recurrenceRule,
+      };
+    } else {
+      where = {
+        ...baseWhere,
+        customerId: appointment.customerId,
+        startTime: appointment.startTime,
+      };
+
+      if (appointment.price !== undefined && appointment.price !== null) {
+        where.price = appointment.price;
+      }
+      if (appointment.notes) {
+        where.notes = appointment.notes;
+      }
+      if (appointment.isRecurring !== undefined) {
+        where.isRecurring = appointment.isRecurring;
+      }
+    }
+
+    const result = await prisma.appointment.deleteMany({ where });
+
+    if (result.count === 0) {
+      await prisma.appointment.deleteMany({
+        where: { id: appointment.id, userId: req.user!.id },
+      });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao remover série recorrente.' });
   }
 });
 

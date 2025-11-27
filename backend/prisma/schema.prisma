@@ -53,6 +53,7 @@ model Appointment {
   status                   String        @default("AGENDADO")
   isRecurring              Boolean       @default(false)
   recurrenceRule           String?
+  recurrenceSeriesId       String?
   notes                    String?
   startedAt                DateTime?
   finishedAt               DateTime?
@@ -65,6 +66,8 @@ model Appointment {
   customer                 Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   user                     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions             Transaction[]
+
+  @@index([recurrenceSeriesId])
 }
 
 model Transaction {

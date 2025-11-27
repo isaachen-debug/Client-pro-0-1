@@ -18,6 +18,20 @@ import EditModal from '../components/appointments/EditModal';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
 
+const isSameSeries = (a: Appointment, b: Appointment) => {
+  if (a.customerId !== b.customerId) return false;
+  if (a.recurrenceSeriesId && b.recurrenceSeriesId) {
+    return a.recurrenceSeriesId === b.recurrenceSeriesId;
+  }
+  if (a.recurrenceRule && b.recurrenceRule) {
+    return a.recurrenceRule === b.recurrenceRule;
+  }
+  const sameStart = a.startTime === b.startTime;
+  const samePrice = a.price === b.price;
+  const recurringFlag = a.isRecurring || b.isRecurring;
+  return sameStart && samePrice && recurringFlag;
+};
+
 const AgendaMensal = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -131,13 +145,56 @@ const AgendaMensal = () => {
     }
   };
 
-  const handleStatusUpdate = async (appointmentId: string, status: AppointmentStatus, promptInvoice: boolean) => {
+  const deleteSeriesAndRefresh = async (appointment: Appointment) => {
+    setSaving(true);
+    try {
+      await appointmentsApi.deleteSeries(appointment.id);
+      fetchData();
+      return true;
+    } catch (error) {
+      console.error('Erro ao remover série recorrente:', error);
+      const confirmFallback = window.confirm(
+        'Não foi possível remover automaticamente. Deseja remover todos os agendamentos deste cliente com o mesmo horário?',
+      );
+      if (!confirmFallback) {
+        return false;
+      }
+      try {
+        const customerAppointments = await appointmentsApi.listByCustomer(appointment.customerId);
+        const sameSeriesAppointments = customerAppointments.filter((item) =>
+          isSameSeries(item, appointment),
+        );
+        await Promise.all(sameSeriesAppointments.map((item) => appointmentsApi.remove(item.id)));
+        fetchData();
+        return true;
+      } catch (fallbackError) {
+        console.error('Erro no fallback de remoção:', fallbackError);
+        alert('Ainda não foi possível remover a série completa. Tente novamente.');
+        return false;
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStatusUpdate = async (
+    appointment: Appointment,
+    status: AppointmentStatus,
+    promptInvoice: boolean,
+  ) => {
+    if (status === 'CANCELADO') {
+      const removed = await deleteSeriesAndRefresh(appointment);
+      if (removed) {
+        return;
+      }
+    }
+
     let sendInvoice = false;
     if (promptInvoice) {
       sendInvoice = window.confirm('Deseja enviar a cobrança por e-mail/copiar o link da fatura agora?');
     }
     const updated = await appointmentsApi.changeStatus(
-      appointmentId,
+      appointment.id,
       status,
       sendInvoice ? { sendInvoice: true } : undefined,
     );
@@ -151,7 +208,7 @@ const AgendaMensal = () => {
     }
   };
 
-  const handleEmptyDayClick = (day: Date) => {
+  const handleAddAppointmentForDay = (day: Date) => {
     resetForm(day);
     setShowCreateModal(true);
   };
@@ -185,7 +242,7 @@ const AgendaMensal = () => {
         status: editForm.status,
       });
       if (shouldPromptInvoice) {
-        await handleStatusUpdate(editingAppointment.id, 'CONCLUIDO', true);
+        await handleStatusUpdate(editingAppointment, 'CONCLUIDO', true);
       }
       setShowEditModal(false);
       setEditingAppointment(null);
@@ -201,7 +258,7 @@ const AgendaMensal = () => {
     if (!editingAppointment) return;
     try {
       setSaving(true);
-      await handleStatusUpdate(editingAppointment.id, status, status === 'CONCLUIDO');
+      await handleStatusUpdate(editingAppointment, status, status === 'CONCLUIDO');
       setShowEditModal(false);
       setEditingAppointment(null);
       fetchData();
@@ -209,6 +266,17 @@ const AgendaMensal = () => {
       console.error('Erro ao atualizar status:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    if (!editingAppointment) return;
+    const confirmed = window.confirm('Deseja remover todos os agendamentos desta série recorrente?');
+    if (!confirmed) return;
+    const removed = await deleteSeriesAndRefresh(editingAppointment);
+    if (removed) {
+      setShowEditModal(false);
+      setEditingAppointment(null);
     }
   };
 
@@ -301,7 +369,7 @@ const AgendaMensal = () => {
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {dayAppointments.length > 0 ? (
+                  {dayAppointments.length > 0 &&
                     dayAppointments.map((appointment) => (
                       <button
                         type="button"
@@ -314,16 +382,18 @@ const AgendaMensal = () => {
                         <div className="font-medium truncate">{appointment.customer.name}</div>
                         <div className="text-xs opacity-75">{appointment.startTime}</div>
                       </button>
-                    ))
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleEmptyDayClick(day)}
-                      className="w-full text-xs text-gray-500 border-2 border-dashed border-gray-200 rounded-lg py-6 text-center hover:border-primary-400 hover:text-primary-600 transition-colors"
-                    >
-                      + Adicionar agendamento
-                    </button>
-                  )}
+                    ))}
+                  <button
+                    type="button"
+                    onClick={() => handleAddAppointmentForDay(day)}
+                    className={`w-full text-xs rounded-lg transition-colors ${
+                      dayAppointments.length === 0
+                        ? 'text-gray-500 border-2 border-dashed border-gray-200 py-6 text-center hover:border-primary-400 hover:text-primary-600'
+                        : 'text-primary-600 border border-primary-100 py-2 hover:bg-primary-50'
+                    }`}
+                  >
+                    + Adicionar agendamento
+                  </button>
                 </div>
               </div>
             );
@@ -357,6 +427,8 @@ const AgendaMensal = () => {
           }}
           onSubmit={handleUpdate}
           onQuickStatus={handleQuickStatus}
+          canDeleteSeries
+          onDeleteSeries={handleDeleteSeries}
         />
       )}
     </div>
