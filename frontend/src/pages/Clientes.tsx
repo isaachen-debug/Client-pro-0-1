@@ -189,6 +189,13 @@ const Clientes = () => {
     setHistoryAppointments([]);
   };
 
+  const sanitizeCsvValue = (value: string | number | null | undefined) => {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    return String(value).replace(/"/g, '""');
+  };
+
   const handleExportClientes = () => {
     if (clientes.length === 0) {
       alert('Não há clientes para exportar.');
@@ -211,12 +218,14 @@ const Clientes = () => {
       cliente.phone ?? '',
       cliente.address ?? '',
       cliente.serviceType ?? '',
-      STATUS_LABELS[cliente.status],
-      cliente.defaultPrice !== undefined ? cliente.defaultPrice.toFixed(2).replace('.', ',') : '',
+      STATUS_LABELS[cliente.status] ?? cliente.status ?? '',
+      cliente.defaultPrice !== undefined && cliente.defaultPrice !== null
+        ? cliente.defaultPrice.toFixed(2).replace('.', ',')
+        : '',
     ]);
 
     const csvContent = [headers, ...rows]
-      .map((row) => row.map((value) => `"${value.replace(/"/g, '""')}"`).join(';'))
+      .map((row) => row.map((value) => `"${sanitizeCsvValue(value)}"`).join(';'))
       .join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
