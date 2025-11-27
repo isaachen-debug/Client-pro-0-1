@@ -159,11 +159,11 @@ const Start = () => {
     <div className="p-4 md:p-8 space-y-5 md:space-y-8">
       <div>
         <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">
-          Agenda diária
+          Daily Agenda
         </p>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
           {isSameDay(selectedDate, new Date())
-            ? 'Hoje'
+            ? 'Today'
             : isSameDay(selectedDate, addDays(new Date(), 1))
               ? 'Amanhã'
               : format(selectedDate, "EEEE',' dd 'de' MMMM", { locale: ptBR })}
