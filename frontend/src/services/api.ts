@@ -5,6 +5,8 @@ import {
   Customer,
   CustomerStatus,
   DashboardOverview,
+  LanguageOption,
+  ThemeOption,
   Transaction,
   TransactionStatus,
   User,
@@ -54,6 +56,8 @@ export interface UpdateProfilePayload {
   companyName?: string;
   primaryColor?: string;
   avatarUrl?: string;
+  preferredTheme?: ThemeOption;
+  preferredLanguage?: LanguageOption;
 }
 
 export interface UpdatePasswordPayload {

@@ -12,6 +12,8 @@ const mapUserResponse = (user: any) => ({
   companyName: user.companyName,
   primaryColor: user.primaryColor,
   avatarUrl: user.avatarUrl,
+  preferredTheme: user.preferredTheme,
+  preferredLanguage: user.preferredLanguage,
   planStatus: user.planStatus,
   trialStart: user.trialStart,
   trialEnd: user.trialEnd,

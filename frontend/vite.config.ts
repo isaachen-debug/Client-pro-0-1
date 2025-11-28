@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
       manifest: {
-        name: 'ClientePro',
-        short_name: 'ClientePro',
+        name: 'Client Pro',
+        short_name: 'Client Pro',
         description: 'App para organizar clientes, agenda e financeiro de empresas de limpeza.',
         start_url: '/',
         display: 'standalone',

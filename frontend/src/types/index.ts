@@ -1,3 +1,6 @@
+export type ThemeOption = 'light' | 'dark';
+export type LanguageOption = 'pt' | 'en' | 'es';
+
 export interface User {
   id: string;
   name: string;
@@ -5,6 +8,8 @@ export interface User {
   avatarUrl?: string;
   companyName?: string;
   primaryColor?: string;
+  preferredTheme?: ThemeOption;
+  preferredLanguage?: LanguageOption;
   createdAt?: string;
   trialStart?: string;
   trialEnd?: string;

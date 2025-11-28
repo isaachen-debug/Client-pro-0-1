@@ -26,6 +26,13 @@ const Dashboard = () => {
     }
   };
 
+  const revenueValues = data?.revenueByWeek?.map((week) => week.value) ?? [];
+  const maxRevenueValue =
+    revenueValues.length > 0 ? Math.max(...revenueValues) : 0;
+  const chartBase = 800;
+  const chartMaxTarget = Math.max(data?.totalRevenueMonth ?? 0, maxRevenueValue, chartBase);
+  const chartCeiling = Math.ceil(chartMaxTarget / 100) * 100 || chartBase;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -126,7 +133,13 @@ const Dashboard = () => {
             <BarChart data={data.revenueByWeek}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="label" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <YAxis
+                stroke="#6b7280"
+                domain={[0, chartCeiling]}
+                tickFormatter={(value) =>
+                  `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
+                }
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#fff',

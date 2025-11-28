@@ -20,7 +20,7 @@ app.use(express.json());
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'ClientePro API rodando!' });
+  res.json({ status: 'ok', message: 'Client Pro API rodando!' });
 });
 
 // Rotas

@@ -32,7 +32,11 @@ const isSameSeries = (a: Appointment, b: Appointment) => {
   return sameStart && samePrice && recurringFlag;
 };
 
-const AgendaMensal = () => {
+type AgendaMensalProps = {
+  embedded?: boolean;
+};
+
+const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -305,16 +309,8 @@ const AgendaMensal = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4 md:p-8 space-y-6">
+  const headerAndGrid = (
+    <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Agenda</h1>
@@ -400,7 +396,11 @@ const AgendaMensal = () => {
           })}
         </div>
       </div>
+    </>
+  );
 
+  const modals = (
+    <>
       {showCreateModal && (
         <CreateModal
           title="Novo Agendamento"
@@ -431,8 +431,25 @@ const AgendaMensal = () => {
           onDeleteSeries={handleDeleteSeries}
         />
       )}
+    </>
+  );
+
+  const layoutContent = (
+    <div className="space-y-6">
+      {headerAndGrid}
+      {modals}
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+      </div>
+    );
+  }
+
+  return embedded ? layoutContent : <div className="p-4 md:p-8 space-y-6">{layoutContent}</div>;
 };
 
 export default AgendaMensal;

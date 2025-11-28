@@ -2,9 +2,12 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { differenceInCalendarDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
+import { usePreferences } from '../contexts/PreferencesContext';
+import type { LanguageOption, ThemeOption } from '../types';
 
 const Profile = () => {
   const { user, updateProfile, updatePassword } = useAuth();
+  const { setThemePreference, setLanguagePreference } = usePreferences();
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name ?? '',
@@ -12,6 +15,8 @@ const Profile = () => {
     companyName: user?.companyName ?? '',
     primaryColor: user?.primaryColor ?? '#22c55e',
     avatarUrl: user?.avatarUrl ?? '',
+    preferredTheme: (user?.preferredTheme ?? 'light') as ThemeOption,
+    preferredLanguage: (user?.preferredLanguage ?? 'pt') as LanguageOption,
   });
   const [profileStatus, setProfileStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -40,6 +45,8 @@ const Profile = () => {
         companyName: user.companyName ?? '',
         primaryColor: user.primaryColor ?? '#22c55e',
         avatarUrl: user.avatarUrl ?? '',
+        preferredTheme: (user.preferredTheme ?? 'light') as ThemeOption,
+        preferredLanguage: (user.preferredLanguage ?? 'pt') as LanguageOption,
       });
     }
   }, [user]);
@@ -78,6 +85,8 @@ const Profile = () => {
 
     try {
       await updateProfile(profileForm);
+      setThemePreference(profileForm.preferredTheme);
+      setLanguagePreference(profileForm.preferredLanguage);
       setProfileStatus({ type: 'success', message: 'Perfil atualizado com sucesso!' });
     } catch (err: any) {
       const message = err?.response?.data?.error || 'Não foi possível atualizar o perfil.';
@@ -111,6 +120,17 @@ const Profile = () => {
       setPasswordStatus({ type: 'error', message });
     }
   };
+
+  const themeOptions: { value: ThemeOption; label: string }[] = [
+    { value: 'light', label: 'Claro' },
+    { value: 'dark', label: 'Escuro' },
+  ];
+
+  const languageOptions: { value: LanguageOption; label: string }[] = [
+    { value: 'pt', label: 'Português' },
+    { value: 'en', label: 'English' },
+    { value: 'es', label: 'Español' },
+  ];
 
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
@@ -212,6 +232,47 @@ const Profile = () => {
                       <p className="text-xs text-gray-500 mt-1">PNG ou JPG até 2MB.</p>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tema preferido</label>
+                  <select
+                    value={profileForm.preferredTheme}
+                    onChange={(e) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        preferredTheme: e.target.value as ThemeOption,
+                      }))
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  >
+                    {themeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Idioma preferido</label>
+                  <select
+                    value={profileForm.preferredLanguage}
+                    onChange={(e) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        preferredLanguage: e.target.value as LanguageOption,
+                      }))
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

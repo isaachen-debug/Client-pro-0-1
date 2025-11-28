@@ -14,12 +14,17 @@ const selectUserFields = {
   companyName: true,
   primaryColor: true,
   avatarUrl: true,
+  preferredTheme: true,
+  preferredLanguage: true,
   createdAt: true,
   trialStart: true,
   trialEnd: true,
   planStatus: true,
   isActive: true,
 };
+
+const ALLOWED_THEMES = ['light', 'dark'];
+const ALLOWED_LANGUAGES = ['pt', 'en', 'es'];
 
 router.get('/profile', async (req, res) => {
   try {
@@ -41,9 +46,9 @@ router.get('/profile', async (req, res) => {
 
 router.put('/profile', async (req, res) => {
   try {
-    const { name, email, companyName, primaryColor, avatarUrl } = req.body;
+    const { name, email, companyName, primaryColor, avatarUrl, preferredTheme, preferredLanguage } = req.body;
 
-    if (!name && !email && !companyName && !primaryColor && !avatarUrl) {
+    if (!name && !email && !companyName && !primaryColor && !avatarUrl && !preferredTheme && !preferredLanguage) {
       return res.status(400).json({ error: 'Informe algum campo para atualizar.' });
     }
 
@@ -59,6 +64,22 @@ router.put('/profile', async (req, res) => {
       }
     }
 
+    let themeValue: string | undefined;
+    if (preferredTheme) {
+      if (!ALLOWED_THEMES.includes(preferredTheme)) {
+        return res.status(400).json({ error: 'Tema inválido.' });
+      }
+      themeValue = preferredTheme;
+    }
+
+    let languageValue: string | undefined;
+    if (preferredLanguage) {
+      if (!ALLOWED_LANGUAGES.includes(preferredLanguage)) {
+        return res.status(400).json({ error: 'Idioma inválido.' });
+      }
+      languageValue = preferredLanguage;
+    }
+
     const updated = await prisma.user.update({
       where: { id: req.user!.id },
       data: {
@@ -67,6 +88,8 @@ router.put('/profile', async (req, res) => {
         companyName: companyName ?? undefined,
         primaryColor: primaryColor ?? undefined,
         avatarUrl: avatarUrl ?? undefined,
+        preferredTheme: themeValue,
+        preferredLanguage: languageValue,
       } as any,
       select: selectUserFields,
     });

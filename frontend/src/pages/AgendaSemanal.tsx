@@ -25,7 +25,11 @@ const isSameSeries = (a: Appointment, b: Appointment) => {
   return sameStart && samePrice && recurringFlag;
 };
 
-const AgendaSemanal = () => {
+type AgendaSemanalProps = {
+  embedded?: boolean;
+};
+
+const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [agendamentos, setAgendamentos] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -355,16 +359,8 @@ const AgendaSemanal = () => {
     </span>
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4 md:p-8 space-y-6">
+  const pageSections = (
+    <>
       {/* Header */}
       <div className="space-y-4">
         <div>
@@ -679,8 +675,20 @@ const AgendaSemanal = () => {
           onDeleteSeries={handleDeleteSeries}
         />
       )}
-    </div>
+    </>
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  const containerClasses = embedded ? 'space-y-6' : 'p-4 md:p-8 space-y-6';
+
+  return <div className={containerClasses}>{pageSections}</div>;
 };
 
 type DayActionsModalProps = {

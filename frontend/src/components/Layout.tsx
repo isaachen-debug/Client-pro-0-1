@@ -1,36 +1,61 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  CalendarDays,
-  DollarSign,
-  Menu,
-  X,
-  PlayCircle,
-  UserCircle,
-  LogOut,
-} from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, DollarSign, Menu, X, PlayCircle, UserCircle, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 const LogoMark = () => (
-  <div className="w-10 h-10 bg-primary-600 rounded-2xl flex items-center justify-center">
-    <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center relative">
-      <div className="w-2 h-2 bg-primary-600 rounded-full absolute top-1" />
-      <div className="w-4 h-2 bg-primary-600 rounded-full absolute bottom-1" />
-      <div className="w-3 h-1 bg-white rounded-full absolute bottom-0 right-0 rotate-45 origin-bottom-left"></div>
+  <div className="w-12 h-12 rounded-3xl bg-gradient-to-br from-green-400 via-emerald-500 to-green-600 p-[2px] shadow-lg shadow-emerald-300/30">
+    <div className="w-full h-full rounded-3xl bg-white flex items-center justify-center">
+      <svg viewBox="0 0 64 64" className="w-10 h-10 text-emerald-600">
+        <defs>
+          <linearGradient id="clientProGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#22c55e" />
+            <stop offset="100%" stopColor="#15803d" />
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="28" fill="url(#clientProGradient)" opacity="0.15" />
+        <path
+          d="M21 19h22a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H21a4 4 0 0 1-4-4V23a4 4 0 0 1 4-4Z"
+          fill="#fff"
+          stroke="url(#clientProGradient)"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M24 15v6M40 15v6"
+          stroke="url(#clientProGradient)"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <path
+          d="M24 33l5 5 11-11"
+          stroke="#22c55e"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M18 40c4 4 9.5 6 14.5 6 8 0 13.5-3.5 18-11"
+          stroke="#15803d"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="47" cy="24" r="4" fill="#22c55e" stroke="#fff" strokeWidth="2" />
+        <path d="M45.5 24l1.5 1.5L49 23" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+      </svg>
     </div>
   </div>
 );
 
-const BrandBlock = () => (
+const BrandBlock = ({ subtitle }: { subtitle: string }) => (
   <div className="flex items-center space-x-2">
     <LogoMark />
     <div>
-      <h1 className="text-lg font-bold text-gray-900">ClientePro</h1>
-      <p className="text-xs text-gray-500">Gestão de clientes e agenda</p>
+      <h1 className="text-lg font-bold text-gray-900 tracking-tight">Client Pro</h1>
+      <p className="text-xs text-gray-500">{subtitle}</p>
     </div>
   </div>
 );
@@ -41,15 +66,15 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const { canInstall, install, dismissed, dismiss } = useInstallPrompt();
+  const { t } = usePreferences();
 
   const menuItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/start', icon: PlayCircle, label: 'Today' },
-    { path: '/clientes', icon: Users, label: 'Clientes' },
-    { path: '/agenda', icon: Calendar, label: 'Agenda' },
-    { path: '/semana', icon: CalendarDays, label: 'Semana' },
-    { path: '/financeiro', icon: DollarSign, label: 'Financeiro' },
-    { path: '/profile', icon: UserCircle, label: 'Perfil' },
+    { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+    { path: '/start', icon: PlayCircle, labelKey: 'nav.today' },
+    { path: '/clientes', icon: Users, labelKey: 'nav.clients' },
+    { path: '/agenda', icon: Calendar, labelKey: 'nav.agenda' },
+    { path: '/financeiro', icon: DollarSign, labelKey: 'nav.finance' },
+    { path: '/profile', icon: UserCircle, labelKey: 'nav.profile' },
   ];
 
   const initials = user?.name
@@ -115,13 +140,13 @@ const Layout = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex transition-colors duration-200">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64 bg-white border-r border-gray-200">
+        <div className="flex flex-col w-64 bg-white border-r border-gray-200 relative">
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
-    <BrandBlock />
+          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 pr-2">
+            <BrandBlock subtitle={t('layout.brandSubtitle')} />
           </div>
 
           {/* Menu */}
@@ -129,19 +154,17 @@ const Layout = () => {
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              
+
               return (
                 <Link
                   key={item.path}
                   to={item.path}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <Icon size={20} />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium">{t(item.labelKey)}</span>
                 </Link>
               );
             })}
@@ -176,7 +199,7 @@ const Layout = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)} />
           <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white shadow-xl z-50">
             <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-              <BrandBlock />
+              <BrandBlock subtitle={t('layout.brandSubtitle')} />
               <button onClick={() => setSidebarOpen(false)}>
                 <X size={24} />
               </button>
@@ -185,20 +208,18 @@ const Layout = () => {
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
-                
+
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                      isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     <Icon size={20} />
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium">{t(item.labelKey)}</span>
                   </Link>
                 );
               })}
@@ -224,7 +245,7 @@ const Layout = () => {
           <button onClick={() => setSidebarOpen(true)}>
             <Menu size={24} />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">ClientePro</h1>
+          <h1 className="text-lg font-bold text-gray-900">Client Pro</h1>
           <div className="w-6" />
         </header>
 
@@ -235,7 +256,7 @@ const Layout = () => {
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Instale o ClientePro</p>
+                    <p className="text-sm font-semibold text-gray-900">Instale o Client Pro</p>
                     <p className="text-xs text-gray-500">
                       Adicione o app na tela inicial para acessar mais rápido.
                     </p>
@@ -252,7 +273,7 @@ const Layout = () => {
                     onClick={install}
                     className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors"
                   >
-                    Instalar ClientePro
+                    Instalar Client Pro
                   </button>
                 </div>
               </div>

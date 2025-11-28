@@ -57,7 +57,9 @@ router.get('/overview', async (req, res) => {
       },
     });
 
-    const totalRevenueMonth = revenueTransactions.reduce((sum, item) => sum + item.amount, 0);
+    const totalRevenueMonth = revenueTransactions
+      .filter((item) => item.status === 'PAGO')
+      .reduce((sum, item) => sum + item.amount, 0);
     const pendingPaymentsMonth = revenueTransactions
       .filter((item) => item.status === 'PENDENTE')
       .reduce((sum, item) => sum + item.amount, 0);

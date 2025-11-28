@@ -20,6 +20,8 @@ model User {
   companyName  String?
   primaryColor String?       @default("#22c55e")
   avatarUrl    String?
+  preferredTheme    String   @default("light")
+  preferredLanguage String   @default("pt")
   appointments Appointment[]
   customers    Customer[]
   transactions Transaction[]
