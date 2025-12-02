@@ -124,8 +124,14 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
     tasks.push(
       prisma.appointment.create({
         data: {
-          userId: appointment.userId,
-          customerId: appointment.customerId,
+          owner: {
+            connect: { id: appointment.userId },
+          },
+          customer: appointment.customerId
+            ? {
+                connect: { id: appointment.customerId },
+              }
+            : undefined,
           date: nextDate,
           startTime: appointment.startTime,
           endTime: appointment.endTime,
@@ -136,7 +142,11 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
           notes: appointment.notes,
           estimatedDurationMinutes: appointment.estimatedDurationMinutes,
           isRecurring: false,
-          assignedHelperId: appointment.assignedHelperId,
+          assignedHelper: appointment.assignedHelperId
+            ? {
+                connect: { id: appointment.assignedHelperId },
+              }
+            : undefined,
           checklistSnapshot: appointment.checklistSnapshot as Prisma.JsonValue,
         },
       }),
@@ -429,8 +439,14 @@ router.post('/', async (req, res) => {
 
     const appointment = await prisma.appointment.create({
       data: {
-        userId,
-        customerId,
+        owner: {
+          connect: { id: userId },
+        },
+        customer: customerId
+          ? {
+              connect: { id: customerId },
+            }
+          : undefined,
         date: appointmentDate,
         startTime,
         endTime,
@@ -442,7 +458,11 @@ router.post('/', async (req, res) => {
         recurrenceSeriesId,
         notes,
         estimatedDurationMinutes: estimatedDurationMinutes ? parseInt(estimatedDurationMinutes, 10) : null,
-        assignedHelperId: assignedHelperId || null,
+        assignedHelper: assignedHelperId
+          ? {
+              connect: { id: assignedHelperId },
+            }
+          : undefined,
         checklistSnapshot: normalizedChecklist ?? undefined,
       },
       ...defaultAppointmentInclude,
@@ -533,7 +553,11 @@ router.put('/:id', async (req, res) => {
     }
 
     const updateData: Prisma.AppointmentUpdateInput = {
-      customerId: customerId ?? undefined,
+      customer: customerId
+        ? {
+            connect: { id: customerId },
+          }
+        : undefined,
       date: nextDate ?? undefined,
       startTime: startTime ?? undefined,
       endTime: endTime ?? undefined,
@@ -546,9 +570,16 @@ router.put('/:id', async (req, res) => {
         estimatedDurationMinutes !== undefined
           ? parseInt(estimatedDurationMinutes, 10)
           : undefined,
-      assignedHelperId: assignedHelperId !== undefined ? nextHelperId : undefined,
       checklistSnapshot: normalizedChecklistUpdate ?? undefined,
     };
+
+    if (assignedHelperId !== undefined) {
+      updateData.assignedHelper = nextHelperId
+        ? {
+            connect: { id: nextHelperId },
+          }
+        : { disconnect: true };
+    }
 
     if (helperFeeValue !== undefined) {
       updateData.helperFee = helperFeeValue;

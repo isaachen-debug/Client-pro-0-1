@@ -1,6 +1,5 @@
 import type {
   Contract,
-  ContractBlueprint,
   ContractStatus,
   HelperAppointment,
   HelperChecklistItem,

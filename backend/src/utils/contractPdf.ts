@@ -1,6 +1,8 @@
 import PDFDocument from 'pdfkit';
 import type { Contract, Prisma } from '@prisma/client';
 
+type PDFDocumentType = InstanceType<typeof PDFDocument>;
+
 type BlueprintServiceAddon = {
   id: string;
   label: string;
@@ -83,7 +85,7 @@ const mapServices = (blueprint: ContractBlueprint | null) => {
   return items;
 };
 
-const drawSection = (doc: PDFDocument, title: string, body: string | string[]) => {
+const drawSection = (doc: PDFDocumentType, title: string, body: string | string[]) => {
   doc
     .fillColor('#111827')
     .fontSize(13)
@@ -96,7 +98,7 @@ const drawSection = (doc: PDFDocument, title: string, body: string | string[]) =
   doc.moveDown();
 };
 
-const buildBodyFallback = (doc: PDFDocument, body: string) => {
+const buildBodyFallback = (doc: PDFDocumentType, body: string) => {
   drawSection(doc, 'Agreement', body);
 };
 

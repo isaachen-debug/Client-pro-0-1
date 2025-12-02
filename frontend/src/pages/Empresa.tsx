@@ -164,7 +164,7 @@ const Empresa = () => {
         companyShowcase: {
           headline: showcaseForm.headline?.trim() || undefined,
           description: showcaseForm.description?.trim() || undefined,
-          layout: showcaseForm.layout === 'stacked' ? 'stacked' : 'grid',
+          layout: (showcaseForm.layout === 'stacked' ? 'stacked' : 'grid') as CompanyShowcase['layout'],
           sections: sanitizedSections.length ? sanitizedSections : createDefaultShowcase().sections,
         },
       };
@@ -536,7 +536,7 @@ const Empresa = () => {
           <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Área de atuação</p>
         </div>
         <p className="text-sm text-gray-600">
-          {user?.address || 'Defina sua área de atendimento na Central de Clientes.'}
+          {user?.companyShowcase?.description || 'Defina sua área de atendimento na Central de Clientes.'}
         </p>
         <div className="flex items-center gap-2 text-sm text-primary-700">
           <Globe size={16} />

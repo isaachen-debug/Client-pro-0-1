@@ -71,11 +71,6 @@ const Financeiro = () => {
     }
   }, [helpers, selectedHelperId]);
 
-  const selectedHelper = useMemo(
-    () => helpers.find((helper) => helper.id === selectedHelperId) ?? null,
-    [helpers, selectedHelperId],
-  );
-
   const resolvePeriod = () => {
     const now = new Date();
     switch (periodo) {

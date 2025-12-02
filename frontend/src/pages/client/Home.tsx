@@ -107,6 +107,37 @@ const BLUEPRINT_SERVICE_LABELS: Record<string, string> = {
   highDusting: 'High dusting',
 };
 
+const extractBlueprint = (contract?: Contract | null): ContractBlueprint | null => {
+  if (!contract?.placeholders) return null;
+  const rawBlueprint: unknown =
+    (contract.placeholders as Record<string, unknown> | undefined)?.blueprint ?? contract.placeholders;
+  if (!rawBlueprint || typeof rawBlueprint !== 'object') {
+    return null;
+  }
+  return rawBlueprint as ContractBlueprint;
+};
+
+const getBlueprintServices = (blueprint?: ContractBlueprint | null) => {
+  if (!blueprint?.services) return [];
+  const {
+    standard = {},
+    deep = {},
+    custom = [],
+    addons = [],
+  } = blueprint.services || { standard: {}, deep: {}, custom: [], addons: [] };
+  const items: string[] = [];
+  Object.entries(standard).forEach(([key, value]) => {
+    if (value) items.push(BLUEPRINT_SERVICE_LABELS[key] ?? key);
+  });
+  Object.entries(deep).forEach(([key, value]) => {
+    if (value) items.push(BLUEPRINT_SERVICE_LABELS[key] ?? key);
+  });
+  const extraAddons = addons.map((addon) => `${addon.label} (+${usdFormatter.format(addon.price)})`);
+  return [...items, ...custom, ...extraAddons];
+};
+
+const getBlueprintAddons = (blueprint?: ContractBlueprint | null) => blueprint?.services?.addons ?? [];
+
 const ClientHome = () => {
   const [data, setData] = useState<ClientPortalSummary | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -225,23 +256,6 @@ const ClientHome = () => {
   }, [data?.customer?.companyShowcase]);
   const showcaseSections = companyShowcase.sections;
   const showcaseLayout = companyShowcase.layout === 'stacked' ? 'stacked' : 'grid';
-  const extractBlueprint = (contract?: Contract) =>
-    (contract?.placeholders?.blueprint as ContractBlueprint | undefined) || null;
-  const getBlueprintServices = (blueprint?: ContractBlueprint | null) => {
-    if (!blueprint) return [];
-    const items: string[] = [];
-    Object.entries(blueprint.services.standard).forEach(([key, value]) => {
-      if (value) items.push(BLUEPRINT_SERVICE_LABELS[key] ?? key);
-    });
-    Object.entries(blueprint.services.deep).forEach(([key, value]) => {
-      if (value) items.push(BLUEPRINT_SERVICE_LABELS[key] ?? key);
-    });
-    const addons = blueprint.services.addons?.map(
-      (addon) => `${addon.label} (+${usdFormatter.format(addon.price)})`,
-    ) ?? [];
-    return [...items, ...blueprint.services.custom, ...addons];
-  };
-  const getBlueprintAddons = (blueprint?: ContractBlueprint | null) => blueprint?.services.addons ?? [];
   const triggerDownload = (blob: Blob, filename: string) => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
