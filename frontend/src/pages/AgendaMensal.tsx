@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { appointmentsApi, customersApi } from '../services/api';
-import { Appointment, AppointmentStatus, Customer } from '../types';
+import { appointmentsApi, customersApi, teamApi } from '../services/api';
+import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import {
   addMonths,
   eachDayOfInterval,
@@ -40,6 +40,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [helpers, setHelpers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -52,9 +53,11 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
     startTime: '',
     endTime: '',
     price: '',
+    helperFee: '',
     isRecurring: false,
     recurrenceRule: '',
     notes: '',
+    assignedHelperId: '',
   });
   const [dateError, setDateError] = useState('');
   const [editForm, setEditForm] = useState({
@@ -62,14 +65,27 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
     startTime: '',
     endTime: '',
     price: '',
+    helperFee: '',
     notes: '',
     status: 'AGENDADO' as AppointmentStatus,
+    assignedHelperId: '',
   });
 
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
+  useEffect(() => {
+    const loadHelpers = async () => {
+      try {
+        const data = await teamApi.list();
+        setHelpers(data.members.filter((member) => member.role === 'HELPER'));
+      } catch (error) {
+        console.error('Erro ao carregar helpers:', error);
+      }
+    };
+    loadHelpers();
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -97,9 +113,11 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
       startTime: '',
       endTime: '',
       price: '',
+      helperFee: '',
       isRecurring: false,
       recurrenceRule: '',
       notes: '',
+      assignedHelperId: '',
     });
     setDateError('');
   };
@@ -135,9 +153,11 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
         startTime: formData.startTime,
         endTime: formData.endTime || undefined,
         price: parseFloat(formData.price),
+        helperFee: formData.helperFee ? Number(formData.helperFee) : undefined,
         isRecurring: formData.isRecurring,
         recurrenceRule: formData.isRecurring ? formData.recurrenceRule : undefined,
         notes: formData.notes,
+        assignedHelperId: formData.assignedHelperId || undefined,
       });
       setShowCreateModal(false);
       resetForm();
@@ -224,8 +244,13 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
       startTime: appointment.startTime,
       endTime: appointment.endTime || '',
       price: appointment.price.toString(),
+      helperFee:
+        appointment.helperFee !== null && appointment.helperFee !== undefined
+          ? appointment.helperFee.toString()
+          : '',
       notes: appointment.notes || '',
       status: appointment.status,
+      assignedHelperId: appointment.assignedHelperId ?? '',
     });
     setShowEditModal(true);
   };
@@ -242,8 +267,10 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
         startTime: editForm.startTime,
         endTime: editForm.endTime || undefined,
         price: parseFloat(editForm.price),
+        helperFee: editForm.helperFee === '' ? undefined : Number(editForm.helperFee),
         notes: editForm.notes,
         status: editForm.status,
+        assignedHelperId: editForm.assignedHelperId === '' ? null : editForm.assignedHelperId,
       });
       if (shouldPromptInvoice) {
         await handleStatusUpdate(editingAppointment, 'CONCLUIDO', true);
@@ -377,6 +404,11 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
                       >
                         <div className="font-medium truncate">{appointment.customer.name}</div>
                         <div className="text-xs opacity-75">{appointment.startTime}</div>
+                        {appointment.assignedHelper?.name && (
+                          <div className="text-[11px] text-gray-700 mt-1">
+                            Helper: <span className="font-semibold">{appointment.assignedHelper.name}</span>
+                          </div>
+                        )}
                       </button>
                     ))}
                   <button
@@ -405,6 +437,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
         <CreateModal
           title="Novo Agendamento"
           customers={customers}
+          helpers={helpers}
           formData={formData}
           setFormData={setFormData}
           saving={saving}
@@ -420,6 +453,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
           appointment={editingAppointment}
           formData={editForm}
           setFormData={setEditForm}
+          helpers={helpers}
           saving={saving}
           onClose={() => {
             setShowEditModal(false);

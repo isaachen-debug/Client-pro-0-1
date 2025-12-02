@@ -13,7 +13,7 @@ router.get('/:id', async (req, res) => {
       include: {
         customer: true,
         transactions: true,
-        user: true,
+        owner: true,
       },
     });
 
@@ -22,9 +22,7 @@ router.get('/:id', async (req, res) => {
     }
 
     const transaction =
-      appointment.transactions.length > 0
-        ? appointment.transactions[0]
-        : null;
+      appointment.transactions.length > 0 ? appointment.transactions[0] : null;
 
     res.json({
       id: appointment.id,
@@ -41,11 +39,11 @@ router.get('/:id', async (req, res) => {
       transaction,
       notes: appointment.notes,
       company: {
-        name: appointment.user.name,
-        email: appointment.user.email,
-        companyName: appointment.user.companyName,
-        primaryColor: appointment.user.primaryColor,
-        avatarUrl: appointment.user.avatarUrl,
+        name: appointment.owner.name,
+        email: appointment.owner.email,
+        companyName: appointment.owner.companyName,
+        primaryColor: appointment.owner.primaryColor,
+        avatarUrl: appointment.owner.avatarUrl,
       },
     });
   } catch (error) {

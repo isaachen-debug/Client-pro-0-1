@@ -1,5 +1,16 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, DollarSign, Menu, X, PlayCircle, UserCircle, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  DollarSign,
+  Menu,
+  X,
+  PlayCircle,
+  UserCircle,
+  LogOut,
+  Building2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
@@ -69,12 +80,18 @@ const Layout = () => {
   const { t } = usePreferences();
 
   const menuItems = [
-    { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-    { path: '/start', icon: PlayCircle, labelKey: 'nav.today' },
-    { path: '/clientes', icon: Users, labelKey: 'nav.clients' },
-    { path: '/agenda', icon: Calendar, labelKey: 'nav.agenda' },
-    { path: '/financeiro', icon: DollarSign, labelKey: 'nav.finance' },
-    { path: '/profile', icon: UserCircle, labelKey: 'nav.profile' },
+    { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+    { path: '/app/start', icon: PlayCircle, labelKey: 'nav.today' },
+    { path: '/app/clientes', icon: Users, labelKey: 'nav.clients' },
+    { path: '/app/agenda', icon: Calendar, labelKey: 'nav.agenda' },
+    { path: '/app/financeiro', icon: DollarSign, labelKey: 'nav.finance' },
+    ...(user?.role === 'OWNER'
+      ? [
+          { path: '/app/empresa', icon: Building2, labelKey: 'nav.company' },
+          { path: '/app/team', icon: Users, labelKey: 'nav.team' },
+        ]
+      : []),
+    { path: '/app/profile', icon: UserCircle, labelKey: 'nav.profile' },
   ];
 
   const initials = user?.name
@@ -153,7 +170,7 @@ const Layout = () => {
           <nav className="flex-1 px-4 py-4 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname.startsWith(item.path);
 
               return (
                 <Link
@@ -175,7 +192,7 @@ const Layout = () => {
             <ProfileQuickInfo />
             <div className="mt-4 space-y-2">
               <Link
-                to="/profile"
+                to="/app/profile"
                 className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100"
               >
                 <UserCircle size={18} />

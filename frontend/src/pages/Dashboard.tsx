@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, Clock, Users, Calendar } from 'lucide-react';
+import { DollarSign, Clock, Users, Calendar, BellRing } from 'lucide-react';
 import { dashboardApi } from '../services/api';
 import { DashboardOverview } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { parseDateFromInput } from '../utils/date';
+import usePushNotifications from '../hooks/usePushNotifications';
 
 const Dashboard = () => {
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const pushNotifications = usePushNotifications();
 
   useEffect(() => {
     fetchDashboardData();
@@ -57,37 +59,69 @@ const Dashboard = () => {
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
 
+      {pushNotifications.status !== 'enabled' && (
+        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-4 sm:p-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <BellRing size={16} className="text-primary-600" />
+              Receba lembretes no seu celular
+            </p>
+            <p className="text-xs text-gray-500">
+              Avisaremos um dia antes das limpezas para confirmar Clients e orientar Partners.
+            </p>
+            {pushNotifications.status === 'unsupported' && (
+              <p className="text-xs text-red-500 mt-1">
+                O navegador atual não suporta notificações push. Tente usar o Chrome/Edge.
+              </p>
+            )}
+            {pushNotifications.status === 'denied' && (
+              <p className="text-xs text-amber-600 mt-1">
+                Você bloqueou notificações. Reative nas configurações do navegador e tente novamente.
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={pushNotifications.enable}
+            disabled={pushNotifications.status === 'loading'}
+            className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition disabled:opacity-50"
+          >
+            {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar notificações'}
+          </button>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Total de Ganhos */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div className="bg-gradient-to-br from-[#e8fff5] via-white to-white rounded-2xl shadow-md border border-green-100 p-4">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-gray-600">Receita do mês</span>
-            <div className="p-2 bg-green-50 rounded-lg">
-              <DollarSign size={20} className="text-green-600" />
+            <div className="p-2 bg-white rounded-xl border border-green-100 shadow-sm">
+              <DollarSign size={18} className="text-green-600" />
             </div>
           </div>
           <div className="space-y-1">
-            <h2 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900">
               R$ {data.totalRevenueMonth.toFixed(2)}
             </h2>
-            <p className="text-sm text-gray-500">Receita confirmada</p>
+            <p className="text-xs text-gray-500">Receita confirmada</p>
           </div>
         </div>
 
         {/* Pagamentos Pendentes */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div className="bg-gradient-to-br from-[#fff3e6] via-white to-white rounded-2xl shadow-md border border-orange-100 p-4">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-gray-600">Pagamentos Pendentes</span>
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <Clock size={20} className="text-orange-600" />
+            <div className="p-2 bg-white rounded-xl border border-orange-100 shadow-sm">
+              <Clock size={18} className="text-orange-500" />
             </div>
           </div>
           <div className="space-y-1">
-            <h2 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900">
               R$ {data.pendingPaymentsMonth.toFixed(2)}
             </h2>
-            <p className="text-sm text-gray-500">Aguardando confirmação</p>
+            <p className="text-xs text-gray-500">Aguardando confirmação</p>
           </div>
         </div>
 

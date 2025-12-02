@@ -5,11 +5,23 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import type { LanguageOption, ThemeOption } from '../types';
 
+type ProfileFormState = {
+  name: string;
+  email: string;
+  companyName: string;
+  primaryColor: string;
+  avatarUrl: string;
+  preferredTheme: ThemeOption;
+  preferredLanguage: LanguageOption;
+  whatsappNumber: string;
+  contactPhone: string;
+};
+
 const Profile = () => {
   const { user, updateProfile, updatePassword } = useAuth();
   const { setThemePreference, setLanguagePreference } = usePreferences();
 
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<ProfileFormState>(() => ({
     name: user?.name ?? '',
     email: user?.email ?? '',
     companyName: user?.companyName ?? '',
@@ -17,7 +29,9 @@ const Profile = () => {
     avatarUrl: user?.avatarUrl ?? '',
     preferredTheme: (user?.preferredTheme ?? 'light') as ThemeOption,
     preferredLanguage: (user?.preferredLanguage ?? 'pt') as LanguageOption,
-  });
+    whatsappNumber: user?.whatsappNumber ?? '',
+    contactPhone: user?.contactPhone ?? '',
+  }));
   const [profileStatus, setProfileStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [passwordForm, setPasswordForm] = useState({
@@ -47,6 +61,8 @@ const Profile = () => {
         avatarUrl: user.avatarUrl ?? '',
         preferredTheme: (user.preferredTheme ?? 'light') as ThemeOption,
         preferredLanguage: (user.preferredLanguage ?? 'pt') as LanguageOption,
+        whatsappNumber: user.whatsappNumber ?? '',
+        contactPhone: user.contactPhone ?? '',
       });
     }
   }, [user]);
@@ -74,7 +90,6 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
-
   if (!user) {
     return null;
   }
@@ -83,8 +98,23 @@ const Profile = () => {
     event.preventDefault();
     setProfileStatus(null);
 
+    const trimmedWhatsapp = profileForm.whatsappNumber.trim();
+    const trimmedPhone = profileForm.contactPhone.trim();
+
+    const payload = {
+      name: profileForm.name,
+      email: profileForm.email,
+      companyName: profileForm.companyName,
+      primaryColor: profileForm.primaryColor,
+      avatarUrl: profileForm.avatarUrl,
+      preferredTheme: profileForm.preferredTheme,
+      preferredLanguage: profileForm.preferredLanguage,
+      whatsappNumber: trimmedWhatsapp || null,
+      contactPhone: trimmedPhone || null,
+    };
+
     try {
-      await updateProfile(profileForm);
+      await updateProfile(payload);
       setThemePreference(profileForm.preferredTheme);
       setLanguagePreference(profileForm.preferredLanguage);
       setProfileStatus({ type: 'success', message: 'Perfil atualizado com sucesso!' });
@@ -189,6 +219,40 @@ const Profile = () => {
                   onChange={(e) => setProfileForm((prev) => ({ ...prev, companyName: e.target.value }))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
                   placeholder="Ex: Brilho&Limpeza"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp comercial</label>
+                  <input
+                    type="tel"
+                    value={profileForm.whatsappNumber}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    placeholder="(11) 90000-0000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefone fixo / recados</label>
+                  <input
+                    type="tel"
+                    value={profileForm.contactPhone}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    placeholder="(11) 4002-8922"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Site oficial</label>
+                <input
+                  type="url"
+                  value={profileForm.companyWebsite}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, companyWebsite: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  placeholder="https://suaempresa.com"
                 />
               </div>
 

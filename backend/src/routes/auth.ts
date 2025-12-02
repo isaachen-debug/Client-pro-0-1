@@ -19,6 +19,13 @@ const mapUserResponse = (user: any) => ({
   trialEnd: user.trialEnd,
   isActive: user.isActive,
   createdAt: user.createdAt,
+  role: user.role ?? 'OWNER',
+  companyId: user.companyId,
+  whatsappNumber: user.whatsappNumber,
+  contactPhone: user.contactPhone,
+  reviewLinks: user.reviewLinks,
+  companyWebsite: user.companyWebsite,
+  companyShowcase: user.companyShowcase,
 });
 
 router.post('/register', async (req, res) => {
@@ -55,6 +62,7 @@ router.post('/register', async (req, res) => {
         trialEnd,
         planStatus: 'TRIAL',
         isActive: true,
+        role: 'OWNER',
       } as any,
     });
 

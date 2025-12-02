@@ -8,6 +8,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
+      srcDir: 'src',
+      filename: 'service-worker.ts',
+      strategies: 'injectManifest',
       manifest: {
         name: 'Client Pro',
         short_name: 'Client Pro',
@@ -28,6 +31,9 @@ export default defineConfig({
             type: 'image/png'
           }
         ]
+      },
+      devOptions: {
+        enabled: true
       }
     })
   ],

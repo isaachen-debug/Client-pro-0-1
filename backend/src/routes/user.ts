@@ -21,6 +21,13 @@ const selectUserFields = {
   trialEnd: true,
   planStatus: true,
   isActive: true,
+  role: true,
+  companyId: true,
+  whatsappNumber: true,
+  contactPhone: true,
+  reviewLinks: true,
+  companyWebsite: true,
+  companyShowcase: true,
 };
 
 const ALLOWED_THEMES = ['light', 'dark'];
@@ -46,9 +53,35 @@ router.get('/profile', async (req, res) => {
 
 router.put('/profile', async (req, res) => {
   try {
-    const { name, email, companyName, primaryColor, avatarUrl, preferredTheme, preferredLanguage } = req.body;
+    const {
+      name,
+      email,
+      companyName,
+      primaryColor,
+      avatarUrl,
+      preferredTheme,
+      preferredLanguage,
+      whatsappNumber,
+      contactPhone,
+      reviewLinks,
+      companyWebsite,
+      companyShowcase,
+    } = req.body;
 
-    if (!name && !email && !companyName && !primaryColor && !avatarUrl && !preferredTheme && !preferredLanguage) {
+    if (
+      !name &&
+      !email &&
+      !companyName &&
+      !primaryColor &&
+      !avatarUrl &&
+      !preferredTheme &&
+      !preferredLanguage &&
+      !whatsappNumber &&
+      !contactPhone &&
+      reviewLinks === undefined &&
+      companyWebsite === undefined &&
+      companyShowcase === undefined
+    ) {
       return res.status(400).json({ error: 'Informe algum campo para atualizar.' });
     }
 
@@ -80,17 +113,48 @@ router.put('/profile', async (req, res) => {
       languageValue = preferredLanguage;
     }
 
+    const sanitizeLinks = (links: any) => {
+      if (typeof links !== 'object' || links === null) {
+        return undefined;
+      }
+      const sanitized: Record<string, string> = {};
+      Object.entries(links).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          if (trimmed) {
+            sanitized[key] = trimmed;
+          }
+        }
+      });
+      return Object.keys(sanitized).length ? sanitized : null;
+    };
+
+    const data: any = {
+      name: name ?? undefined,
+      email: email ?? undefined,
+      companyName: companyName ?? undefined,
+      primaryColor: primaryColor ?? undefined,
+      avatarUrl: avatarUrl ?? undefined,
+      preferredTheme: themeValue,
+      preferredLanguage: languageValue,
+      whatsappNumber: whatsappNumber ?? undefined,
+      contactPhone: contactPhone ?? undefined,
+    };
+
+    if (reviewLinks !== undefined) {
+      data.reviewLinks = sanitizeLinks(reviewLinks);
+    }
+    if (companyWebsite !== undefined) {
+      data.companyWebsite = typeof companyWebsite === 'string' ? companyWebsite.trim() || null : null;
+    }
+    if (companyShowcase !== undefined) {
+      data.companyShowcase =
+        companyShowcase && typeof companyShowcase === 'object' ? companyShowcase : null;
+    }
+
     const updated = await prisma.user.update({
       where: { id: req.user!.id },
-      data: {
-        name: name ?? undefined,
-        email: email ?? undefined,
-        companyName: companyName ?? undefined,
-        primaryColor: primaryColor ?? undefined,
-        avatarUrl: avatarUrl ?? undefined,
-        preferredTheme: themeValue,
-        preferredLanguage: languageValue,
-      } as any,
+      data,
       select: selectUserFields,
     });
 

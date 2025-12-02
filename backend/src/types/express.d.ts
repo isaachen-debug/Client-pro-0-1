@@ -6,6 +6,8 @@ declare global {
       id: string;
       name?: string;
       email?: string;
+      role?: string;
+      companyId?: string | null;
     }
 
     interface Request {

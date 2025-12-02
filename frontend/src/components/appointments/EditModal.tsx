@@ -8,8 +8,10 @@ type EditModalProps = {
     startTime: string;
     endTime: string;
     price: string;
+    helperFee: string;
     notes: string;
     status: AppointmentStatus;
+    assignedHelperId: string;
   };
   setFormData: React.Dispatch<
     React.SetStateAction<{
@@ -17,10 +19,13 @@ type EditModalProps = {
       startTime: string;
       endTime: string;
       price: string;
+        helperFee: string;
       notes: string;
       status: AppointmentStatus;
+      assignedHelperId: string;
     }>
   >;
+  helpers?: { id: string; name: string }[];
   saving: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -33,6 +38,7 @@ const EditModal = ({
   appointment,
   formData,
   setFormData,
+  helpers = [],
   saving,
   onClose,
   onSubmit,
@@ -104,7 +110,7 @@ const EditModal = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Valor cobrado (USD)</label>
               <input
                 type="number"
                 step="0.01"
@@ -119,6 +125,24 @@ const EditModal = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pagamento da helper (USD)</label>
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Ex: 80"
+              value={formData.helperFee}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  helperFee: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Quanto você repassa para a helper neste serviço.</p>
           </div>
 
           <div>
@@ -139,6 +163,29 @@ const EditModal = ({
               <option value="CANCELADO">Cancelado</option>
             </select>
           </div>
+
+          {helpers.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Helper atribuído</label>
+              <select
+                value={formData.assignedHelperId}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    assignedHelperId: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Sem helper</option>
+                {helpers.map((helper) => (
+                  <option key={helper.id} value={helper.id}>
+                    {helper.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>

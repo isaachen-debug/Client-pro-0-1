@@ -1,3 +1,4 @@
+import { Role, HelperPayoutMode, type User } from '@prisma/client';
 import { Router } from 'express';
 import type { Prisma, Appointment as AppointmentModel } from '@prisma/client';
 import prisma from '../db';
@@ -8,8 +9,40 @@ const router = Router();
 
 router.use(authenticate);
 
-const withCustomer = {
-  include: { customer: true },
+const defaultAppointmentInclude = {
+  include: {
+    customer: true,
+    assignedHelper: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    },
+  },
+};
+
+const parseHelperFeeValue = (value: any) => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) {
+    return undefined;
+  }
+  return parsed;
+};
+
+const roundCurrency = (amount: number) => Math.round(amount * 100) / 100;
+
+const computeHelperFeeFromConfig = (price: number, helper?: Pick<User, 'helperPayoutMode' | 'helperPayoutValue'>) => {
+  if (!helper || !Number.isFinite(price)) return undefined;
+  const raw =
+    helper.helperPayoutMode === HelperPayoutMode.PERCENTAGE
+      ? (price * helper.helperPayoutValue) / 100
+      : helper.helperPayoutValue;
+  if (!Number.isFinite(raw)) return undefined;
+  return Math.max(0, roundCurrency(raw));
 };
 
 const parseYmdParts = (value?: string | null) => {
@@ -103,6 +136,8 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
           notes: appointment.notes,
           estimatedDurationMinutes: appointment.estimatedDurationMinutes,
           isRecurring: false,
+          assignedHelperId: appointment.assignedHelperId,
+          checklistSnapshot: appointment.checklistSnapshot as Prisma.JsonValue,
         },
       }),
     );
@@ -121,6 +156,68 @@ const ensureCustomerOwnership = async (customerId: string, userId: string) => {
   if (!customer) {
     throw new Error('CUSTOMER_NOT_FOUND');
   }
+};
+
+const normalizeChecklistSnapshot = (value: any): { title: string }[] | undefined => {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value
+    .map((entry: any) => {
+      if (typeof entry === 'string') return entry.trim();
+      if (entry && typeof entry.title === 'string') return entry.title.trim();
+      return '';
+    })
+    .filter((title: string) => title.length > 0)
+    .map((title: string) => ({ title }));
+};
+
+const ensureHelperOwnership = async (helperId: string | null | undefined, ownerId: string) => {
+  if (!helperId) return null;
+  const helper = await prisma.user.findFirst({
+    where: { id: helperId, companyId: ownerId, role: Role.HELPER },
+    select: {
+      id: true,
+      name: true,
+      helperPayoutMode: true,
+      helperPayoutValue: true,
+    },
+  });
+  if (!helper) {
+    throw new Error('HELPER_NOT_FOUND');
+  }
+  return helper;
+};
+
+const syncChecklistItems = async (
+  appointmentId: string,
+  snapshot?: { title?: string | null }[],
+) => {
+  if (!snapshot || snapshot.length === 0) return;
+
+  await prisma.appointmentChecklistItem.deleteMany({ where: { appointmentId } });
+
+  const toCreate = snapshot
+    .map((item, index) => ({
+      title: item.title?.trim(),
+      sortOrder: index,
+    }))
+    .filter((item) => item.title && item.title.length > 0) as { title: string; sortOrder: number }[];
+
+  if (!toCreate.length) return;
+
+  await prisma.$transaction(
+    toCreate.map((item) =>
+      prisma.appointmentChecklistItem.create({
+        data: {
+          appointmentId,
+          title: item.title,
+          sortOrder: item.sortOrder,
+        },
+      }),
+    ),
+  );
 };
 
 router.get('/', async (req, res) => {
@@ -151,7 +248,7 @@ router.get('/', async (req, res) => {
 
     const appointments = await prisma.appointment.findMany({
       where,
-      ...withCustomer,
+      ...defaultAppointmentInclude,
       orderBy: [{ date: 'desc' }, { startTime: 'desc' }],
     });
 
@@ -182,7 +279,7 @@ router.get('/month', async (req, res) => {
           lte: end,
         },
       },
-      ...withCustomer,
+      ...defaultAppointmentInclude,
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
 
@@ -218,7 +315,7 @@ router.get('/week', async (req, res) => {
           lte: end,
         },
       },
-      ...withCustomer,
+      ...defaultAppointmentInclude,
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
 
@@ -241,7 +338,7 @@ router.get('/today', async (req, res) => {
         userId: req.user!.id,
         date: { gte: today, lte: end },
       },
-      include: { customer: true },
+      ...defaultAppointmentInclude,
       orderBy: [{ startTime: 'asc' }],
     });
 
@@ -256,7 +353,17 @@ router.get('/:id', async (req, res) => {
   try {
     const appointment = await prisma.appointment.findFirst({
       where: { id: req.params.id, userId: req.user!.id },
-      include: { customer: true, transactions: true },
+      include: {
+        customer: true,
+        transactions: true,
+        assignedHelper: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!appointment) {
@@ -278,20 +385,29 @@ router.post('/', async (req, res) => {
       startTime,
       endTime,
       price,
+      helperFee,
       status,
       isRecurring,
       recurrenceRule,
       notes,
       estimatedDurationMinutes,
+      assignedHelperId,
+      checklistSnapshot,
     } = req.body;
 
     const userId = req.user!.id;
 
+    let helperRecord: Awaited<ReturnType<typeof ensureHelperOwnership>> = null;
+
     try {
       await ensureCustomerOwnership(customerId, userId);
+      helperRecord = await ensureHelperOwnership(assignedHelperId, userId);
     } catch (error: any) {
       if (error.message === 'CUSTOMER_NOT_FOUND') {
         return res.status(404).json({ error: 'Cliente não encontrado.' });
+      }
+      if (error.message === 'HELPER_NOT_FOUND') {
+        return res.status(404).json({ error: 'Helper não encontrada na sua equipe.' });
       }
       throw error;
     }
@@ -303,6 +419,14 @@ router.post('/', async (req, res) => {
 
     const recurrenceSeriesId = isRecurring ? randomBytes(8).toString('hex') : null;
 
+    const normalizedChecklist = normalizeChecklistSnapshot(checklistSnapshot);
+
+    const parsedPrice = parseFloat(price);
+    let helperFeeValue = parseHelperFeeValue(helperFee);
+    if (helperFeeValue === undefined && helperRecord) {
+      helperFeeValue = computeHelperFeeFromConfig(parsedPrice, helperRecord);
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         userId,
@@ -310,18 +434,23 @@ router.post('/', async (req, res) => {
         date: appointmentDate,
         startTime,
         endTime,
-        price: parseFloat(price),
+        price: parsedPrice,
+        helperFee: helperFeeValue,
         status: status || 'AGENDADO',
         isRecurring: isRecurring ?? false,
         recurrenceRule,
         recurrenceSeriesId,
         notes,
-        estimatedDurationMinutes: estimatedDurationMinutes
-          ? parseInt(estimatedDurationMinutes, 10)
-          : null,
+        estimatedDurationMinutes: estimatedDurationMinutes ? parseInt(estimatedDurationMinutes, 10) : null,
+        assignedHelperId: assignedHelperId || null,
+        checklistSnapshot: normalizedChecklist ?? undefined,
       },
-      include: { customer: true },
+      ...defaultAppointmentInclude,
     });
+
+    if (normalizedChecklist?.length) {
+      await syncChecklistItems(appointment.id, normalizedChecklist);
+    }
 
     await scheduleRecurringAppointments(appointment);
 
@@ -340,11 +469,14 @@ router.put('/:id', async (req, res) => {
       startTime,
       endTime,
       price,
+      helperFee,
       status,
       isRecurring,
       recurrenceRule,
       notes,
       estimatedDurationMinutes,
+      assignedHelperId,
+      checklistSnapshot,
     } = req.body;
 
     if (customerId) {
@@ -358,6 +490,15 @@ router.put('/:id', async (req, res) => {
       }
     }
 
+    const appointmentId = req.params.id;
+    const existing = await prisma.appointment.findFirst({
+      where: { id: appointmentId, userId: req.user!.id },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Agendamento não encontrado.' });
+    }
+
     let nextDate: Date | undefined;
     if (date) {
       const built = buildDateAtUtcNoon(date);
@@ -367,33 +508,61 @@ router.put('/:id', async (req, res) => {
       nextDate = built;
     }
 
-    const updated = await prisma.appointment.updateMany({
-      where: { id: req.params.id, userId: req.user!.id },
-      data: {
-        customerId,
-        date: nextDate,
-        startTime,
-        endTime,
-        price: price !== undefined ? parseFloat(price) : undefined,
-        status,
-        isRecurring,
-        recurrenceRule,
-        notes,
-        estimatedDurationMinutes:
-          estimatedDurationMinutes !== undefined
-            ? parseInt(estimatedDurationMinutes, 10)
-            : undefined,
-      },
-    });
+    const normalizedChecklistUpdate = normalizeChecklistSnapshot(checklistSnapshot);
 
-    if (updated.count === 0) {
-      return res.status(404).json({ error: 'Agendamento não encontrado.' });
+    const nextHelperId =
+      assignedHelperId !== undefined ? (assignedHelperId || null) : existing.assignedHelperId;
+    let helperRecord: Awaited<ReturnType<typeof ensureHelperOwnership>> = null;
+    if (nextHelperId) {
+      try {
+        helperRecord = await ensureHelperOwnership(nextHelperId, req.user!.id);
+      } catch (error: any) {
+        if (error.message === 'HELPER_NOT_FOUND') {
+          return res.status(404).json({ error: 'Helper não encontrada na sua equipe.' });
+        }
+        throw error;
+      }
     }
 
-    const appointment = await prisma.appointment.findFirst({
-      where: { id: req.params.id, userId: req.user!.id },
-      include: { customer: true },
+    const priceForCalc = price !== undefined ? parseFloat(price) : existing.price;
+    let helperFeeValue =
+      helperFee === undefined ? undefined : parseHelperFeeValue(helperFee) ?? 0;
+
+    if (helperFee === undefined && helperRecord) {
+      helperFeeValue = computeHelperFeeFromConfig(priceForCalc, helperRecord);
+    }
+
+    const updateData: Prisma.AppointmentUpdateInput = {
+      customerId: customerId ?? undefined,
+      date: nextDate ?? undefined,
+      startTime: startTime ?? undefined,
+      endTime: endTime ?? undefined,
+      price: price !== undefined ? priceForCalc : undefined,
+      status: status ?? undefined,
+      isRecurring: isRecurring ?? undefined,
+      recurrenceRule: recurrenceRule ?? undefined,
+      notes: notes ?? undefined,
+      estimatedDurationMinutes:
+        estimatedDurationMinutes !== undefined
+          ? parseInt(estimatedDurationMinutes, 10)
+          : undefined,
+      assignedHelperId: assignedHelperId !== undefined ? nextHelperId : undefined,
+      checklistSnapshot: normalizedChecklistUpdate ?? undefined,
+    };
+
+    if (helperFeeValue !== undefined) {
+      updateData.helperFee = helperFeeValue;
+    }
+
+    const appointment = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: updateData,
+      ...defaultAppointmentInclude,
     });
+
+    if (normalizedChecklistUpdate) {
+      await syncChecklistItems(appointmentId, normalizedChecklistUpdate);
+    }
 
     res.json(appointment);
   } catch (error) {

@@ -4,16 +4,16 @@ import { useAuth } from '../contexts/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register, isAuthenticated } = useAuth();
+  const { register, isAuthenticated, user } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
+    if (isAuthenticated && user?.role === 'OWNER') {
+      navigate('/app/dashboard', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user?.role, navigate]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -32,7 +32,7 @@ const Register = () => {
     setLoading(true);
     try {
       await register({ name: form.name, email: form.email, password: form.password });
-      navigate('/', { replace: true });
+      navigate('/app/dashboard', { replace: true });
     } catch (err: any) {
       const message =
         err?.response?.data?.error ||

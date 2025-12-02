@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Prisma } from '@prisma/client';
 import prisma from '../db';
 import { authenticate } from '../middleware/auth';
+import { geocodeAddress } from '../utils/geocode';
 
 const router = Router();
 
@@ -17,6 +18,14 @@ const parseDefaultPrice = (value: any) => {
   }
   const parsed = Number(value);
   return Number.isNaN(parsed) ? undefined : parsed;
+};
+
+const parseCoordinate = (value: any) => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 router.use(authenticate);
@@ -94,6 +103,17 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Status inválido.' });
     }
 
+    let latitude = parseCoordinate(req.body.latitude);
+    let longitude = parseCoordinate(req.body.longitude);
+
+    if ((latitude === undefined || longitude === undefined) && address) {
+      const geocoded = await geocodeAddress(address);
+      if (geocoded) {
+        latitude = geocoded.latitude;
+        longitude = geocoded.longitude;
+      }
+    }
+
     const customer = await prisma.customer.create({
       data: {
         userId: req.user!.id,
@@ -105,6 +125,8 @@ router.post('/', async (req, res) => {
         notes,
         status: status ?? 'ACTIVE',
         defaultPrice: parseDefaultPrice(defaultPrice),
+        latitude,
+        longitude,
       },
     });
     res.status(201).json(customer);
@@ -122,6 +144,33 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Status inválido.' });
     }
 
+    const existing = await prisma.customer.findFirst({
+      where: { id: req.params.id, userId: req.user!.id },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+
+    let latitude = parseCoordinate(req.body.latitude);
+    let longitude = parseCoordinate(req.body.longitude);
+    const coordinatesProvided = latitude !== undefined || longitude !== undefined;
+
+    if (!coordinatesProvided) {
+      latitude = existing.latitude ?? undefined;
+      longitude = existing.longitude ?? undefined;
+    }
+
+    const addressChanged = typeof address === 'string' && address.trim() !== '' && address !== existing.address;
+
+    if (!coordinatesProvided && addressChanged) {
+      const geocoded = await geocodeAddress(address);
+      if (geocoded) {
+        latitude = geocoded.latitude;
+        longitude = geocoded.longitude;
+      }
+    }
+
     const customer = await prisma.customer.updateMany({
       where: { id: req.params.id, userId: req.user!.id },
       data: {
@@ -133,6 +182,8 @@ router.put('/:id', async (req, res) => {
         notes,
         status,
         defaultPrice: parseDefaultPrice(defaultPrice),
+        latitude,
+        longitude,
       },
     });
 

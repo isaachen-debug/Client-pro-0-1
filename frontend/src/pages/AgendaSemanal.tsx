@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileText } from 'lucide-react';
-import { appointmentsApi, customersApi } from '../services/api';
-import { Appointment, AppointmentStatus, Customer } from '../types';
+import { appointmentsApi, customersApi, teamApi } from '../services/api';
+import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
@@ -35,6 +35,7 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('todos');
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [helpers, setHelpers] = useState<User[]>([]);
   const [saving, setSaving] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [dateError, setDateError] = useState('');
@@ -48,8 +49,10 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
     startTime: '',
     endTime: '',
     price: '',
+    helperFee: '',
     notes: '',
     status: 'AGENDADO' as AppointmentStatus,
+    assignedHelperId: '',
   });
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
@@ -59,9 +62,11 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
     startTime: '',
     endTime: '',
     price: '',
+  helperFee: '',
     isRecurring: false,
     recurrenceRule: '',
     notes: '',
+    assignedHelperId: '',
   });
 
   const [createForm, setCreateForm] = useState<CreateFormState>(() => buildCreateForm(currentDate));
@@ -92,6 +97,18 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
       }
     };
     loadCustomers();
+  }, []);
+
+  useEffect(() => {
+    const loadHelpers = async () => {
+      try {
+        const data = await teamApi.list();
+        setHelpers(data.members.filter((member) => member.role === 'HELPER'));
+      } catch (error) {
+        console.error('Erro ao carregar helpers:', error);
+      }
+    };
+    loadHelpers();
   }, []);
 
   const fetchAgendamentos = async () => {
@@ -198,9 +215,11 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
         startTime: createForm.startTime,
         endTime: createForm.endTime || undefined,
         price: parseFloat(createForm.price),
+        helperFee: createForm.helperFee ? Number(createForm.helperFee) : undefined,
         isRecurring: createForm.isRecurring,
         recurrenceRule: createForm.isRecurring ? createForm.recurrenceRule : undefined,
         notes: createForm.notes,
+        assignedHelperId: createForm.assignedHelperId || undefined,
       });
 
       setShowCreateModal(false);
@@ -225,8 +244,10 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
         startTime: editForm.startTime,
         endTime: editForm.endTime || undefined,
         price: parseFloat(editForm.price),
+        helperFee: editForm.helperFee === '' ? undefined : Number(editForm.helperFee),
         notes: editForm.notes,
         status: editForm.status,
+        assignedHelperId: editForm.assignedHelperId === '' ? null : editForm.assignedHelperId,
       });
       if (shouldPromptInvoice) {
         await handleStatusChange(editingAppointment, 'CONCLUIDO');
@@ -291,8 +312,13 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
       startTime: appointment.startTime,
       endTime: appointment.endTime || '',
       price: appointment.price.toString(),
+      helperFee:
+        appointment.helperFee !== null && appointment.helperFee !== undefined
+          ? appointment.helperFee.toString()
+          : '',
       notes: appointment.notes || '',
       status: appointment.status,
+      assignedHelperId: appointment.assignedHelperId ?? '',
     });
     setShowEditModal(true);
   };
@@ -522,6 +548,11 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
                         <div className="text-xs text-gray-500">
                           {ag.startTime} • R$ {ag.price.toFixed(2)}
                         </div>
+                        {ag.assignedHelper?.name && (
+                          <div className="text-[11px] text-gray-500">
+                            Helper: <span className="font-semibold text-gray-700">{ag.assignedHelper.name}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -639,6 +670,7 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
         <CreateModal
           title="Novo agendamento"
           customers={customers}
+          helpers={helpers}
           formData={createForm}
           setFormData={setCreateForm}
           saving={saving}
@@ -664,6 +696,7 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
           appointment={editingAppointment}
           formData={editForm}
           setFormData={setEditForm}
+          helpers={helpers}
           saving={saving}
           onClose={() => {
             setShowEditModal(false);

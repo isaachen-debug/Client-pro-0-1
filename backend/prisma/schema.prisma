@@ -7,24 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  OWNER
+  HELPER
+  CLIENT
+}
+
+enum AppointmentPhotoType {
+  BEFORE
+  AFTER
+}
+
+enum HelperPayoutMode {
+  FIXED
+  PERCENTAGE
+}
+
 model User {
-  id           String        @id @default(uuid())
-  name         String
-  email        String        @unique
-  passwordHash String
-  createdAt    DateTime      @default(now())
-  trialStart   DateTime?     @default(now())
-  trialEnd     DateTime?
-  planStatus   String        @default("TRIAL")
-  isActive     Boolean       @default(true)
-  companyName  String?
-  primaryColor String?       @default("#22c55e")
-  avatarUrl    String?
-  preferredTheme    String   @default("light")
-  preferredLanguage String   @default("pt")
-  appointments Appointment[]
-  customers    Customer[]
-  transactions Transaction[]
+  id                String                  @id @default(uuid())
+  name              String
+  email             String                  @unique
+  passwordHash      String
+  createdAt         DateTime                @default(now())
+  trialStart        DateTime?               @default(now())
+  trialEnd          DateTime?
+  planStatus        String                  @default("TRIAL")
+  isActive          Boolean                 @default(true)
+  companyName       String?
+  primaryColor      String?                 @default("#22c55e")
+  avatarUrl         String?
+  preferredTheme    String                  @default("light")
+  preferredLanguage String                  @default("pt")
+  role              Role                    @default(OWNER)
+  companyId         String?
+  whatsappNumber    String?
+  contactPhone      String?
+  reviewLinks       Json?
+  companyWebsite    String?
+  companyShowcase   Json?
+  company           User?                   @relation("CompanyMembers", fields: [companyId], references: [id])
+  teamMembers       User[]                  @relation("CompanyMembers")
+  appointments      Appointment[]           @relation("AppointmentOwner")
+  assignedVisits    Appointment[]           @relation("AppointmentAssignedHelper")
+  checklistMarked   AppointmentChecklistItem[] @relation("ChecklistCompletedBy")
+  uploadedPhotos    AppointmentPhoto[]      @relation("PhotoUploadedBy")
+  customers         Customer[]
+  transactions      Transaction[]
+  contractsOwned    Contract[]              @relation("OwnerContracts")
+  contractsSigned   Contract[]              @relation("ClientContracts")
+  helperPayoutMode  HelperPayoutMode        @default(FIXED)
+  helperPayoutValue Float                   @default(0)
+  helperExpenses    HelperExpense[]         @relation("HelperExpenses")
+  recordedExpenses  HelperExpense[]         @relation("OwnerExpenses")
+  pushSubscriptions PushSubscription[]
 }
 
 model Customer {
@@ -34,10 +69,13 @@ model Customer {
   email        String?
   phone        String?
   address      String?
+  latitude     Float?
+  longitude    Float?
   serviceType  String?
   notes        String?
   status       String        @default("ACTIVE")
   defaultPrice Float?
+  clientPreferences Json?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   appointments Appointment[]
@@ -45,31 +83,81 @@ model Customer {
 }
 
 model Appointment {
-  id                       String        @id @default(uuid())
+  id                       String                     @id @default(uuid())
   userId                   String
   customerId               String
+  assignedHelperId         String?
   date                     DateTime
   startTime                String
   endTime                  String?
   price                    Float
-  status                   String        @default("AGENDADO")
-  isRecurring              Boolean       @default(false)
+  helperFee                Float?                    @default(0)
+  status                   String                     @default("AGENDADO")
+  isRecurring              Boolean                    @default(false)
   recurrenceRule           String?
   notes                    String?
   startedAt                DateTime?
   finishedAt               DateTime?
   estimatedDurationMinutes Int?
   invoiceNumber            String?
-  invoiceToken             String?       @unique
+  invoiceToken             String?                    @unique
   invoiceSentAt            DateTime?
   recurrenceSeriesId       String?
-  createdAt                DateTime      @default(now())
-  updatedAt                DateTime      @updatedAt
-  customer                 Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  user                     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checklistSnapshot        Json?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  customer                 Customer                   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  owner                    User                      @relation("AppointmentOwner", fields: [userId], references: [id], onDelete: Cascade)
+  assignedHelper           User?                     @relation("AppointmentAssignedHelper", fields: [assignedHelperId], references: [id])
   transactions             Transaction[]
+  checklistItems           AppointmentChecklistItem[]
+  photos                   AppointmentPhoto[]
 
   @@index([recurrenceSeriesId])
+  @@index([assignedHelperId])
+}
+
+model HelperExpense {
+  id        String   @id @default(uuid())
+  helperId  String
+  ownerId   String
+  date      DateTime @default(now())
+  category  String
+  amount    Float
+  notes     String?
+  helper    User     @relation("HelperExpenses", fields: [helperId], references: [id], onDelete: Cascade)
+  owner     User     @relation("OwnerExpenses", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([helperId, date])
+  @@index([ownerId, date])
+}
+
+model Contract {
+  id           String    @id @default(uuid())
+  ownerId      String
+  clientId     String
+  title        String
+  body         String
+  pdfUrl       String?
+  status       ContractStatus @default(PENDENTE)
+  sentAt       DateTime @default(now())
+  acceptedAt   DateTime?
+  clientNotes  String?
+  ownerNotes   String?
+  placeholders Json?
+  gallery      Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  owner        User     @relation("OwnerContracts", fields: [ownerId], references: [id], onDelete: Cascade)
+  client       User     @relation("ClientContracts", fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, clientId, status])
+}
+
+enum ContractStatus {
+  PENDENTE
+  ACEITO
+  RECUSADO
 }
 
 model Transaction {
@@ -86,4 +174,45 @@ model Transaction {
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([appointmentId, type])
+}
+
+model AppointmentChecklistItem {
+  id             String      @id @default(uuid())
+  appointmentId  String
+  title          String
+  sortOrder      Int         @default(0)
+  completedAt    DateTime?
+  completedById  String?
+  appointment    Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  completedBy    User?       @relation("ChecklistCompletedBy", fields: [completedById], references: [id])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([appointmentId])
+}
+
+model AppointmentPhoto {
+  id             String                @id @default(uuid())
+  appointmentId  String
+  uploadedById   String?
+  url            String
+  type           AppointmentPhotoType
+  createdAt      DateTime              @default(now())
+  appointment    Appointment           @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  uploadedBy     User?                 @relation("PhotoUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([appointmentId])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

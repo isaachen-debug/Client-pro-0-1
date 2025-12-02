@@ -30,7 +30,9 @@ type TranslationDictionary = Record<
       clients: string;
       agenda: string;
       finance: string;
+      company: string;
       profile: string;
+      team: string;
     };
   }
 >;
@@ -51,7 +53,9 @@ const translations: TranslationDictionary = {
       clients: 'Clientes',
       agenda: 'Agenda',
       finance: 'Financeiro',
+      company: 'Empresa',
       profile: 'Perfil',
+      team: 'Equipe',
     },
   },
   en: {
@@ -69,7 +73,9 @@ const translations: TranslationDictionary = {
       clients: 'Clients',
       agenda: 'Agenda',
       finance: 'Finance',
+      company: 'Company',
       profile: 'Profile',
+      team: 'Team',
     },
   },
   es: {
@@ -87,7 +93,9 @@ const translations: TranslationDictionary = {
       clients: 'Clientes',
       agenda: 'Agenda',
       finance: 'Finanzas',
+      company: 'Empresa',
       profile: 'Perfil',
+      team: 'Equipo',
     },
   },
 };

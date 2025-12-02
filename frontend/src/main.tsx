@@ -1,12 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import './index.css'
 
-registerSW({
-  immediate: true,
-})
+if (import.meta.env.PROD) {
+  const registerSW = async () => {
+    const { registerSW: register } = await import('virtual:pwa-register')
+    register({ immediate: true })
+  }
+  registerSW()
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
