@@ -10,6 +10,20 @@ import {
   UserCircle,
   LogOut,
   Building2,
+  Grid,
+  Plus,
+  Search,
+  UserPlus,
+  ChevronDown,
+  Bot,
+  CalendarDays,
+  BellOff,
+  Bell,
+  Settings as SettingsIcon,
+  HelpCircle,
+  Mail,
+  Star,
+  Power,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -77,7 +91,68 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const { canInstall, install, dismissed, dismiss } = useInstallPrompt();
-  const { t } = usePreferences();
+  const { t, theme } = usePreferences();
+  const isOwner = user?.role === 'OWNER';
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const quickActionGridItems = [
+    {
+      key: 'dashboard',
+      label: 'Dashboards',
+      icon: '📊',
+      path: '/app/dashboard',
+    },
+    {
+      key: 'start',
+      label: 'Hoje',
+      icon: '⚡',
+      path: '/app/start',
+    },
+    {
+      key: 'clientes',
+      label: 'Clientes',
+      icon: '👥',
+      path: '/app/clientes',
+    },
+    {
+      key: 'agenda',
+      label: 'Agenda',
+      icon: '🗓️',
+      path: '/app/agenda',
+    },
+    {
+      key: 'financeiro',
+      label: 'Financeiro',
+      icon: '💰',
+      path: '/app/financeiro',
+    },
+    {
+      key: 'empresa',
+      label: 'Empresa',
+      icon: '🏢',
+      path: '/app/empresa',
+    },
+    {
+      key: 'equipe',
+      label: 'Equipe',
+      icon: '🤝',
+      path: '/app/team',
+    },
+    {
+      key: 'perfil',
+      label: 'Perfil',
+      icon: '👤',
+      path: '/app/profile',
+    },
+  ];
+  const isDarkTheme = theme === 'dark';
+  const mobileHeaderContainerClass = `md:hidden border-b ${isDarkTheme ? 'bg-[#03050c] text-white border-white/10' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`;
+  const mobileHeaderPanelClass = `rounded-[32px] px-4 pt-4 pb-6 space-y-4 ${isDarkTheme ? 'border border-white/12 bg-gradient-to-b from-[#090d19] to-[#04060d] shadow-[0_20px_60px_rgba(0,0,0,0.45)] text-white' : 'border border-gray-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,0.08)] text-gray-900'}`;
+  const mobileIconButtonClass = `${isDarkTheme ? 'bg-white/10 border border-white/15 text-white' : 'bg-gray-100 border border-gray-200 text-gray-900'} rounded-2xl flex items-center justify-center`;
+  const mobileInputWrapperClass = `rounded-2xl flex items-center gap-2 px-4 py-2.5 ${isDarkTheme ? 'bg-white/10 border border-white/10' : 'bg-gray-50 border border-gray-200'}`;
+  const mobileInputClass = `bg-transparent flex-1 text-sm placeholder:text-current/40 focus:outline-none ${isDarkTheme ? 'text-white' : 'text-gray-900'}`;
+  const mobileMutedTextClass = isDarkTheme ? 'text-white/50' : 'text-gray-500';
+  const mobileSecondaryTextClass = isDarkTheme ? 'text-white/70' : 'text-gray-600';
+  const sidebarSurfaceClass = isDarkTheme ? 'bg-[#05070c] text-white' : 'bg-white text-gray-900';
 
   const menuItems = [
     { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
@@ -156,6 +231,46 @@ const Layout = () => {
     </div>
   );
 
+  const mobileNavItems = [
+    {
+      key: 'home',
+      label: 'Home',
+      path: '/app/dashboard',
+      icon: LayoutDashboard,
+      type: 'route' as const,
+    },
+    {
+      key: 'agenda',
+      label: 'Agenda',
+      path: '/app/agenda',
+      icon: Calendar,
+      type: 'route' as const,
+    },
+    {
+      key: 'clientes',
+      label: 'Clientes',
+      path: '/app/clientes',
+      icon: Users,
+      type: 'route' as const,
+    },
+    {
+      key: 'more',
+      label: 'More',
+      icon: Grid,
+      type: 'more' as const,
+    },
+  ];
+
+
+  const handleMobileNav = (item: (typeof mobileNavItems)[number]) => {
+    if (item.type === 'more') {
+      setQuickCreateOpen(true);
+      return;
+    }
+    navigate(item.path);
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-50 flex transition-colors duration-200">
       {/* Sidebar Desktop */}
@@ -213,44 +328,166 @@ const Layout = () => {
       {/* Mobile Sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)} />
-          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white shadow-xl z-50">
-            <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-              <BrandBlock subtitle={t('layout.brandSubtitle')} />
-              <button onClick={() => setSidebarOpen(false)}>
-                <X size={24} />
-              </button>
-            </div>
-            <nav className="px-4 py-4 space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon size={20} />
-                    <span className="font-medium">{t(item.labelKey)}</span>
-                  </Link>
-                );
-              })}
-              <div className="mt-6 border-t border-gray-200 pt-4 space-y-3">
-                <ProfileQuickInfo hideTip />
+          <div className="fixed inset-0 bg-black/70" onClick={() => setSidebarOpen(false)} />
+          <aside className={`fixed top-0 bottom-0 left-0 right-0 z-50 overflow-y-auto ${sidebarSurfaceClass}`}>
+            <div className="px-6 pt-6 pb-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-semibold">Profile & Settings</p>
                 <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50"
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    isDarkTheme ? 'bg-white/10 border border-white/15 text-white' : 'bg-gray-100 border border-gray-200 text-gray-900'
+                  }`}
                 >
-                  <LogOut size={18} />
-                  <span>Sair</span>
+                  <X size={20} />
                 </button>
               </div>
-            </nav>
+
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div
+                  className={`relative w-20 h-20 rounded-full flex items-center justify-center text-2xl font-semibold ${
+                    isDarkTheme ? 'bg-white text-gray-900' : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  {initials}
+                  <span
+                    className={`absolute bottom-2 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 ${
+                      isDarkTheme ? 'border-[#05070c]' : 'border-white'
+                    }`}
+                  />
+                </div>
+                <p className="text-xl font-semibold">{user?.name || 'Owner'}</p>
+                <div
+                  className={`w-full rounded-2xl px-4 py-2 text-left text-sm ${
+                    isDarkTheme ? 'bg-white/10 border border-white/15 text-white/60' : 'bg-gray-50 border border-gray-200 text-gray-600'
+                  }`}
+                >
+                  Set a status
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/app/profile');
+                      setSidebarOpen(false);
+                    }}
+                    className={`flex-1 rounded-2xl py-2 font-semibold text-sm border ${
+                      isDarkTheme ? 'border-white/15 bg-white/5 text-white' : 'border-gray-200 bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    Edit profile
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 rounded-2xl py-2 font-semibold text-sm flex items-center justify-center gap-2 border ${
+                      isDarkTheme ? 'border-white/15 bg-white/5 text-white' : 'border-gray-200 bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    <Bot size={16} /> AI StandUp
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1 text-sm">
+                {[
+                  { label: 'My Calendar', icon: CalendarDays, path: '/app/agenda' },
+                  { label: 'Mute notifications', icon: BellOff },
+                  { label: 'Settings', icon: SettingsIcon, path: '/app/profile' },
+                  { label: 'Notification settings', icon: Bell },
+                  { label: 'Invite users', icon: UserPlus },
+                  { label: 'Help & resources', icon: HelpCircle },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => {
+                        if (item.path) {
+                          navigate(item.path);
+                          setSidebarOpen(false);
+                        }
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl transition ${
+                        isDarkTheme ? 'hover:bg-white/5' : 'hover:bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      <Icon size={18} className={isDarkTheme ? 'text-white/70' : 'text-gray-500'} />
+                      <span className="text-base">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <p className={`text-xs uppercase tracking-wide ${isDarkTheme ? 'text-white/40' : 'text-gray-500'}`}>General info</p>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span className={isDarkTheme ? 'text-white' : 'text-gray-900'}>Online</span>
+                </div>
+                <button
+                  type="button"
+                  className={`flex items-center gap-2 ${isDarkTheme ? 'text-white/80' : 'text-gray-600'}`}
+                  onClick={() => {
+                    if (user?.email) {
+                      navigator.clipboard?.writeText(user.email);
+                    }
+                  }}
+                >
+                  <Mail size={16} /> {user?.email || 'email@clientpro.com'}
+                </button>
+                <div className={`flex items-center gap-2 ${isDarkTheme ? 'text-white/80' : 'text-gray-600'}`}>
+                  <Star size={16} /> Favorite
+                </div>
+              </div>
+
+              <div className={`pt-4 space-y-2 border-t ${isDarkTheme ? 'border-white/10' : 'border-gray-200'}`}>
+                <p className={`text-xs uppercase tracking-wide ${isDarkTheme ? 'text-white/40' : 'text-gray-500'}`}>Teams</p>
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname.startsWith(item.path);
+                  return (
+                    <button
+                      key={`mobile-${item.path}`}
+                      type="button"
+                      onClick={() => {
+                        navigate(item.path);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-left ${
+                        isActive
+                          ? isDarkTheme
+                            ? 'bg-white/10 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                          : isDarkTheme
+                            ? 'text-white/70 hover:bg-white/5'
+                            : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <Icon size={18} />
+                        {t(item.labelKey)}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={`${isDarkTheme ? 'text-white/40' : 'text-gray-400'} rotate-[-90deg]`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={`w-full flex items-center justify-center gap-2 rounded-2xl py-2 text-sm font-semibold transition border ${
+                  isDarkTheme ? 'bg-white/10 border-white/15 text-red-200 hover:bg-white/15' : 'bg-red-50 border-red-100 text-red-600 hover:bg-red-100'
+                }`}
+              >
+                <Power size={16} /> Logout
+              </button>
+            </div>
           </aside>
         </div>
       )}
@@ -258,16 +495,74 @@ const Layout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header Mobile */}
-        <header className="md:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4">
-          <button onClick={() => setSidebarOpen(true)}>
-            <Menu size={24} />
-          </button>
-          <h1 className="text-lg font-bold text-gray-900">Client Pro</h1>
-          <div className="w-6" />
+        <header className={mobileHeaderContainerClass}>
+          <div className="px-4 pt-4 pb-6">
+            <div className={mobileHeaderPanelClass}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className={`w-12 h-12 ${mobileIconButtonClass}`}
+                  >
+                    <Menu size={22} />
+                  </button>
+                  <div>
+                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>Workspace</p>
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1 text-base font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      {user?.companyName || 'Client Pro'}
+                      <ChevronDown size={16} className={mobileSecondaryTextClass} />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setQuickCreateOpen(true)}
+                    className={`w-11 h-11 ${mobileIconButtonClass}`}
+                  >
+                    <Plus size={20} />
+                  </button>
+                  <div
+                    className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${
+                      isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>{initials}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className={mobileInputWrapperClass}>
+                <Search size={16} className={mobileSecondaryTextClass} />
+                <input
+                  type="text"
+                  placeholder="Buscar agenda, Clients ou contratos"
+                  className={mobileInputClass}
+                />
+                <button
+                  type="button"
+                  onClick={() => navigate('/app/agenda')}
+                  className={`text-xs font-semibold ${isDarkTheme ? 'text-emerald-300' : 'text-emerald-600'}`}
+                >
+                  Agenda
+                </button>
+              </div>
+              <div className={`${mobileSecondaryTextClass} text-sm`}>
+                <p>Veja métricas detalhadas no Dashboard.</p>
+              </div>
+            </div>
+          </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pb-28 sm:pb-0">
           {canInstall && !dismissed && (
             <div className="px-4 pt-4">
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
@@ -299,6 +594,108 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      {isOwner && (
+        <>
+          <div className="md:hidden fixed inset-x-4 bottom-4 z-40">
+            <div className="relative">
+              <div className="bg-gradient-to-r from-[#1c0f2a] via-[#130a1f] to-[#1c0f2a] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-[32px] px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  {mobileNavItems.slice(0, 2).map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.type === 'route' && location.pathname.startsWith(item.path);
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => handleMobileNav(item)}
+                        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+                          isActive ? 'text-white' : 'text-white/60'
+                        }`}
+                      >
+                        <Icon size={20} />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-6">
+                  {mobileNavItems.slice(2).map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.type === 'route' && location.pathname.startsWith(item.path ?? '');
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => handleMobileNav(item)}
+                        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+                          isActive ? 'text-white' : 'text-white/60'
+                        }`}
+                      >
+                        <Icon size={20} />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickCreateOpen(true)}
+                className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-gray-900 shadow-[0_15px_30px_rgba(0,0,0,0.35)] border border-white/60 flex items-center justify-center"
+              >
+                <Plus size={28} />
+              </button>
+            </div>
+          </div>
+
+          {quickCreateOpen && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+              <div className="flex-1" onClick={() => setQuickCreateOpen(false)} />
+              <div className="rounded-t-[36px] bg-gradient-to-br from-[#681c94] via-[#7f24a8] to-[#a432b9] p-6 space-y-5 border-t border-white/20">
+                <div className="flex items-center justify-between text-white">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.3em] text-white/70">Launcher</p>
+                    <p className="text-2xl font-semibold">Explore Client Pro</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setQuickCreateOpen(false)}
+                    className="w-10 h-10 rounded-full bg-white/15 border border-white/20 flex items-center justify-center"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="rounded-2xl bg-white/15 border border-white/20 flex items-center gap-2 px-4 py-2">
+                  <Search size={16} className="text-white/60" />
+                  <input
+                    type="text"
+                    placeholder="Buscar apps ou ações"
+                    className="bg-transparent flex-1 text-sm text-white placeholder:text-white/60 focus:outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-4 gap-3 text-white">
+                  {quickActionGridItems.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        setQuickCreateOpen(false);
+                        navigate(item.path);
+                      }}
+                      className="rounded-3xl bg-white/10 border border-white/15 py-4 flex flex-col items-center gap-2 hover:bg-white/15 transition"
+                    >
+                      <div className="text-2xl">{item.icon}</div>
+                      <p className="text-xs font-semibold">{item.label}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -1,9 +1,11 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { differenceInCalendarDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { BellRing } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import type { LanguageOption, ThemeOption } from '../types';
+import usePushNotifications from '../hooks/usePushNotifications';
 
 type ProfileFormState = {
   name: string;
@@ -20,6 +22,7 @@ type ProfileFormState = {
 const Profile = () => {
   const { user, updateProfile, updatePassword } = useAuth();
   const { setThemePreference, setLanguagePreference } = usePreferences();
+  const pushNotifications = usePushNotifications();
 
   const [profileForm, setProfileForm] = useState<ProfileFormState>(() => ({
     name: user?.name ?? '',
@@ -167,6 +170,39 @@ const Profile = () => {
       <div className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Perfil do Usuário</h1>
         <p className="text-sm text-gray-500">Gerencie suas informações pessoais e preferências de acesso.</p>
+      </div>
+
+      <div className="bg-white border border-primary-100 rounded-2xl shadow-sm p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <BellRing size={18} className="text-primary-600" />
+            Receba notificações sobre suas limpezas
+          </p>
+          <p className="text-xs text-gray-500">
+            Habilite o lembrete para confirmar Clients e alinhar Partners um dia antes de cada visita.
+          </p>
+          {pushNotifications.status === 'unsupported' && (
+            <p className="text-xs text-red-500 mt-1">O navegador atual não suporta notificações push.</p>
+          )}
+          {pushNotifications.status === 'denied' && (
+            <p className="text-xs text-amber-600 mt-1">
+              Você bloqueou notificações. Reative nas configurações do navegador e tente novamente.
+            </p>
+          )}
+          {pushNotifications.status === 'enabled' && (
+            <p className="text-xs text-emerald-600 mt-1 font-semibold">Notificações ativas para esta conta.</p>
+          )}
+        </div>
+        {pushNotifications.status !== 'enabled' && (
+          <button
+            type="button"
+            onClick={pushNotifications.enable}
+            disabled={pushNotifications.status === 'loading'}
+            className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition disabled:opacity-50"
+          >
+            {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar notificações'}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

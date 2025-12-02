@@ -1,8 +1,10 @@
-import { FormEvent, useState, useEffect } from 'react';
+import { FormEvent, useState, useEffect, TouchEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserRole } from '../types';
+import { FileText, MessageSquare, Smartphone } from 'lucide-react';
 import logoFull from '../assets/client-pro-logo.svg';
+import loginHero from '../assets/login-hero.png';
 
 type LoginPersona = UserRole;
 
@@ -46,7 +48,28 @@ const Login = () => {
   const [persona, setPersona] = useState<LoginPersona>('OWNER');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginSegment, setLoginSegment] = useState<'ownerPartner' | 'client' | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileSlides = [
+    {
+      title: 'Sua limpeza em um só lugar.',
+      description: 'Com Partners e Clients alinhados por SMS, sobra tempo para crescer o negócio.',
+      highlight: 'Ganhe um dia livre por semana.',
+      subcopy: 'Painel focado, SMS automáticos e portal para Clients com a cara da sua marca.',
+    },
+    {
+      title: 'Operação guiada por SMS.',
+      description: 'Envie recados inteligentes antes da rota e evite ligações e improviso.',
+      highlight: 'Tudo preparado antes da visita.',
+      subcopy: 'Partners recebem briefing completo no celular; Clients confirmam em segundos.',
+    },
+    {
+      title: 'Portal com a cara da sua marca.',
+      description: 'Contratos, fotos, medidores e pop-up “Sua empresa parceira” em um toque.',
+      highlight: 'Experiência VIP para Clients.',
+      subcopy: 'Compartilhe novidades, antes/depois e mantenha o relacionamento sempre ativo.',
+    },
+  ];
+  const [mobileSlideIndex, setMobileSlideIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && user?.role) {
@@ -118,14 +141,33 @@ const Login = () => {
     { href: '#testimonials', label: 'Feedbacks' },
   ];
 
+  const goToSlide = (index: number) => {
+    const total = mobileSlides.length;
+    const nextIndex = ((index % total) + total) % total;
+    setMobileSlideIndex(nextIndex);
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    setTouchStartX(event.changedTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (touchStartX === null) return;
+    const delta = touchStartX - event.changedTouches[0].clientX;
+    if (Math.abs(delta) > 40) {
+      goToSlide(mobileSlideIndex + (delta > 0 ? 1 : -1));
+    }
+    setTouchStartX(null);
+  };
+
   return (
-    <div className="min-h-screen bg-[#fffaf4] flex flex-col">
-      <header className="w-full border-b border-white/70 bg-white/80 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="min-h-screen bg-[#03050c] sm:bg-[#fffaf4] flex flex-col pb-10 sm:pb-0">
+      <header className="hidden sm:block w-full border-b border-white/70 bg-white/80 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <img src={logoFull} alt="Client Pro logo" className="h-12 w-auto" />
           </div>
-          <nav className="hidden sm:flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-600">
+          <nav className="flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-600">
             {navigationLinks.map((link) => (
               <a key={link.href} href={link.href} className="hover:text-primary-600 transition">
                 {link.label}
@@ -139,121 +181,179 @@ const Login = () => {
               Fazer login
             </button>
           </nav>
-          <button
-            type="button"
-            className="sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 text-gray-700"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            aria-label="Abrir menu de navegação"
-          >
-            <span className="flex flex-col gap-1">
-              <span className="w-5 h-0.5 bg-gray-700 rounded" />
-              <span className="w-5 h-0.5 bg-gray-700 rounded" />
-              <span className="w-5 h-0.5 bg-gray-700 rounded" />
-            </span>
-          </button>
         </div>
-        {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-gray-100 bg-white/95 backdrop-blur-sm">
-            <nav className="px-4 py-4 flex flex-col gap-3 text-sm font-semibold text-gray-700">
-              {navigationLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="py-1 hover:text-primary-600 transition"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  openLoginModal('ownerPartner');
-                  setMobileMenuOpen(false);
-                }}
-                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-primary-600 text-white text-xs uppercase tracking-wide"
-              >
-                Fazer login
-              </button>
-            </nav>
-          </div>
-        )}
       </header>
 
-      {/* HERO PRINCIPAL – inspirado na Unimeal */}
-      <section className="relative overflow-hidden bg-[#fff5ec]">
+      <section className="sm:hidden bg-[#03050c] text-white pt-10 pb-16">
+        <div className="max-w-md mx-auto flex flex-col gap-8">
+          <div
+            className="relative overflow-hidden rounded-[40px] border border-white/10 bg-gradient-to-b from-[#06090f] via-[#05070c] to-[#020307]"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              className="flex transition-transform duration-300"
+              style={{ transform: `translateX(-${mobileSlideIndex * 100}%)` }}
+            >
+              {mobileSlides.map((slide) => (
+                <div key={slide.title} className="w-full flex-shrink-0 flex flex-col items-center gap-8 py-10 text-center px-6">
+                  <div className="space-y-3">
+                    <img src={logoFull} alt="Client Pro" className="h-9 mx-auto" />
+                    <p className="text-xs uppercase tracking-[0.3em] text-emerald-300 font-semibold">Client Pro</p>
+                    <h1 className="text-3xl font-bold">{slide.title}</h1>
+                    <p className="text-sm text-white/70">{slide.description}</p>
+                  </div>
+                  <div className="w-56 h-56 rounded-[40px] border border-white/10 bg-gradient-to-br from-white/8 via-white/0 to-transparent shadow-[0_30px_60px_rgba(0,0,0,0.45)] flex items-center justify-center overflow-hidden">
+                    <img src={loginHero} alt="Client Pro app preview" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-lg font-semibold">{slide.highlight}</p>
+                    <p className="text-sm text-white/70">{slide.subcopy}</p>
+                    <div className="flex items-center justify-center gap-1 text-white/35 text-xs">
+                      {['•', '•', '•'].map((dot, index) => (
+                        <span key={`${slide.title}-dot-${index}`}>{dot}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            {mobileSlides.map((_, index) => (
+              <button
+                key={`hero-dot-${index}`}
+                type="button"
+                onClick={() => goToSlide(index)}
+                aria-label={`Ir para slide ${index + 1}`}
+                className={`w-2.5 h-2.5 rounded-full transition ${
+                  mobileSlideIndex === index ? 'bg-white' : 'bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
+          <div className="w-full flex flex-col gap-3 px-6">
+            <button
+              type="button"
+              onClick={() => openLoginModal('ownerPartner')}
+              className="w-full rounded-full bg-emerald-500 text-gray-900 font-semibold py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)]"
+            >
+              Get started
+            </button>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-2xl border border-white/20 py-3 text-sm"
+                onClick={() => openLoginModal('ownerPartner')}
+              >
+                Sou Owner ou Partner
+              </button>
+              <button
+                className="flex-1 rounded-2xl border border-white/20 py-3 text-sm"
+                onClick={() => openLoginModal('client')}
+              >
+                Sou Client
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HERO PRINCIPAL – desktop */}
+      <section className="hidden sm:block relative overflow-hidden bg-[#03050c]">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 -left-10 w-72 h-72 bg-[#ffe3cc] rounded-full blur-3xl" />
-          <div className="absolute top-10 right-[-60px] w-96 h-96 bg-[#e6f7f2] rounded-full blur-3xl" />
-          <div className="absolute bottom-[-80px] left-1/2 -translate-x-1/2 w-[120%] h-48 bg-gradient-to-t from-white/80 to-transparent rounded-t-[120px] blur-2xl" />
+          <div className="absolute -top-24 -left-10 w-72 h-72 bg-[#0f172a] rounded-full blur-[160px]" />
+          <div className="absolute top-0 right-[-40px] w-80 h-80 bg-[#065f46] rounded-full blur-[180px]" />
+          <div className="absolute bottom-[-140px] left-1/2 -translate-x-1/2 w-[150%] h-56 bg-gradient-to-t from-[#03050c] via-transparent to-transparent blur-[140px]" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 pt-10 pb-14 lg:pb-20 grid gap-10 lg:grid-cols-[1.4fr,1fr] items-center">
+        <div className="relative max-w-6xl mx-auto px-6 pt-16 pb-20 grid gap-10 lg:grid-cols-[1.3fr,1fr] items-center text-white">
           {/* Texto / brand */}
-          <div className="space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-white/80 border border-white shadow-sm backdrop-blur-sm text-primary-600 text-xs font-semibold">
+          <div className="space-y-7 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-emerald-200 text-xs font-semibold shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
               <span>Operating system para o seu cleaning business</span>
             </div>
 
-            <div className="space-y-3">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+            <div className="space-y-4">
+              <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                 Seu cleaning business, seus Partners e Clients em um só painel.
               </h1>
-              <p className="text-gray-600 text-base lg:text-lg max-w-xl mx-auto lg:mx-0">
-                Veja a agenda de hoje, envie recados por SMS e mantenha Owners, Partners e Clients sempre na mesma página.
+              <p className="text-base lg:text-lg text-white/70 max-w-2xl mx-auto lg:mx-0">
+                Planeje SMS, contratos e rotas num único lugar. No mobile ou desktop, o Client Pro centraliza tudo e mantém Owners, Partners e Clients sincronizados.
               </p>
             </div>
 
-            <div className="pt-4 flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-white/75 justify-center lg:justify-start">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+                <MessageSquare size={16} className="text-emerald-300" />
+                SMS automáticos
+              </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+                <FileText size={16} className="text-sky-300" />
+                Contratos com timeline
+              </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+                <Smartphone size={16} className="text-amber-300" />
+                Portal do Client
+              </div>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={() => openLoginModal('ownerPartner')}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 text-white px-4 py-3 text-sm font-semibold shadow-lg hover:bg-primary-700 transition"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-500 text-gray-900 px-4 py-3 text-sm font-semibold shadow-[0_20px_40px_rgba(34,197,94,0.35)] hover:bg-primary-400 transition"
               >
                 Sou Owner ou Partner
               </button>
               <button
                 type="button"
                 onClick={() => openLoginModal('client')}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-primary-700 px-4 py-3 text-sm font-semibold border border-primary-100 shadow-sm hover:bg-primary-50 transition"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 text-white px-4 py-3 text-sm font-semibold border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:bg-white/15 transition"
               >
                 Sou Client
               </button>
             </div>
-            <p className="text-xs text-gray-500">
-              Escolha seu tipo de acesso. Abriremos um pop-up seguro para você entrar.
+            <p className="text-xs text-white/50">
+              Abriremos um pop-up seguro para você entrar. Escolha seu tipo de acesso.
             </p>
           </div>
 
           {/* Espaço ilustrativo */}
           <div className="relative w-full max-w-md mx-auto">
-            <div className="rounded-[32px] border border-white/60 bg-white/70 shadow-[0_25px_60px_rgba(15,23,42,0.12)] p-6 space-y-4 text-left">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Client Pro App</p>
-              <p className="text-lg font-semibold text-gray-900">Painel resumido</p>
-              <div className="space-y-3">
-                <div className="rounded-2xl bg-[#fde8d3] px-4 py-3 text-sm">
-                  <span className="font-semibold text-[#d97706]">📍 Hoje</span>
-                  <p className="text-gray-700">3 visits · 2 SMS enviados • Portal atualizado</p>
+            <div className="relative rounded-[40px] bg-gradient-to-b from-white to-white/85 border border-white/20 shadow-[0_30px_90px_rgba(3,5,12,0.8)] p-6">
+              <div className="bg-[#03050c] rounded-[32px] p-6 flex flex-col items-center gap-6">
+                <div className="w-60 h-60 rounded-[36px] border border-white/5 bg-gradient-to-b from-white/20 via-white/5 to-transparent flex items-center justify-center shadow-[0_30px_60px_rgba(0,0,0,0.45)]">
+                  <img src={loginHero} alt="Client Pro preview" className="w-48 h-48 object-contain" />
                 </div>
-                <div className="rounded-2xl bg-[#e7faf2] px-4 py-3 text-sm">
-                  <span className="font-semibold text-emerald-600">💬 SMS prontos</span>
-                  <p className="text-gray-700">Office Main · “Foque em mesas e vidro da recepção”.</p>
-                </div>
-                <div className="rounded-2xl bg-[#ecf2ff] px-4 py-3 text-sm">
-                  <span className="font-semibold text-sky-600">⭐ Client Portal</span>
-                  <p className="text-gray-700">Contrato atualizado + fotos antes/depois salvas.</p>
+                <div className="flex flex-col gap-2 text-left w-full text-white/85">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-2">
+                    <MessageSquare size={16} className="text-emerald-300" />
+                    SMS para Partners antes da rota.
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-2">
+                    <FileText size={16} className="text-sky-300" />
+                    Contratos com addons e assinatura.
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-2">
+                    <Smartphone size={16} className="text-amber-300" />
+                    Portal com antes/depois e feedback.
+                  </div>
                 </div>
               </div>
-              <p className="text-[11px] text-gray-500">
-                Faça login no pop-up para acessar a versão completa.
-              </p>
+
+              <div className="absolute -top-6 -left-6 rounded-2xl bg-white text-gray-900 text-xs font-semibold px-4 py-2 shadow-lg flex items-center gap-2">
+                <span className="text-emerald-500">●</span> Hoje: 3 visitas confirmadas
+              </div>
+              <div className="absolute -bottom-6 right-0 rounded-2xl bg-white/90 text-gray-900 text-xs font-semibold px-4 py-2 shadow-lg flex items-center gap-2">
+                ⭐ Portal do Client atualizado
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* SEÇÃO “O que você obtém com Client Pro” – cards maiores */}
-      <section id="benefits" className="bg-white py-12 md:py-16">
+      <section id="benefits" className="bg-white py-12 md:py-16 hidden lg:block">
         <div className="max-w-5xl mx-auto px-4 space-y-8">
           <div className="text-center space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
@@ -265,18 +365,18 @@ const Login = () => {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="bg-[#fde8d3] rounded-2xl border border-[#fbd1ad] px-4 py-4 text-left shadow-sm space-y-2">
+          <div className="flex gap-3 overflow-x-auto sm:grid sm:grid-cols-3 sm:overflow-visible snap-x snap-mandatory pb-4 sm:pb-0">
+            <div className="bg-[#fde8d3] rounded-2xl border border-[#fbd1ad] px-4 py-4 text-left shadow-sm space-y-2 flex-shrink-0 w-64 sm:w-auto snap-center">
               <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg">📍</div>
               <p className="text-xs font-semibold text-[#d97706] uppercase tracking-wide">Agenda & rotas</p>
               <p className="text-sm text-gray-700">Veja hoje e amanhã para cada Partner, sem abrir mil conversas.</p>
             </div>
-            <div className="bg-[#e8f7f1] rounded-2xl border border-[#c9ecdf] px-4 py-4 text-left shadow-sm space-y-2">
+            <div className="bg-[#e8f7f1] rounded-2xl border border-[#c9ecdf] px-4 py-4 text-left shadow-sm space-y-2 flex-shrink-0 w-64 sm:w-auto snap-center">
               <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg">💬</div>
               <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">SMS como canal oficial</p>
               <p className="text-sm text-gray-700">Recados ligados às visitas, direto no bolso de Partners e Clients.</p>
             </div>
-            <div className="bg-[#e9f0ff] rounded-2xl border border-[#cadcff] px-4 py-4 text-left shadow-sm space-y-2">
+            <div className="bg-[#e9f0ff] rounded-2xl border border-[#cadcff] px-4 py-4 text-left shadow-sm space-y-2 flex-shrink-0 w-64 sm:w-auto snap-center">
               <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg">⭐</div>
               <p className="text-xs font-semibold text-sky-600 uppercase tracking-wide">Portal do Client</p>
               <p className="text-sm text-gray-700">Contratos, fotos e histórico num lugar bonito com a cara da sua marca.</p>
@@ -350,7 +450,7 @@ const Login = () => {
       </section>
 
       {/* SEÇÃO “Veja o Client Pro em ação” – prévias estilo telas de app */}
-      <section id="feature-preview" className="bg-[#f4f6fb] py-12 md:py-16 border-t border-gray-100">
+      <section id="feature-preview" className="bg-[#f4f6fb] py-12 md:py-16 border-t border-gray-100 hidden lg:block">
         <div className="max-w-6xl mx-auto px-4 space-y-8">
           <div className="text-center space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
@@ -362,9 +462,9 @@ const Login = () => {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="flex gap-4 overflow-x-auto md:grid md:grid-cols-3 md:overflow-visible snap-x snap-mandatory pb-4 md:pb-0">
             {/* Owner preview */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center flex-shrink-0 w-72 md:w-auto snap-center">
               <p className="text-xs font-semibold text-primary-600 uppercase tracking-wide mb-2">Owner view</p>
               <div className="relative w-full max-w-[260px] aspect-[9/16] rounded-[32px] bg-gray-900/5 border border-gray-200 shadow-inner overflow-hidden">
                 <div className="absolute inset-x-8 top-4 h-2 rounded-full bg-gray-200" />
@@ -404,7 +504,7 @@ const Login = () => {
             </div>
 
             {/* Partner preview */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center flex-shrink-0 w-72 md:w-auto snap-center">
               <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-2">Partner view</p>
               <div className="relative w-full max-w-[260px] aspect-[9/16] rounded-[32px] bg-gray-900/5 border border-gray-200 shadow-inner overflow-hidden">
                 <div className="absolute inset-x-8 top-4 h-2 rounded-full bg-gray-200" />
@@ -444,7 +544,7 @@ const Login = () => {
             </div>
 
             {/* Client preview */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center flex-shrink-0 w-72 md:w-auto snap-center">
               <p className="text-xs font-semibold text-sky-600 uppercase tracking-wide mb-2">Client view</p>
               <div className="relative w-full max-w-[260px] aspect-[9/16] rounded-[32px] bg-gray-900/5 border border-gray-200 shadow-inner overflow-hidden">
                 <div className="absolute inset-x-8 top-4 h-2 rounded-full bg-gray-200" />
@@ -480,7 +580,7 @@ const Login = () => {
       </section>
 
       {/* Seção de depoimentos */}
-      <section id="testimonials" className="bg-[#f1f5ff] py-12 md:py-16">
+      <section id="testimonials" className="bg-[#f1f5ff] py-12 md:py-16 hidden lg:block">
         <div className="max-w-5xl mx-auto px-4 space-y-8">
           <div className="text-center space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">Feedbacks reais</p>
@@ -528,7 +628,7 @@ const Login = () => {
       </section>
 
       {/* Seção resultados */}
-      <section className="bg-[#eef4ff] py-12 md:py-16 border-t border-gray-100">
+      <section className="bg-[#eef4ff] py-12 md:py-16 border-t border-gray-100 hidden lg:block">
         <div className="max-w-4xl mx-auto px-4 space-y-6 text-center">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">Resultados de operações reais</p>
           <p className="text-2xl md:text-3xl font-bold text-gray-900">“Em 3 meses, organizei 180 visitas e reduzi 40% das falhas.”</p>
@@ -566,7 +666,7 @@ const Login = () => {
       </section>
 
       {/* CTA final */}
-      <section className="bg-white py-12">
+      <section className="bg-white py-12 hidden lg:block">
         <div className="max-w-4xl mx-auto px-4">
           <div className="rounded-3xl border border-gray-100 bg-gradient-to-br from-amber-50 via-white to-emerald-50 shadow-lg px-6 py-8 md:px-10 md:py-10 flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1 text-center md:text-left space-y-2">

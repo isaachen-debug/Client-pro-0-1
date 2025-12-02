@@ -1,17 +1,65 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, Clock, Users, Calendar, BellRing } from 'lucide-react';
+import { DollarSign, Clock, Users, Calendar, BellRing, X as CloseIcon } from 'lucide-react';
 import { dashboardApi } from '../services/api';
 import { DashboardOverview } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { parseDateFromInput } from '../utils/date';
 import usePushNotifications from '../hooks/usePushNotifications';
+import { useNavigate } from 'react-router-dom';
+import { usePreferences } from '../contexts/PreferencesContext';
+
+const DASHBOARD_SUMMARY_STORAGE_KEY = 'clientepro:dashboard-summary';
+const DASHBOARD_UPDATE_EVENT = 'clientepro:dashboard-update';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { theme } = usePreferences();
+  const isDarkTheme = theme === 'dark';
+  const heroContainerClass = isDarkTheme
+    ? 'bg-[#05070c] text-white rounded-3xl shadow-[0_30px_90px_rgba(3,5,12,0.6)] border border-white/10'
+    : 'bg-white text-gray-900 rounded-3xl shadow-[0_25px_60px_rgba(15,23,42,0.08)] border border-gray-100';
+  const heroLabelClass = isDarkTheme ? 'text-white/60' : 'text-gray-500';
+  const heroValueClass = isDarkTheme ? 'text-white' : 'text-gray-900';
+  const heroChipClass = isDarkTheme
+    ? 'inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/70'
+    : 'inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-600';
+  const smallCardContainer = isDarkTheme
+    ? 'rounded-2xl border border-white/10 bg-white/5 px-4 py-3 flex items-center justify-between hover:bg-white/10 transition cursor-pointer'
+    : 'rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition cursor-pointer';
+  const smallCardIcon = isDarkTheme ? 'w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center' : 'w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center';
+
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const pushNotifications = usePushNotifications();
+  const [pushPromptDismissed, setPushPromptDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('clientepro:pushPromptDismissed');
+    if (stored === 'true') {
+      setPushPromptDismissed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pushNotifications.status === 'enabled') {
+      setPushPromptDismissed(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('clientepro:pushPromptDismissed', 'true');
+      }
+    }
+  }, [pushNotifications.status]);
+
+  const shouldShowPushPrompt = pushNotifications.status !== 'enabled' && !pushPromptDismissed;
+
+  const handleDismissPushPrompt = () => {
+    setPushPromptDismissed(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('clientepro:pushPromptDismissed', 'true');
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -21,6 +69,16 @@ const Dashboard = () => {
     try {
       const response = await dashboardApi.getMetrics();
       setData(response);
+      const snapshot = {
+        activeClientsCount: response.activeClientsCount,
+        scheduledServicesCount: response.scheduledServicesCount,
+        totalRevenueMonth: response.totalRevenueMonth,
+        pendingPaymentsMonth: response.pendingPaymentsMonth,
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(DASHBOARD_SUMMARY_STORAGE_KEY, JSON.stringify(snapshot));
+        window.dispatchEvent(new CustomEvent(DASHBOARD_UPDATE_EVENT, { detail: snapshot }));
+      }
     } catch (error) {
       console.error('Erro ao buscar dados do dashboard:', error);
     } finally {
@@ -53,18 +111,20 @@ const Dashboard = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-5 md:space-y-6">
-      {/* Header */}
-      <div className="space-y-1">
-        <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">Overview</p>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
-      </div>
-
-      {pushNotifications.status !== 'enabled' && (
+      {shouldShowPushPrompt && (
         <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-4 sm:p-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
               <BellRing size={16} className="text-primary-600" />
               Receba lembretes no seu celular
+              <button
+                type="button"
+                onClick={handleDismissPushPrompt}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Fechar lembrete de notificações"
+              >
+                <CloseIcon size={16} />
+              </button>
             </p>
             <p className="text-xs text-gray-500">
               Avisaremos um dia antes das limpezas para confirmar Clients e orientar Partners.
@@ -91,70 +151,79 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {/* Total de Ganhos */}
-        <div className="bg-gradient-to-br from-[#e8fff5] via-white to-white rounded-2xl shadow-md border border-green-100 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-gray-600">Receita do mês</span>
-            <div className="p-2 bg-white rounded-xl border border-green-100 shadow-sm">
-              <DollarSign size={18} className="text-green-600" />
-            </div>
+      {/* Hero Stats */}
+      <div className="relative mt-6">
+        <div className="pointer-events-none absolute inset-x-0 -top-4 flex justify-center">
+          <div
+            className={`w-full rounded-t-[32px] border border-b-0 ${
+              isDarkTheme ? 'border-white/20' : 'border-gray-200'
+            }`}
+          />
+        </div>
+        <div className={`${heroContainerClass} p-5 md:p-6 space-y-6`}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className={`text-[10px] uppercase tracking-[0.4em] ${isDarkTheme ? 'text-emerald-200' : 'text-emerald-600'}`}>Overview</p>
+            <h2 className={`text-2xl md:text-3xl font-bold ${heroValueClass}`}>Dashboard</h2>
+            <p className={`text-sm ${heroLabelClass}`}>Resumo das operações do mês</p>
           </div>
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-gray-900">
-              R$ {data.totalRevenueMonth.toFixed(2)}
-            </h2>
-            <p className="text-xs text-gray-500">Receita confirmada</p>
+          <div className={heroChipClass}>
+            <Calendar size={16} />
+            {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
           </div>
         </div>
-
-        {/* Pagamentos Pendentes */}
-        <div className="bg-gradient-to-br from-[#fff3e6] via-white to-white rounded-2xl shadow-md border border-orange-100 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-gray-600">Pagamentos Pendentes</span>
-            <div className="p-2 bg-white rounded-xl border border-orange-100 shadow-sm">
-              <Clock size={18} className="text-orange-500" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-300 text-gray-900 p-5 shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold uppercase tracking-wide">Receita do mês</span>
+              <div className="w-10 h-10 rounded-2xl bg-white/40 flex items-center justify-center">
+                <DollarSign size={18} />
+              </div>
             </div>
+            <p className="text-3xl font-bold mt-4">R$ {data.totalRevenueMonth.toFixed(2)}</p>
+            <p className="text-sm text-gray-900/70">Receita confirmada até o momento.</p>
           </div>
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-gray-900">
-              R$ {data.pendingPaymentsMonth.toFixed(2)}
-            </h2>
-            <p className="text-xs text-gray-500">Aguardando confirmação</p>
+          <div className="rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-700 text-white p-5 shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold uppercase tracking-wide">Pagamentos pendentes</span>
+              <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
+                <Clock size={18} />
+              </div>
+            </div>
+            <p className="text-3xl font-bold mt-4">R$ {data.pendingPaymentsMonth.toFixed(2)}</p>
+            <p className="text-sm text-white/80">Aguardando confirmação no mês atual.</p>
           </div>
         </div>
-
-        {/* Clientes Ativos */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-gray-600">Clientes Ativos</span>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Users size={20} className="text-blue-600" />
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/app/clientes')}
+            className={smallCardContainer}
+          >
+            <div className="text-left">
+              <p className={`text-[11px] uppercase tracking-wide ${heroLabelClass}`}>Clientes ativos</p>
+              <p className={`text-2xl font-bold ${heroValueClass}`}>{data.activeClientsCount}</p>
+              <p className={`text-[11px] ${heroLabelClass}`}>Base atualizada</p>
             </div>
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-3xl font-bold text-gray-900">
-              {data.activeClientsCount}
-            </h2>
-            <p className="text-sm text-gray-500">Clientes ativos na base</p>
-          </div>
+            <div className={smallCardIcon}>
+              <Users size={18} className={heroValueClass} />
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/app/agenda')}
+            className={smallCardContainer}
+          >
+            <div className="text-left">
+              <p className={`text-[11px] uppercase tracking-wide ${heroLabelClass}`}>Serviços agendados</p>
+              <p className={`text-2xl font-bold ${heroValueClass}`}>{data.scheduledServicesCount}</p>
+              <p className={`text-[11px] ${heroLabelClass}`}>Próximas 24 horas</p>
+            </div>
+            <div className={smallCardIcon}>
+              <Calendar size={18} className={heroValueClass} />
+            </div>
+          </button>
         </div>
-
-        {/* Serviços Agendados */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-gray-600">Serviços agendados</span>
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <Calendar size={20} className="text-purple-600" />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-3xl font-bold text-gray-900">
-              {data.scheduledServicesCount}
-            </h2>
-            <p className="text-sm text-gray-500">Serviços previstos para hoje</p>
-          </div>
         </div>
       </div>
 
