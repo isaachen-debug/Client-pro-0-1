@@ -57,6 +57,7 @@ const Layout = () => {
   const isOwner = user?.role === 'OWNER';
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [morePanelOpen, setMorePanelOpen] = useState(false);
+  const [mobileWorkspaceExpanded, setMobileWorkspaceExpanded] = useState(false);
   const quickActionGridItems = [
     {
       key: 'dashboard',
@@ -558,7 +559,7 @@ const Layout = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header Mobile */}
         <header className={mobileHeaderContainerClass}>
-          <div className="px-4 pt-4 pb-6">
+          <div className={`px-4 pt-4 ${mobileWorkspaceExpanded ? 'pb-6' : 'pb-4'}`}>
             <div className={mobileHeaderPanelClass}>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -573,10 +574,17 @@ const Layout = () => {
                     <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>Workspace</p>
                     <button
                       type="button"
+                      onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
+                      aria-expanded={mobileWorkspaceExpanded}
                       className={`flex items-center gap-1 text-base font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}
                     >
                       {user?.companyName || 'Client Up'}
-                      <ChevronDown size={16} className={mobileSecondaryTextClass} />
+                      <ChevronDown
+                        size={16}
+                        className={`${mobileSecondaryTextClass} transition-transform ${
+                          mobileWorkspaceExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
                     </button>
                   </div>
                 </div>
@@ -601,24 +609,30 @@ const Layout = () => {
                   </div>
                 </div>
               </div>
-              <div className={mobileInputWrapperClass}>
-                <Search size={16} className={mobileSecondaryTextClass} />
-                <input
-                  type="text"
-                  placeholder="Buscar agenda, Clients ou contratos"
-                  className={mobileInputClass}
-                />
-                <button
-                  type="button"
-                  onClick={() => navigate('/app/agenda')}
-                  className={`text-xs font-semibold ${isDarkTheme ? 'text-emerald-300' : 'text-emerald-600'}`}
-                >
-                  Agenda
-                </button>
-              </div>
-              <div className={`${mobileSecondaryTextClass} text-sm`}>
-                <p>Veja métricas detalhadas no Dashboard.</p>
-              </div>
+              {mobileWorkspaceExpanded && (
+                <>
+                  <div className="mt-4">
+                    <div className={mobileInputWrapperClass}>
+                      <Search size={16} className={mobileSecondaryTextClass} />
+                      <input
+                        type="text"
+                        placeholder="Buscar agenda, Clients ou contratos"
+                        className={mobileInputClass}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => navigate('/app/agenda')}
+                        className={`text-xs font-semibold ${isDarkTheme ? 'text-emerald-300' : 'text-emerald-600'}`}
+                      >
+                        Agenda
+                      </button>
+                    </div>
+                    <div className={`${mobileSecondaryTextClass} text-sm mt-3`}>
+                      <p>Veja métricas detalhadas no Dashboard.</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>
