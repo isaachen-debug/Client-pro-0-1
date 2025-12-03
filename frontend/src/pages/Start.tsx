@@ -3,7 +3,7 @@ import { appointmentsApi } from '../services/api';
 import { Appointment } from '../types';
 import { differenceInMinutes, format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone } from 'lucide-react';
+import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone, Search } from 'lucide-react';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 
 const statusStyles: Record<string, string> = {
@@ -157,43 +157,75 @@ const Start = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-5 md:space-y-8">
-      <div>
-        <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">
-          Daily Agenda
-        </p>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          {isSameDay(selectedDate, new Date())
-            ? 'Today'
-            : isSameDay(selectedDate, addDays(new Date(), 1))
-              ? 'Amanhã'
-              : format(selectedDate, "EEEE',' dd 'de' MMMM", { locale: ptBR })}
-        </h1>
-        <p className="text-sm md:text-base text-gray-600 mt-2 max-w-2xl">
-          Deslize pelas datas para conferir os serviços do dia e acompanhe o progresso em tempo real.
-        </p>
-      </div>
+      <div className="rounded-[32px] border border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm p-5 space-y-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.3em] text-primary-500 font-semibold">Daily agenda</p>
+            <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">
+              {isSameDay(selectedDate, new Date())
+                ? 'Today'
+                : isSameDay(selectedDate, addDays(new Date(), 1))
+                  ? 'Amanhã'
+                  : format(selectedDate, "EEEE',' dd 'de' MMMM", { locale: ptBR })}
+            </h1>
+            <p className="text-sm text-gray-500">
+              Deslize pelas datas para conferir os serviços do dia e acompanhe o progresso em tempo real.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-inner">
+            Dia selecionado: {selectedDateLabel}
+          </div>
+        </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-        {Array.from({ length: 5 }).map((_, index) => {
-          const dateChip = addDays(new Date(), index);
-          const isActive = isSameDay(dateChip, selectedDate);
-          const label = isSameDay(dateChip, new Date())
-            ? 'Hoje'
-            : isSameDay(dateChip, addDays(new Date(), 1))
-              ? 'Amanhã'
-              : format(dateChip, 'dd/MM');
-          return (
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-2 flex items-center gap-2">
+            <Search size={16} className="text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar agenda, Clients ou contratos"
+              className="flex-1 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+            />
+          </div>
+          <div className="flex gap-2">
             <button
-              key={dateChip.toISOString()}
-              onClick={() => setSelectedDate(dateChip)}
-              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-colors ${
-                isActive ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              type="button"
+              onClick={() => setSelectedDate(new Date())}
+              className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
             >
-              {label}
+              Hoje
             </button>
-          );
-        })}
+            <button
+              type="button"
+              onClick={() => setSelectedDate(addDays(new Date(), 1))}
+              className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+            >
+              Amanhã
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+          {Array.from({ length: 5 }).map((_, index) => {
+            const dateChip = addDays(new Date(), index);
+            const isActive = isSameDay(dateChip, selectedDate);
+            const label = isSameDay(dateChip, new Date())
+              ? 'Hoje'
+              : isSameDay(dateChip, addDays(new Date(), 1))
+                ? 'Amanhã'
+                : format(dateChip, 'dd/MM');
+            return (
+              <button
+                key={dateChip.toISOString()}
+                onClick={() => setSelectedDate(dateChip)}
+                className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-colors ${
+                  isActive ? 'bg-primary-600 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-200 hover:text-primary-600'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {error && (

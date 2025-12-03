@@ -94,6 +94,7 @@ const Layout = () => {
   const { t, theme } = usePreferences();
   const isOwner = user?.role === 'OWNER';
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [morePanelOpen, setMorePanelOpen] = useState(false);
   const quickActionGridItems = [
     {
       key: 'dashboard',
@@ -142,6 +143,50 @@ const Layout = () => {
       label: 'Perfil',
       icon: '👤',
       path: '/app/profile',
+    },
+  ];
+  const quickCreateActions = [
+    {
+      key: 'helper',
+      label: 'Adicionar helper',
+      description: 'Convide Partners e configure acessos.',
+      icon: '🤝',
+      action: () => navigate('/app/team'),
+    },
+    {
+      key: 'client',
+      label: 'Adicionar cliente',
+      description: 'Cadastre Clients e preferências fixas.',
+      icon: '👤',
+      action: () => navigate('/app/clientes'),
+    },
+    {
+      key: 'profile',
+      label: 'Perfil do cliente',
+      description: 'Personalize o portal do Client.',
+      icon: '✨',
+      action: () => navigate('/app/clientes?tab=list'),
+    },
+    {
+      key: 'schedule',
+      label: 'Novo agendamento',
+      description: 'Crie um serviço único ou recorrente.',
+      icon: '📆',
+      action: () => navigate('/app/agenda?quick=create'),
+    },
+    {
+      key: 'contract',
+      label: 'Enviar contrato',
+      description: 'Use o wizard multi-etapas.',
+      icon: '📄',
+      action: () => navigate('/app/clientes?tab=contracts'),
+    },
+    {
+      key: 'invoice',
+      label: 'Registrar cobrança',
+      description: 'Controle financeiro em um toque.',
+      icon: '💳',
+      action: () => navigate('/app/financeiro'),
     },
   ];
   const isDarkTheme = theme === 'dark';
@@ -264,7 +309,7 @@ const Layout = () => {
 
   const handleMobileNav = (item: (typeof mobileNavItems)[number]) => {
     if (item.type === 'more') {
-      setQuickCreateOpen(true);
+      setMorePanelOpen(true);
       return;
     }
     navigate(item.path);
@@ -275,52 +320,68 @@ const Layout = () => {
     <div className="min-h-screen bg-gray-50 flex transition-colors duration-200">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64 bg-white border-r border-gray-200 relative">
-          {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 pr-2">
-            <BrandBlock subtitle={t('layout.brandSubtitle')} />
+        <div className="flex flex-col w-72 bg-[#f8f6fb] border-r border-[#eadff8] h-screen sticky top-0">
+          <div className="px-5 pt-6 pb-4 space-y-4">
+            <div className="flex items-center justify-start">
+              <BrandBlock subtitle={t('layout.brandSubtitle')} />
+            </div>
+            <div className="rounded-2xl bg-white border border-[#eadff8] px-4 py-2 flex items-center gap-2">
+              <Search size={16} className="text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar agenda, Clients ou contratos"
+                className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
+              />
+            </div>
+            <ProfileQuickInfo hideTip />
           </div>
 
-          {/* Menu */}
-          <nav className="flex-1 px-4 py-4 space-y-2">
+          <nav className="flex-1 px-5 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname.startsWith(item.path);
-
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
+                  className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
+                    isActive ? 'bg-white text-primary-700 shadow-sm border border-primary-100' : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
                   }`}
                 >
-                  <Icon size={20} />
-                  <span className="font-medium">{t(item.labelKey)}</span>
+                  <span className="flex items-center gap-3">
+                    <Icon size={18} />
+                    {t(item.labelKey)}
+                  </span>
+                  {isActive && <span className="text-xs text-primary-500">•</span>}
                 </Link>
               );
             })}
           </nav>
 
-          {/* User Info */}
-          <div className="border-t border-gray-200 p-4">
-            <ProfileQuickInfo />
-            <div className="mt-4 space-y-2">
-              <Link
-                to="/app/profile"
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100"
-              >
-                <UserCircle size={18} />
-                <span>Perfil</span>
-              </Link>
+          <div className="px-5 py-4 space-y-3 border-t border-[#eadff8]">
+            <div className="rounded-2xl bg-white border border-[#eadff8] p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Starter</p>
+                  <p className="text-xs text-gray-500">Até 50 Clients ativos</p>
+                </div>
+                <span className="text-xs font-semibold text-primary-500">Plano atual</span>
+              </div>
               <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 w-full"
+                type="button"
+                onClick={() => navigate('/app/financeiro')}
+                className="mt-3 w-full text-sm font-semibold text-white bg-primary-600 rounded-xl py-2 hover:bg-primary-700 transition"
               >
-                <LogOut size={18} />
-                <span>Sair</span>
+                Ver planos e upgrades
               </button>
             </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white border border-red-100 text-red-600 py-2 text-sm font-semibold hover:bg-red-50 transition"
+            >
+              <LogOut size={18} />
+              Sair
+            </button>
           </div>
         </div>
       </aside>
@@ -440,6 +501,30 @@ const Layout = () => {
                 <div className={`flex items-center gap-2 ${isDarkTheme ? 'text-white/80' : 'text-gray-600'}`}>
                   <Star size={16} /> Favorite
                 </div>
+              </div>
+
+              <div className="space-y-3 text-sm">
+                <p className={`text-xs uppercase tracking-wide ${isDarkTheme ? 'text-white/40' : 'text-gray-500'}`}>Plans</p>
+                <div
+                  className={`rounded-2xl p-3 border ${
+                    isDarkTheme ? 'border-white/10 bg-white/5 text-white' : 'border-gray-200 bg-gray-50 text-gray-900'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">Starter</p>
+                      <p className="text-xs opacity-70">Até 50 Clients ativos</p>
+                    </div>
+                    <span className="text-xs font-semibold text-primary-300">Plano atual</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/app/financeiro')}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl border border-primary-200 text-sm font-semibold text-primary-600 hover:bg-primary-50 transition"
+                >
+                  Ver planos e upgrades
+                </button>
               </div>
 
               <div className={`pt-4 space-y-2 border-t ${isDarkTheme ? 'border-white/10' : 'border-gray-200'}`}>
@@ -653,6 +738,55 @@ const Layout = () => {
           {quickCreateOpen && (
             <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
               <div className="flex-1" onClick={() => setQuickCreateOpen(false)} />
+              <div className="rounded-t-[32px] bg-white p-6 space-y-5 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Create</p>
+                    <p className="text-xs text-gray-500">Escolha uma ação rápida</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setQuickCreateOpen(false)}
+                    className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="rounded-2xl bg-gray-100 flex items-center gap-2 px-4 py-2">
+                  <Search size={16} className="text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Buscar ações"
+                    className="bg-transparent flex-1 text-sm text-gray-700 placeholder:text-gray-500 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-3">
+                  {quickCreateActions.map((action) => (
+                    <button
+                      key={action.key}
+                      type="button"
+                      onClick={() => {
+                        setQuickCreateOpen(false);
+                        action.action();
+                      }}
+                      className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 transition"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-gray-100 text-xl flex items-center justify-center">
+                        {action.icon}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">{action.label}</p>
+                        <p className="text-xs text-gray-500">{action.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          {morePanelOpen && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+              <div className="flex-1" onClick={() => setMorePanelOpen(false)} />
               <div className="rounded-t-[36px] bg-gradient-to-br from-[#681c94] via-[#7f24a8] to-[#a432b9] p-6 space-y-5 border-t border-white/20">
                 <div className="flex items-center justify-between text-white">
                   <div>
@@ -661,7 +795,7 @@ const Layout = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setQuickCreateOpen(false)}
+                    onClick={() => setMorePanelOpen(false)}
                     className="w-10 h-10 rounded-full bg-white/15 border border-white/20 flex items-center justify-center"
                   >
                     <X size={20} />
@@ -681,7 +815,7 @@ const Layout = () => {
                       key={item.key}
                       type="button"
                       onClick={() => {
-                        setQuickCreateOpen(false);
+                        setMorePanelOpen(false);
                         navigate(item.path);
                       }}
                       className="rounded-3xl bg-white/10 border border-white/15 py-4 flex flex-col items-center gap-2 hover:bg-white/15 transition"
