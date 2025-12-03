@@ -7,13 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'robots.txt'],
       srcDir: 'src',
       filename: 'service-worker.ts',
       strategies: 'injectManifest',
       manifest: {
-        name: 'Client Pro',
-        short_name: 'Client Pro',
+        name: 'Client Up',
+        short_name: 'Client Up',
         description: 'App para organizar clientes, agenda e financeiro de empresas de limpeza.',
         start_url: '/',
         display: 'standalone',

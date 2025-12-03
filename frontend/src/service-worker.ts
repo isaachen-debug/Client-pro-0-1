@@ -14,7 +14,7 @@ self.addEventListener('push', (event) => {
     }
   })();
 
-  const title = data.title || 'Client Pro';
+  const title = data.title || 'Client Up';
   const options: NotificationOptions = {
     body: data.body || '',
     icon: '/pwa-192x192.png',

@@ -166,58 +166,80 @@ const Profile = () => {
   ];
 
   return (
-    <div className="p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
-      <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Perfil do Usuário</h1>
-        <p className="text-sm text-gray-500">Gerencie suas informações pessoais e preferências de acesso.</p>
-      </div>
-
-      <div className="bg-white border border-primary-100 rounded-2xl shadow-sm p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <BellRing size={18} className="text-primary-600" />
-            Receba notificações sobre suas limpezas
-          </p>
-          <p className="text-xs text-gray-500">
-            Habilite o lembrete para confirmar Clients e alinhar Partners um dia antes de cada visita.
-          </p>
-          {pushNotifications.status === 'unsupported' && (
-            <p className="text-xs text-red-500 mt-1">O navegador atual não suporta notificações push.</p>
-          )}
-          {pushNotifications.status === 'denied' && (
-            <p className="text-xs text-amber-600 mt-1">
-              Você bloqueou notificações. Reative nas configurações do navegador e tente novamente.
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-6xl mx-auto">
+      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#05040f] text-white shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4c1d95] to-[#0f172a] opacity-90" />
+        <div className="relative p-6 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-4">
+            <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Perfil & Preferências</p>
+            <h1 className="text-3xl md:text-4xl font-semibold">Deixe o Client Up com a cara da sua empresa</h1>
+            <p className="text-sm text-white/70 max-w-2xl">
+              Atualize identidade visual, canais de contato e preferências de idioma/tema para oferecer uma experiência consistente
+              a helpers e clientes.
             </p>
-          )}
-          {pushNotifications.status === 'enabled' && (
-            <p className="text-xs text-emerald-600 mt-1 font-semibold">Notificações ativas para esta conta.</p>
-          )}
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
+                Plano:{' '}
+                <span className="uppercase tracking-wide">{(user.planStatus ?? 'TRIAL').toLowerCase()}</span>
+              </span>
+              {trialInfo && (
+                <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
+                  {trialInfo.daysLeft >= 0
+                    ? `${trialInfo.daysLeft} dia(s) de teste restantes`
+                    : 'Período de testes encerrado'}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="w-full md:w-auto flex flex-col gap-3">
+            <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
+              <p className="text-sm text-white/70">Conta criada</p>
+              <p className="text-3xl font-semibold">
+                {user.createdAt
+                  ? format(new Date(user.createdAt), "dd MMM yyyy", { locale: ptBR })
+                  : '—'}
+              </p>
+              <p className="text-xs text-white/60">Status: {user.isActive ? 'Ativa' : 'Desativada'}</p>
+            </div>
+            <div className="rounded-3xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white/80 space-y-1">
+              <p className="font-semibold flex items-center gap-2">
+                <BellRing size={16} className="text-primary-200" />
+                Notificações push
+              </p>
+              <p className="text-xs text-white/70">
+                {pushNotifications.status === 'enabled'
+                  ? 'Ativas para este dispositivo'
+                  : 'Receba alertas antes de cada rota'}
+              </p>
+              {pushNotifications.status !== 'enabled' && (
+                <button
+                  type="button"
+                  onClick={pushNotifications.enable}
+                  disabled={pushNotifications.status === 'loading'}
+                  className="mt-2 inline-flex items-center justify-center rounded-2xl bg-white text-gray-900 px-4 py-2 text-xs font-semibold shadow-[0_10px_25px_rgba(15,23,42,0.25)] disabled:opacity-60"
+                >
+                  {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar notificações'}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-        {pushNotifications.status !== 'enabled' && (
-          <button
-            type="button"
-            onClick={pushNotifications.enable}
-            disabled={pushNotifications.status === 'loading'}
-            className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition disabled:opacity-50"
-          >
-            {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar notificações'}
-          </button>
-        )}
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <section className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Informações básicas</h2>
-              <p className="text-sm text-gray-500">Atualize seu nome e e-mail principal.</p>
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-6 space-y-6">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-primary-600 uppercase tracking-[0.3em]">Identidade</p>
+              <h2 className="text-2xl font-semibold text-gray-900">Informações da conta e visual</h2>
+              <p className="text-sm text-gray-500">Esses dados aparecem no app interno e no portal do cliente.</p>
             </div>
 
             {profileStatus && (
               <div
-                className={`text-sm px-4 py-2 rounded-lg ${
+                className={`text-sm px-4 py-2 rounded-xl ${
                   profileStatus.type === 'success'
-                    ? 'bg-green-50 text-green-700 border border-green-100'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                     : 'bg-red-50 text-red-600 border border-red-100'
                 }`}
               >
@@ -225,87 +247,90 @@ const Profile = () => {
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleProfileSubmit}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input
-                  type="text"
-                  value={profileForm.name}
-                  onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                <input
-                  type="email"
-                  value={profileForm.email}
-                  onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome da empresa</label>
-                <input
-                  type="text"
-                  value={profileForm.companyName}
-                  onChange={(e) => setProfileForm((prev) => ({ ...prev, companyName: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                  placeholder="Ex: Brilho&Limpeza"
-                />
-              </div>
-
+            <form className="space-y-5" onSubmit={handleProfileSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp comercial</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome</label>
                   <input
-                    type="tel"
-                    value={profileForm.whatsappNumber}
-                    onChange={(e) => setProfileForm((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                    placeholder="(11) 90000-0000"
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefone fixo / recados</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">E-mail</label>
                   <input
-                    type="tel"
-                    value={profileForm.contactPhone}
-                    onChange={(e) => setProfileForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                    placeholder="(11) 4002-8922"
+                    type="email"
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    required
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cor primária</label>
-                  <div className="flex items-center space-x-3 border border-gray-200 rounded-lg px-4 py-2">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome da empresa</label>
+                  <input
+                    type="text"
+                    value={profileForm.companyName}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, companyName: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Ex: Sunflowers Cleaning"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">WhatsApp comercial</label>
+                    <input
+                      type="tel"
+                      value={profileForm.whatsappNumber}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
+                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="(11) 90000-0000"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Telefone fixo / recados</label>
+                    <input
+                      type="tel"
+                      value={profileForm.contactPhone}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
+                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="(11) 4002-8922"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cor primária</label>
+                  <div className="mt-1 flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-2">
                     <input
                       type="color"
                       value={profileForm.primaryColor}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                      className="w-10 h-10 border-none bg-transparent cursor-pointer"
+                      className="h-10 w-10 cursor-pointer bg-transparent"
                     />
-                    <span className="text-sm text-gray-600">{profileForm.primaryColor.toUpperCase()}</span>
+                    <span className="text-sm font-semibold text-gray-700">{profileForm.primaryColor.toUpperCase()}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Logo / foto</label>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-14 h-14 rounded-full border border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Logo / foto</label>
+                  <div className="mt-2 flex items-center gap-4">
+                    <div className="h-16 w-16 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center">
                       {profileForm.avatarUrl ? (
-                        <img src={profileForm.avatarUrl} alt="Logo" className="w-full h-full object-cover" />
+                        <img src={profileForm.avatarUrl} alt="Logo" className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-gray-500 font-semibold">{initials}</span>
+                        <span className="text-lg font-semibold text-gray-500">{initials}</span>
                       )}
                     </div>
-                    <div className="space-x-2">
-                      <label className="inline-flex items-center px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 cursor-pointer hover:border-primary-300">
+                    <div className="space-y-1">
+                      <label className="inline-flex items-center rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 cursor-pointer hover:border-primary-300">
                         Enviar imagem
                         <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                       </label>
@@ -318,7 +343,7 @@ const Profile = () => {
                           Remover
                         </button>
                       )}
-                      <p className="text-xs text-gray-500 mt-1">PNG ou JPG até 2MB.</p>
+                      <p className="text-xs text-gray-500">PNG ou JPG até 2MB.</p>
                     </div>
                   </div>
                 </div>
@@ -326,7 +351,7 @@ const Profile = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tema preferido</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tema preferido</label>
                   <select
                     value={profileForm.preferredTheme}
                     onChange={(e) =>
@@ -335,7 +360,7 @@ const Profile = () => {
                         preferredTheme: e.target.value as ThemeOption,
                       }))
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     {themeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -345,7 +370,7 @@ const Profile = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Idioma preferido</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Idioma preferido</label>
                   <select
                     value={profileForm.preferredLanguage}
                     onChange={(e) =>
@@ -354,7 +379,7 @@ const Profile = () => {
                         preferredLanguage: e.target.value as LanguageOption,
                       }))
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     {languageOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -365,30 +390,55 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="text-sm text-gray-500">
-                Conta criada em {user.createdAt ? format(new Date(user.createdAt), "dd 'de' MMMM yyyy", { locale: ptBR }) : '-'}
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
+                Conta criada em{' '}
+                <span className="font-semibold text-gray-700">
+                  {user.createdAt ? format(new Date(user.createdAt), "dd 'de' MMMM yyyy", { locale: ptBR }) : '—'}
+                </span>
               </div>
 
-              <button
-                type="submit"
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
-              >
-                Salvar alterações
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="submit"
+                  className="inline-flex w-full md:w-auto items-center justify-center rounded-2xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white hover:bg-primary-700 transition"
+                >
+                  Salvar alterações
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setProfileForm({
+                      name: user.name ?? '',
+                      email: user.email ?? '',
+                      companyName: user.companyName ?? '',
+                      primaryColor: user.primaryColor ?? '#22c55e',
+                      avatarUrl: user.avatarUrl ?? '',
+                      preferredTheme: (user.preferredTheme ?? 'light') as ThemeOption,
+                      preferredLanguage: (user.preferredLanguage ?? 'pt') as LanguageOption,
+                      whatsappNumber: user.whatsappNumber ?? '',
+                      contactPhone: user.contactPhone ?? '',
+                    })
+                  }
+                  className="inline-flex w-full md:w-auto items-center justify-center rounded-2xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-600 hover:border-gray-300 transition"
+                >
+                  Desfazer alterações
+                </button>
+              </div>
             </form>
-          </section>
+          </div>
 
-          <section className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Alterar senha</h2>
-              <p className="text-sm text-gray-500">Defina uma senha segura para proteger sua conta.</p>
+          <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-6 space-y-4">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-primary-600 uppercase tracking-[0.3em]">Segurança</p>
+              <h2 className="text-xl font-semibold text-gray-900">Alterar senha</h2>
+              <p className="text-sm text-gray-500">Mantenha suas credenciais protegidas e atualizadas.</p>
             </div>
 
             {passwordStatus && (
               <div
-                className={`text-sm px-4 py-2 rounded-lg ${
+                className={`text-sm px-4 py-2 rounded-xl ${
                   passwordStatus.type === 'success'
-                    ? 'bg-green-50 text-green-700 border border-green-100'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                     : 'bg-red-50 text-red-600 border border-red-100'
                 }`}
               >
@@ -398,33 +448,33 @@ const Profile = () => {
 
             <form className="space-y-4" onSubmit={handlePasswordSubmit}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Senha atual</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Senha atual</label>
                 <input
                   type="password"
                   value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nova senha</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nova senha</label>
                   <input
                     type="password"
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar nova senha</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Confirmar nova senha</label>
                   <input
                     type="password"
                     value={passwordForm.confirmPassword}
                     onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
                   />
                 </div>
@@ -432,48 +482,66 @@ const Profile = () => {
 
               <button
                 type="submit"
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                className="inline-flex w-full md:w-auto items-center justify-center rounded-2xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition"
               >
                 Atualizar senha
               </button>
             </form>
-          </section>
+          </div>
         </div>
 
         <aside className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Plano</h3>
-              <p className="text-2xl font-bold text-gray-900">{user.planStatus ?? 'TRIAL'}</p>
+          <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-6 space-y-5">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-primary-600 uppercase tracking-[0.3em]">Plano atual</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-semibold text-gray-900">{(user.planStatus ?? 'TRIAL').toUpperCase()}</p>
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                  {user.isActive ? 'Ativa' : 'Inativa'}
+                </span>
+              </div>
             </div>
             {trialInfo && (
-              <div className="text-sm text-gray-600 space-y-1">
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 space-y-1">
                 <p>
                   Trial encerra em{' '}
                   <span className="font-semibold">
                     {format(trialInfo.end, "dd 'de' MMMM yyyy", { locale: ptBR })}
                   </span>
                 </p>
-                <p>
-                  {trialInfo.daysLeft >= 0
-                    ? `${trialInfo.daysLeft} dia(s) restantes`
-                    : 'Período de testes encerrado'}
-                </p>
+                <p>{trialInfo.daysLeft >= 0 ? `${trialInfo.daysLeft} dia(s) restantes` : 'Período de testes encerrado'}</p>
               </div>
             )}
-            <div className="text-sm text-gray-600">
-              Status:{' '}
-              <span
-                className={`font-semibold ${
-                  user.isActive ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {user.isActive ? 'Conta ativa' : 'Conta desativada'}
-              </span>
+            <button
+              type="button"
+              className="inline-flex w-full items-center justify-center rounded-2xl border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 hover:border-primary-300 transition"
+            >
+              Gerenciar plano
+            </button>
+          </div>
+
+          <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-6 space-y-4">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-primary-600 uppercase tracking-[0.3em]">Checklist rápido</p>
+              <h3 className="text-lg font-semibold text-gray-900">Deixe tudo pronto para o portal</h3>
             </div>
+            <ul className="space-y-3 text-sm text-gray-600">
+              <li className="flex items-start gap-2">
+                <span className="mt-1 h-2 w-2 rounded-full bg-primary-500" />
+                Envie uma logo quadrada e defina uma cor primária alinhada à sua marca.
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-1 h-2 w-2 rounded-full bg-primary-500" />
+                Preencha WhatsApp e telefone fixo para habilitar ações rápidas no app.
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-1 h-2 w-2 rounded-full bg-primary-500" />
+                Escolha idioma e tema preferidos — eles sincronizam com o portal do cliente.
+              </li>
+            </ul>
           </div>
         </aside>
-      </div>
+      </section>
     </div>
   );
 };

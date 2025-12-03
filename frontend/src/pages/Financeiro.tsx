@@ -6,6 +6,19 @@ import { format } from 'date-fns';
 
 const COST_CATEGORIES = ['Gasolina', 'Pedágio', 'Material', 'Bônus', 'Outros'] as const;
 
+const PERIOD_OPTIONS = [
+  { value: 'ultimos7dias', label: 'Últimos 7 dias' },
+  { value: 'ultimos30dias', label: 'Últimos 30 dias' },
+  { value: 'mesAtual', label: 'Mês atual' },
+  { value: 'mesPassado', label: 'Mês passado' },
+  { value: 'personalizado', label: 'Personalizado' },
+] as const;
+
+const FINANCE_TABS = [
+  { key: 'receitas', label: 'Receitas e cobranças' },
+  { key: 'custos', label: 'Custos e despesas' },
+] as const;
+
 const createExpenseDraft = () => ({
   category: COST_CATEGORIES[0],
   amount: '',
@@ -233,6 +246,10 @@ const Financeiro = () => {
         end: new Date(range.to),
       }
     : resolvePeriod();
+  const periodLabel = period ? `${format(period.start, "dd MMM")} – ${format(period.end, "dd MMM")}` : 'Período em aberto';
+  const periodFullLabel = period
+    ? `${format(period.start, 'dd/MM/yyyy')} - ${format(period.end, 'dd/MM/yyyy')}`
+    : 'Selecione um intervalo';
 
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -353,6 +370,48 @@ const Financeiro = () => {
     }
   };
 
+  const receiptHighlightCards = [
+    {
+      label: 'Recebido',
+      value: formatCurrency(summary.revenuePaid),
+      detail: `${summary.paidCount} pagamentos recebidos`,
+      icon: DollarSign,
+      iconColor: 'text-emerald-400',
+      accent: 'from-emerald-500/20 via-transparent to-transparent',
+    },
+    {
+      label: 'Pendente',
+      value: formatCurrency(summary.revenuePending),
+      detail: `${summary.pendingCount} aguardando pagamento`,
+      icon: Clock,
+      iconColor: 'text-orange-400',
+      accent: 'from-orange-500/15 via-transparent to-transparent',
+    },
+    {
+      label: 'Concluídos',
+      value: summary.concludedCount.toString(),
+      detail: period ? `${format(period.start, 'dd/MM')} - ${format(period.end, 'dd/MM')}` : 'Período selecionado',
+      icon: CheckCircle,
+      iconColor: 'text-blue-400',
+      accent: 'from-blue-500/15 via-transparent to-transparent',
+    },
+    {
+      label: 'Ticket médio',
+      value: formatCurrency(summary.ticket),
+      detail: 'Por serviço concluído',
+      icon: TrendingUp,
+      iconColor: 'text-purple-400',
+      accent: 'from-purple-500/20 via-transparent to-transparent',
+    },
+  ] as const;
+
+  const costOverviewCards = [
+    { label: 'Despesas registradas', value: costSummary.count.toString() },
+    { label: 'Total de despesas', value: formatCurrency(costSummary.totalExpenses) },
+    { label: 'Pagas', value: formatCurrency(costSummary.paidExpenses) },
+    { label: 'Pendentes', value: formatCurrency(costSummary.pendingExpenses) },
+  ] as const;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -362,223 +421,171 @@ const Financeiro = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Financeiro</h1>
-        <button
-          onClick={handleExportar}
-          className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Download size={20} />
-          <span>Exportar CSV</span>
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Período:
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setPeriodo('ultimos7dias')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  periodo === 'ultimos7dias'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Últimos 7 dias
-              </button>
-              <button
-                onClick={() => setPeriodo('ultimos30dias')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  periodo === 'ultimos30dias'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Últimos 30 dias
-              </button>
-              <button
-                onClick={() => setPeriodo('mesAtual')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  periodo === 'mesAtual'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Mês atual
-              </button>
-              <button
-                onClick={() => setPeriodo('mesPassado')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  periodo === 'mesPassado'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Mês passado
-              </button>
-              <button
-                onClick={() => setPeriodo('personalizado')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  periodo === 'personalizado'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Personalizado
-              </button>
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
+      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#05040f] text-white shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4c1d95] to-[#0f172a] opacity-90" />
+        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-4">
+            <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Finance Hub</p>
+            <h1 className="text-3xl md:text-4xl font-semibold">Financeiro FlowOps-style</h1>
+            <p className="text-sm text-white/70 max-w-2xl">
+              Monitore recebimentos, cobranças pendentes e custos das helpers com visuais consistentes com o novo layout.
+            </p>
+            <div className="flex flex-wrap gap-2 text-sm font-semibold">
+              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
+                <Clock size={16} className="text-white/70" />
+                {periodLabel}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
+                {transactions.length} transações
+              </span>
             </div>
           </div>
-
-          {periodo === 'personalizado' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Data Início
-                </label>
-                <input
-                  type="date"
-                  value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Data Fim
-                </label>
-                <input
-                  type="date"
-                  value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
+          <div className="w-full md:w-auto flex flex-col gap-3">
+            <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
+              <p className="text-sm text-white/70">Total monitorado</p>
+              <p className="text-3xl font-semibold">{formatCurrency(summary.total)}</p>
+              <p className="text-xs text-white/60">
+                Recebido {formatCurrency(summary.revenuePaid)} • Pendente {formatCurrency(summary.revenuePending)}
+              </p>
             </div>
-          )}
-
-          {period && (
-            <div className="text-sm text-gray-500">
-              {format(period.start, 'dd/MM/yyyy')} - {format(period.end, 'dd/MM/yyyy')}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          {(
-            [
-              { key: 'receitas', label: 'Receitas e cobranças' },
-              { key: 'custos', label: 'Custos e despesas' },
-            ] as const
-          ).map((tab) => (
             <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                activeTab === tab.key ? 'bg-primary-600 text-white shadow' : 'bg-gray-100 text-gray-600'
+              onClick={handleExportar}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-gray-900 px-5 py-3 text-sm font-semibold shadow-[0_20px_40px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 transition"
+            >
+              <Download size={18} />
+              Exportar CSV
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-5 md:p-6 space-y-5">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-gray-900">Período e visão</p>
+          <p className="text-sm text-gray-500">Escolha o intervalo para atualizar indicadores e alternar as visões.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PERIOD_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setPeriodo(option.value)}
+              className={`px-4 py-2 rounded-2xl text-sm font-semibold border transition ${
+                periodo === option.value
+                  ? 'bg-primary-600 text-white border-primary-600 shadow-[0_15px_40px_rgba(34,197,94,0.35)]'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary-200 hover:text-primary-600'
               }`}
             >
-              {tab.label}
+              {option.label}
             </button>
           ))}
         </div>
-      </div>
 
-      {activeTab === 'receitas' && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                label: 'Recebido',
-                value: formatCurrency(summary.revenuePaid),
-                detail: `${summary.paidCount} pagamentos recebidos`,
-                icon: <DollarSign size={20} className="text-green-600" />,
-                iconBg: 'bg-green-50',
-              },
-              {
-                label: 'Pendente',
-                value: formatCurrency(summary.revenuePending),
-                detail: `${summary.pendingCount} aguardando pagamento`,
-                icon: <Clock size={20} className="text-orange-600" />,
-                iconBg: 'bg-orange-50',
-              },
-              {
-                label: 'Concluídos',
-                value: summary.concludedCount.toString(),
-                detail: period
-                  ? `${format(period.start, 'dd/MM')} - ${format(period.end, 'dd/MM')}`
-                  : 'Período selecionado',
-                icon: <CheckCircle size={20} className="text-blue-600" />,
-                iconBg: 'bg-blue-50',
-              },
-              {
-                label: 'Ticket médio',
-                value: formatCurrency(summary.ticket),
-                detail: 'Por serviço concluído',
-                icon: <TrendingUp size={20} className="text-purple-600" />,
-                iconBg: 'bg-purple-50',
-              },
-            ].map((card) => (
-              <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-1">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-600">{card.label}</span>
-                  <div className={`p-2 rounded-lg ${card.iconBg}`}>{card.icon}</div>
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900">{card.value}</h2>
-                <p className="text-sm text-gray-500">{card.detail}</p>
-              </div>
+        {periodo === 'personalizado' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Data início</label>
+              <input
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Data fim</label>
+              <input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-gray-100 pt-4">
+          <p className="text-sm font-medium text-gray-500">{periodFullLabel}</p>
+          <div className="flex flex-wrap gap-2">
+            {FINANCE_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 rounded-2xl text-sm font-semibold border transition ${
+                  activeTab === tab.key
+                    ? 'bg-primary-600 text-white border-primary-600 shadow-[0_12px_30px_rgba(34,197,94,0.35)]'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary-200 hover:text-primary-600'
+                }`}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      {activeTab === 'receitas' && (
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {receiptHighlightCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.label}
+                  className="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_30px_80px_rgba(15,23,42,0.06)]"
+                >
+                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${card.accent}`} />
+                  <div className="relative flex items-center justify-between mb-6">
+                    <span className="text-sm font-medium text-gray-500">{card.label}</span>
+                    <span className="inline-flex items-center justify-center rounded-2xl bg-gray-900/5 p-2">
+                      <Icon size={18} className={card.iconColor} />
+                    </span>
+                  </div>
+                  <p className="relative text-3xl font-semibold text-gray-900">{card.value}</p>
+                  <p className="relative text-sm text-gray-500 mt-1">{card.detail}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.07)] p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Transações do período</h3>
-                {period && (
-                  <p className="text-sm text-gray-500">
-                    {format(period.start, 'dd/MM/yyyy')} - {format(period.end, 'dd/MM/yyyy')}
-                  </p>
-                )}
+                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-500">Transações</p>
+                <h3 className="text-lg font-semibold text-gray-900">Entradas do período</h3>
+                <p className="text-sm text-gray-500">{periodFullLabel}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+                <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1">
+                  Recebido {formatCurrency(summary.revenuePaid)}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1">
+                  Pendente {formatCurrency(summary.revenuePending)}
+                </span>
               </div>
             </div>
 
             {transactions.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-10">
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-center py-12 text-sm text-gray-500">
                 Nenhuma transação encontrada para o período selecionado.
-              </p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Data
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Descrição
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Valor
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Ações
-                      </th>
+                      <th className="px-4 py-3 text-left">Data</th>
+                      <th className="px-4 py-3 text-left">Descrição</th>
+                      <th className="px-4 py-3 text-left">Valor</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Ações</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-100">
                     {transactions.map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td className="px-4 py-3 text-sm text-gray-700">
+                      <tr key={transaction.id} className="bg-white">
+                        <td className="px-4 py-3 text-gray-700">
                           {format(new Date(transaction.dueDate), 'dd/MM/yyyy')}
                         </td>
                         <td className="px-4 py-3">
@@ -589,15 +596,15 @@ const Financeiro = () => {
                             {transaction.appointment?.customer?.serviceType ?? 'Serviço pontual'}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                        <td className="px-4 py-3 font-semibold text-gray-900">
                           {formatCurrency(transaction.amount)}
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                               transaction.status === 'PAGO'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-orange-100 text-orange-800'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-amber-50 text-amber-700'
                             }`}
                           >
                             {transaction.status === 'PAGO' ? 'Pago' : 'Pendente'}
@@ -606,10 +613,10 @@ const Financeiro = () => {
                         <td className="px-4 py-3">
                           <button
                             onClick={() => handleStatusToggle(transaction)}
-                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
                               transaction.status === 'PAGO'
                                 ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                : 'bg-green-50 text-green-700 hover:bg-green-100'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                             }`}
                           >
                             {transaction.status === 'PAGO' ? 'Marcar como pendente' : 'Marcar como pago'}
@@ -622,47 +629,42 @@ const Financeiro = () => {
               </div>
             )}
 
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Total do período</span>
-              <span className="text-xl font-bold text-primary-600">
-                {formatCurrency(summary.total)}
-              </span>
+            <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 flex items-center justify-between text-sm font-semibold text-gray-700">
+              <span>Total do período</span>
+              <span className="text-xl text-primary-600">{formatCurrency(summary.total)}</span>
             </div>
           </div>
-        </>
+        </section>
       )}
 
       {activeTab === 'custos' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { label: 'Despesas registradas', value: costSummary.count.toString() },
-              { label: 'Total de despesas', value: formatCurrency(costSummary.totalExpenses) },
-              { label: 'Pagas', value: formatCurrency(costSummary.paidExpenses) },
-              { label: 'Pendentes', value: formatCurrency(costSummary.pendingExpenses) },
-            ].map((card) => (
-              <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{card.label}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {costOverviewCards.map((card) => (
+              <div
+                key={card.label}
+                className="rounded-3xl border border-gray-100 bg-white/90 backdrop-blur-sm p-4 shadow-[0_20px_50px_rgba(15,23,42,0.05)]"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">{card.value}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+          <div className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.06)] p-5 md:p-6 space-y-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide">Custos das helpers</p>
-                <h3 className="text-xl font-bold text-gray-900">Pagamentos e gastos extras</h3>
-                <p className="text-sm text-gray-500">
-                  Ajuste quanto cada helper recebe por serviço e registre despesas como gasolina, pedágio ou bônus. Tudo fica
-                  centralizado no Financeiro.
+                <p className="text-sm font-semibold text-primary-600 uppercase tracking-[0.3em]">Custos das helpers</p>
+                <h3 className="text-2xl font-semibold text-gray-900">Pagamentos e gastos extras</h3>
+                <p className="text-sm text-gray-500 max-w-2xl">
+                  Ajuste quanto cada helper recebe por serviço, registre custos variáveis e acompanhe margem e ideias financeiras.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <select
                   value={selectedHelperId}
                   onChange={(e) => handleHelperChange(e.target.value)}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="px-4 py-2 rounded-2xl border border-gray-200 text-sm text-gray-700 focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
                   disabled={helpersLoading || helpers.length === 0}
                 >
                   {helpers.length === 0 ? (
@@ -678,7 +680,7 @@ const Financeiro = () => {
                 <button
                   onClick={() => fetchHelperCosts()}
                   disabled={!selectedHelperId || helperCosts.loading}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-primary-200 disabled:opacity-60"
                 >
                   {helperCosts.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Atualizar
@@ -691,16 +693,13 @@ const Financeiro = () => {
                 <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
               </div>
             ) : helpers.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
                 Nenhuma helper cadastrada. Vá até a aba Equipe para adicionar e então controle os custos por aqui.
-              </p>
+              </div>
             ) : helperCosts.error ? (
-              <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-sm text-red-600 flex items-center justify-between gap-3">
+              <div className="rounded-2xl border border-red-100 bg-red-50/80 p-4 text-sm text-red-600 flex items-center justify-between gap-3">
                 <span>{helperCosts.error}</span>
-                <button
-                  onClick={() => fetchHelperCosts()}
-                  className="text-xs font-semibold text-red-600 underline"
-                >
+                <button onClick={() => fetchHelperCosts()} className="text-xs font-semibold underline">
                   Tentar novamente
                 </button>
               </div>
@@ -714,8 +713,8 @@ const Financeiro = () => {
                     { label: 'Gastos extras', value: usdFormatter.format(helperCostData.summary.expensesTotal) },
                     { label: 'Líquido', value: usdFormatter.format(helperCostData.summary.netAfterExpenses) },
                   ].map((card) => (
-                    <div key={card.label} className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2">
-                      <p className="text-[11px] text-gray-500 uppercase tracking-wide">{card.label}</p>
+                    <div key={card.label} className="rounded-2xl border border-gray-100 bg-gray-50 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</p>
                       <p className="text-lg font-semibold text-gray-900">{card.value}</p>
                     </div>
                   ))}
@@ -733,13 +732,13 @@ const Financeiro = () => {
                         )}
                       </div>
                       <p className="text-xs text-gray-500">
-                        Defina valor fixo ou percentual que será usado nas agendas futuras desta helper.
+                        Defina valor fixo ou percentual para as próximas agendas desta helper.
                       </p>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="text-[11px] uppercase text-gray-500 font-semibold">Modo</label>
                           <select
-                            className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                             value={payoutForm.mode}
                             onChange={(e) =>
                               handlePayoutFormChange({
@@ -759,7 +758,7 @@ const Financeiro = () => {
                             type="number"
                             min="0"
                             step="0.01"
-                            className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                             value={payoutForm.value}
                             onChange={(e) =>
                               handlePayoutFormChange({
@@ -773,7 +772,7 @@ const Financeiro = () => {
                         type="button"
                         onClick={handleSavePayoutConfig}
                         disabled={savingPayout}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
                         {savingPayout ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                         Salvar configuração
@@ -794,7 +793,7 @@ const Financeiro = () => {
                         <div>
                           <label className="text-[11px] uppercase text-gray-500 font-semibold">Categoria</label>
                           <select
-                            className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                             value={expenseDraft.category}
                             onChange={(e) => handleExpenseDraftChange('category', e.target.value)}
                           >
@@ -811,7 +810,7 @@ const Financeiro = () => {
                             type="number"
                             min="0"
                             step="0.01"
-                            className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                             value={expenseDraft.amount}
                             onChange={(e) => handleExpenseDraftChange('amount', e.target.value)}
                           />
@@ -821,7 +820,7 @@ const Financeiro = () => {
                         <label className="text-[11px] uppercase text-gray-500 font-semibold">Anotações</label>
                         <textarea
                           rows={2}
-                          className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                          className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                           placeholder="Ex: Gasolina extra para a rota de segunda"
                           value={expenseDraft.notes}
                           onChange={(e) => handleExpenseDraftChange('notes', e.target.value)}
@@ -831,7 +830,7 @@ const Financeiro = () => {
                         type="button"
                         onClick={handleAddExpense}
                         disabled={savingExpense}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-50 text-primary-700 text-sm font-semibold border border-primary-100 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 disabled:opacity-50"
                       >
                         {savingExpense ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                         Adicionar gasto
@@ -939,7 +938,7 @@ const Financeiro = () => {
                     </div>
 
                     {helperCostData.inspiration.length > 0 && (
-                      <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-3 text-xs text-gray-600 space-y-1">
+                      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 space-y-1">
                         <p className="font-semibold text-gray-700 text-sm">Boas ideias</p>
                         <ul className="list-disc list-inside space-y-1">
                           {helperCostData.inspiration.map((tip) => (
@@ -957,7 +956,7 @@ const Financeiro = () => {
               </p>
             )}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

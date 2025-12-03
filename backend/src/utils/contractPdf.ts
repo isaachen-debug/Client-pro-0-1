@@ -85,21 +85,39 @@ const mapServices = (blueprint: ContractBlueprint | null) => {
   return items;
 };
 
-const drawSection = (doc: PDFDocumentType, title: string, body: string | string[]) => {
+const drawCardSection = (
+  doc: PDFDocumentType,
+  title: string,
+  body: string | (string | null | undefined)[],
+  accentColor: string,
+) => {
+  const content = (Array.isArray(body) ? body : [body]).filter(
+    (line): line is string => Boolean(line && line.trim()),
+  );
+  if (!content.length) return;
+
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const sampleText = `${title}\n${content.join('\n')}`;
+  doc.fontSize(11);
+  const sectionHeight = doc.heightOfString(sampleText, { width }) + 18;
+  const startY = doc.y;
+
   doc
-    .fillColor('#111827')
-    .fontSize(13)
-    .text(title, { underline: true });
-  doc.moveDown(0.3);
-  const content = Array.isArray(body) ? body : [body];
-  content.forEach((line) => {
-    doc.fillColor('#374151').fontSize(11).text(line);
+    .save()
+    .roundedRect(doc.page.margins.left - 6, startY - 6, width + 12, sectionHeight + 6, 12)
+    .fillAndStroke('#f8fafc', '#e2e8f0')
+    .restore();
+
+  doc.fillColor(accentColor).fontSize(11).text(title.toUpperCase(), {
+    characterSpacing: 0.5,
   });
-  doc.moveDown();
+  doc.moveDown(0.2);
+  content.forEach((line) => doc.fillColor('#1f2937').fontSize(11).text(line));
+  doc.moveDown(0.8);
 };
 
-const buildBodyFallback = (doc: PDFDocumentType, body: string) => {
-  drawSection(doc, 'Agreement', body);
+const buildBodyFallback = (doc: PDFDocumentType, body: string, accentColor: string) => {
+  drawCardSection(doc, 'AGREEMENT', body, accentColor);
 };
 
 export const generateContractPdf = async (
@@ -119,6 +137,7 @@ export const generateContractPdf = async (
   },
 ): Promise<Buffer> => {
   const blueprint = getBlueprint(contract.placeholders ?? null);
+  const accentColor = blueprint?.brand?.accentColor || '#22c55e';
 
   return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
@@ -129,64 +148,104 @@ export const generateContractPdf = async (
     doc.on('error', (error) => reject(error));
 
     const title = contract.title || 'Cleaning Agreement';
-    doc.fontSize(20).fillColor('#111827').text(title, { align: 'left' });
-    doc.moveDown(0.5);
+    const headerHeight = 120;
+    const headerY = doc.y;
+
     doc
-      .fontSize(10)
-      .fillColor('#6B7280')
-      .text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} • Contrato ${contract.id}`);
-    doc.moveDown();
+      .save()
+      .rect(0, headerY, doc.page.width, headerHeight)
+      .fill(accentColor)
+      .restore();
 
-    drawSection(doc, 'Empresa', [
-      contract.owner?.companyName || contract.owner?.name || 'Sua equipe',
-      contract.owner?.email ? `Email: ${contract.owner.email}` : '—',
-      contract.owner?.contactPhone ? `Telefone: ${contract.owner.contactPhone}` : null,
-      contract.owner?.whatsappNumber ? `WhatsApp: ${contract.owner.whatsappNumber}` : null,
-    ].filter(Boolean) as string[]);
+    doc
+      .fillColor('#ffffff')
+      .fontSize(24)
+      .text(title, doc.page.margins.left, headerY + 24, {
+        width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
+      });
+    doc
+      .fillColor('#d1fae5')
+      .fontSize(11)
+      .text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} • Contrato ${contract.id}`, {
+        width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
+      });
 
-    drawSection(doc, 'Cliente', [
-      blueprint?.client?.name || contract.client?.name || 'Cliente',
-      blueprint?.client?.email || contract.client?.email ? `Email: ${blueprint?.client?.email ?? contract.client?.email}` : '—',
-      blueprint?.client?.phone || contract.client?.contactPhone
-        ? `Telefone: ${blueprint?.client?.phone ?? contract.client?.contactPhone}`
-        : null,
-      blueprint?.client?.address ? `Endereço: ${blueprint.client.address}` : null,
-    ].filter(Boolean) as string[]);
+    doc.y = headerY + headerHeight + 20;
+    doc.moveDown(0.5);
+
+    drawCardSection(
+      doc,
+      'Empresa',
+      [
+        contract.owner?.companyName || contract.owner?.name || 'Sua equipe',
+        contract.owner?.email ? `Email: ${contract.owner.email}` : null,
+        contract.owner?.contactPhone ? `Telefone: ${contract.owner.contactPhone}` : null,
+        contract.owner?.whatsappNumber ? `WhatsApp: ${contract.owner.whatsappNumber}` : null,
+      ],
+      accentColor,
+    );
+
+    drawCardSection(
+      doc,
+      'Cliente',
+      [
+        blueprint?.client?.name || contract.client?.name || 'Cliente',
+        blueprint?.client?.email || contract.client?.email
+          ? `Email: ${blueprint?.client?.email ?? contract.client?.email}`
+          : null,
+        blueprint?.client?.phone || contract.client?.contactPhone
+          ? `Telefone: ${blueprint?.client?.phone ?? contract.client?.contactPhone}`
+          : null,
+        blueprint?.client?.address ? `Endereço: ${blueprint.client.address}` : null,
+      ],
+      accentColor,
+    );
 
     if (blueprint) {
-      drawSection(doc, 'Plano contratado', [
-        `Frequência: ${blueprint.client?.frequency ?? 'Custom'}`,
-        `Valor por visita: ${formatUSD(blueprint.payment?.amount ?? blueprint.client?.pricePerVisit)}`,
-        `Início: ${blueprint.startDate ?? 'A combinar'}`,
-        `Acesso: ${blueprint.access?.method ?? 'A combinar'}`,
-      ]);
+      drawCardSection(
+        doc,
+        'Plano contratado',
+        [
+          `Frequência: ${blueprint.client?.frequency ?? 'Custom'}`,
+          `Valor por visita: ${formatUSD(blueprint.payment?.amount ?? blueprint.client?.pricePerVisit)}`,
+          `Início: ${blueprint.startDate ?? 'A combinar'}`,
+          `Acesso: ${blueprint.access?.method ?? 'A combinar'}`,
+        ],
+        accentColor,
+      );
 
       const services = mapServices(blueprint);
       if (services.length) {
-        drawSection(
+        drawCardSection(
           doc,
           'Itens incluídos',
           services.map((service) => `• ${service}`),
+          accentColor,
         );
       }
 
-      drawSection(doc, 'Pagamento e políticas', [
-        `Forma de cobrança: ${blueprint.payment?.billingType ?? 'Custom'}`,
-        blueprint.payment?.paymentMethods?.length
-          ? `Métodos aceitos: ${blueprint.payment.paymentMethods.join(', ')}`
-          : 'Métodos conforme disponibilidade.',
-        blueprint.payment?.latePolicy
-          ? `Atrasos: ${blueprint.payment.latePolicy}`
-          : 'Política de atraso conforme contrato.',
-      ]);
+      drawCardSection(
+        doc,
+        'Pagamento e políticas',
+        [
+          `Forma de cobrança: ${blueprint.payment?.billingType ?? 'Custom'}`,
+          blueprint.payment?.paymentMethods?.length
+            ? `Métodos aceitos: ${blueprint.payment.paymentMethods.join(', ')}`
+            : 'Métodos conforme disponibilidade.',
+          blueprint.payment?.latePolicy
+            ? `Atrasos: ${blueprint.payment.latePolicy}`
+            : 'Política de atraso conforme contrato.',
+        ],
+        accentColor,
+      );
 
-      drawSection(doc, 'Cancelamentos', blueprint.cancellation ?? 'Conforme combinado com a equipe.');
+      drawCardSection(doc, 'Cancelamentos', blueprint.cancellation ?? 'Conforme combinado com a equipe.', accentColor);
 
       if (blueprint.access?.notes) {
-        drawSection(doc, 'Observações de acesso', blueprint.access.notes);
+        drawCardSection(doc, 'Observações de acesso', blueprint.access.notes, accentColor);
       }
     } else {
-      buildBodyFallback(doc, contract.body);
+      buildBodyFallback(doc, contract.body, accentColor);
     }
 
     doc.end();

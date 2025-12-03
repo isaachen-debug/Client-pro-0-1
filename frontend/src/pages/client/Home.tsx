@@ -239,7 +239,7 @@ const ClientHome = () => {
     ],
     [data?.history.length, data?.upcoming.length, pendingContract],
   );
-  const companyName = data?.customer?.companyName ?? 'Equipe Client Pro';
+  const companyName = data?.customer?.companyName ?? 'Equipe Client Up';
   const companyLogo = data?.customer?.avatarUrl ?? undefined;
   const companyInitials = useMemo(() => {
     if (!companyName) return 'CP';
@@ -477,92 +477,116 @@ const ClientHome = () => {
         <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-2xl">{error}</div>
       ) : (
         <>
-          <section className="bg-gradient-to-br from-primary-600 via-primary-500 to-primary-400 text-white rounded-3xl p-6 shadow-xl space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-wide font-semibold opacity-80">Portal do cliente</p>
-                <h1 className="text-3xl font-semibold">Olá, {firstName}! 👋</h1>
-                <p className="text-white/80 mt-2 text-sm">
+          <section className="rounded-[32px] border border-gray-100 bg-white shadow-[0_25px_60px_rgba(15,23,42,0.08)] p-6 lg:p-8 grid gap-6 lg:grid-cols-[1.15fr,0.85fr]">
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
+                  Portal do cliente
+                </p>
+                <h1 className="text-3xl font-bold text-gray-900">Olá, {firstName}! 👋</h1>
+                <p className="text-sm text-gray-600">
                   {nextAppointment
-                    ? 'Sua próxima limpeza já está confirmada. Veja os detalhes abaixo.'
-                    : 'Assim que uma nova limpeza for agendada, você será avisado por aqui.'}
+                    ? 'Sua próxima visita já está confirmada. Veja os detalhes e personalize suas preferências.'
+                    : 'Assim que uma nova limpeza for agendada, avisaremos por aqui e por SMS.'}
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-center text-xs font-medium w-full sm:w-auto">
+              <div className="flex flex-wrap gap-3">
                 {quickStats.map((stat) => (
-                  <div key={stat.label} className="bg-white/15 rounded-2xl py-3 px-2">
-                    <p className="uppercase tracking-wide opacity-70">{stat.label}</p>
-                    <p className="text-2xl font-semibold">{stat.value}</p>
-                    <p className="opacity-80">{stat.sublabel}</p>
+                  <div
+                    key={stat.label}
+                    className="flex-1 min-w-[140px] rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3"
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{stat.label}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-xs text-gray-500">{stat.sublabel}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {notifications.slice(0, 2).map((notification, index) => (
+                  <div
+                    key={`${notification.title}-chip-${index}`}
+                    className="px-3 py-2 rounded-full text-xs font-semibold bg-gray-900 text-white"
+                  >
+                    {notification.title}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="bg-white rounded-2xl text-gray-900 p-4 shadow-sm">
-                <p className="text-xs font-semibold text-primary-600 uppercase tracking-wide">Próxima visita</p>
-                {nextAppointment ? (
-                  <>
-                    <p className="text-2xl font-bold mt-2">
-                      {new Date(nextAppointment.date).toLocaleDateString('pt-BR', {
+            <div className="rounded-[30px] bg-gradient-to-br from-[#0d0b2d] via-[#191545] to-[#311859] text-white p-6 space-y-4 shadow-[0_25px_60px_rgba(15,23,42,0.4)]">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/70">Resumo rápido</p>
+                <p className="text-2xl font-semibold">
+                  {nextAppointment
+                    ? new Date(nextAppointment.date).toLocaleDateString('pt-BR', {
                         day: '2-digit',
-                        month: 'short',
-                      })}
-                    </p>
-                    <p className="text-sm text-gray-500">Horário previsto {nextAppointment.startTime}</p>
-                    <p className="text-xs mt-1 text-gray-400">Status: {nextAppointment.status}</p>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500 mt-1">Nenhuma limpeza programada</p>
-                )}
-              </div>
-              <div className="bg-white/15 rounded-2xl p-4">
-                <p className="text-xs uppercase tracking-wide font-semibold">Serviço escolhido</p>
-                <p className="text-xl font-semibold">
-                  {nextAppointment?.serviceType ?? data?.customer?.serviceType ?? 'Personalizado'}
+                        month: 'long',
+                      })
+                    : 'Sem visita agendada'}
                 </p>
-                <p className="text-white/80 text-sm">
-                  {nextAppointment?.helperName
-                    ? `Responsável: ${nextAppointment.helperName}`
-                    : 'Nossa equipe selecionada para você.'}
+                <p className="text-sm text-white/80">
+                  {nextAppointment ? `Horário previsto ${nextAppointment.startTime}` : 'Aguardando confirmação.'}
                 </p>
               </div>
-              <div className="bg-white/15 rounded-2xl p-4">
-                <p className="text-xs uppercase tracking-wide font-semibold">Status geral</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-white/10 border border-white/20 p-3">
+                  <p className="text-xs uppercase tracking-wide font-semibold text-white/60">Serviço</p>
+                  <p className="text-lg font-semibold">
+                    {nextAppointment?.serviceType ?? data?.customer?.serviceType ?? 'Personalizado'}
+                  </p>
+                  <p className="text-xs text-white/70 mt-1">
+                    {nextAppointment?.helperName
+                      ? `Responsável: ${nextAppointment.helperName}`
+                      : 'Equipe dedicada da sua empresa parceira.'}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/10 border border-white/20 p-3">
+                  <p className="text-xs uppercase tracking-wide font-semibold text-white/60">Status geral</p>
+                  <p className="text-lg font-semibold">
+                    {pendingContract ? 'Contrato aguardando' : 'Tudo em dia ✨'}
+                  </p>
+                  <p className="text-xs text-white/70 mt-1">
+                    {pendingContract
+                      ? 'Revise o contrato para liberar novas visitas.'
+                      : 'Nenhuma pendência registrada.'}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white/10 border border-white/20 p-3">
+                <p className="text-xs uppercase tracking-wide font-semibold text-white/60">Mensal</p>
                 <p className="text-xl font-semibold">
-                  {pendingContract ? 'Contrato aguardando' : 'Tudo em dia ✨'}
+                  {formatCurrency(nextAppointment?.price ?? lastAcceptedBlueprint?.payment.amount ?? 0)}
                 </p>
-                <p className="text-white/80 text-sm">
-                  {pendingContract
-                    ? 'Revise o contrato para liberar novas visitas.'
-                    : 'Não há pendências no momento.'}
-                </p>
+                <p className="text-xs text-white/70 mt-1">Valor estimado por visita do seu plano</p>
               </div>
             </div>
           </section>
 
           <div className="grid gap-4 md:grid-cols-2">
             {data?.customer && (
-              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
+              <div className="rounded-[28px] border border-gray-100 bg-gradient-to-br from-[#f7f8fc] via-white to-[#fdfbff] shadow-sm p-6 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-primary-50 flex items-center justify-center overflow-hidden border border-primary-100">
+                  <div className="w-14 h-14 rounded-3xl bg-gray-900 text-white flex items-center justify-center overflow-hidden">
                     {companyLogo ? (
                       <img src={companyLogo} alt={companyName} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-sm font-semibold text-primary-700">{companyInitials}</span>
+                      <span className="text-base font-semibold">{companyInitials}</span>
                     )}
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-primary-600 font-semibold">Sua empresa parceira</p>
-                    <p className="text-lg font-semibold text-gray-900">{companyName}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Sua empresa parceira</p>
+                    <p className="text-lg font-bold text-gray-900">{companyName}</p>
+                    <p className="text-xs text-gray-500">
                       Administradora: <span className="font-semibold">{data.customer.ownerName ?? 'Equipe dedicada'}</span>
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid sm:grid-cols-3 gap-2">
                   {data.customer.contactPhone && (
-                    <a href={`tel:${data.customer.contactPhone}`} className="px-4 py-2 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    <a
+                      href={`tel:${data.customer.contactPhone}`}
+                      className="px-4 py-2 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 text-center"
+                    >
                       Ligar
                     </a>
                   )}
@@ -571,7 +595,7 @@ const ClientHome = () => {
                       href={`https://wa.me/${data.customer.whatsappNumber.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-4 py-2 rounded-2xl border border-primary-200 text-sm font-semibold text-primary-700 hover:bg-primary-50"
+                      className="px-4 py-2 rounded-2xl border border-primary-200 text-sm font-semibold text-primary-700 hover:bg-primary-50 text-center"
                     >
                       WhatsApp
                     </a>
@@ -581,7 +605,7 @@ const ClientHome = () => {
                       href={websiteLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-4 py-2 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 text-center"
                     >
                       Site
                     </a>
@@ -590,7 +614,7 @@ const ClientHome = () => {
                 <button
                   type="button"
                   onClick={() => setCompanyModalOpen(true)}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-primary-600"
                 >
                   Ver detalhes da empresa
                   <ExternalLink size={14} />
@@ -598,9 +622,9 @@ const ClientHome = () => {
               </div>
             )}
 
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 space-y-3">
+            <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold uppercase tracking-wide">
+                <div className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
                   <FileText size={16} /> Contrato de serviço
                 </div>
                 {(pendingContract || lastAcceptedContract) && (

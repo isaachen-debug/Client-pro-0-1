@@ -69,7 +69,7 @@ async function main() {
       name: 'Shirley',
       email: OWNER_EMAIL,
       passwordHash: OWNER_PASSWORD_HASH,
-      companyName: 'Client Pro',
+      companyName: 'Client Up',
       primaryColor: '#22c55e',
       trialStart: now,
       trialEnd,

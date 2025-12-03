@@ -233,34 +233,85 @@ const Team = () => {
     }
   };
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-10 space-y-8">
-      <div className="space-y-2">
-        <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">Equipe</p>
-        <h1 className="text-3xl font-bold text-gray-900">Controle quem te ajuda no campo</h1>
-        <p className="text-gray-600 max-w-2xl">
-          Convide helpers para acompanhar a rotina diária. Você define quem acessa o app e pode compartilhar e-mails e
-          senhas iniciais com um clique.
-        </p>
-      </div>
+  const totalMembers = members.length;
+  const ownerCount = members.filter((member) => member.role === 'OWNER').length;
+  const teamHighlights = [
+    { label: 'Membros totais', value: totalMembers },
+    { label: 'Helpers ativos', value: helpers.length },
+    { label: 'Administradoras', value: ownerCount },
+    { label: 'Convites livres', value: Math.max(0, 5 - helpers.length) },
+  ];
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start">
-        <div className="space-y-6 w-full lg:max-w-xl">
-          <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-4 flex items-start gap-3">
-            <div className="p-2 rounded-full bg-blue-50 text-blue-600">
-              <BarChart3 size={18} />
+  return (
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
+      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#05040f] text-white shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4c1d95] to-[#0f172a] opacity-90" />
+        <div className="relative p-6 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-4">
+            <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Squad & Helpers</p>
+            <h1 className="text-3xl md:text-4xl font-semibold">Equipe alinhada ao novo fluxo FlowOps</h1>
+            <p className="text-sm text-white/70 max-w-2xl">
+              Convide helpers, acompanhe rotas diárias e envie recados direto para o app delas. Toda gestão fica centralizada em
+              um painel rápido e responsivo.
+            </p>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
+                <BarChart3 size={16} className="text-white/70" />
+                {helpers.length} helpers monitoradas
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
+                Última atualização {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+              </span>
             </div>
-            <div className="text-sm text-gray-600">
+          </div>
+          <div className="w-full md:w-auto flex flex-col gap-3">
+            <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
+              <p className="text-sm text-white/70">Capacidade atual</p>
+              <p className="text-3xl font-semibold">{helpers.length}/10 helpers</p>
+              <p className="text-xs text-white/60">
+                {Math.max(0, 10 - helpers.length)} vagas disponíveis para convites imediatos
+              </p>
+            </div>
+            <a
+              href="#create-helper"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-gray-900 px-5 py-3 text-sm font-semibold shadow-[0_20px_40px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 transition"
+            >
+              <UserPlus size={18} />
+              Adicionar helper agora
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {teamHighlights.map((card) => (
+          <div
+            key={card.label}
+            className="rounded-3xl border border-gray-100 bg-white/90 backdrop-blur-sm p-4 shadow-[0_20px_50px_rgba(15,23,42,0.05)]"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
+            <p className="text-2xl font-semibold text-gray-900 mt-1">{card.value}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-start">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-indigo-100 bg-white p-5 flex gap-4">
+            <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+              <BarChart3 size={20} />
+            </div>
+            <div className="space-y-1 text-sm text-gray-600">
               <p className="font-semibold text-gray-900">Controle rápido das rotas</p>
               <p>
-                Clique em <span className="font-semibold text-primary-700">“Ver rotas”</span> para abrir o painel da helper,
-                adicionar ou remover itens de checklist e mandar recados que aparecem no app dela.
+                Use o botão <span className="font-semibold text-primary-700">“Ver rotas”</span> para abrir o painel da helper,
+                editar checklist, enviar recados e abrir rotas no Maps sem sair da página.
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div id="create-helper" className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-6 space-y-4">
+            <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary-50 text-primary-600">
                 <UserPlus size={20} />
               </div>
@@ -271,12 +322,12 @@ const Team = () => {
             </div>
 
             {successMessage && (
-              <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm rounded-xl px-3 py-2 mb-3">
+              <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm rounded-xl px-3 py-2">
                 {successMessage}
               </div>
             )}
             {error && !loading && (
-              <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-3 py-2 mb-3">{error}</div>
+              <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-3 py-2">{error}</div>
             )}
 
             <form className="space-y-3" onSubmit={handleSubmit}>
@@ -286,7 +337,7 @@ const Team = () => {
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Nome completo"
                   required
                 />
@@ -297,7 +348,7 @@ const Team = () => {
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                  className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="helper@clientpro.com"
                   required
                 />
@@ -308,7 +359,7 @@ const Team = () => {
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-                  className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Mínimo 6 caracteres"
                   required
                   minLength={6}
@@ -317,7 +368,7 @@ const Team = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 text-white font-semibold py-3 hover:bg-primary-700 transition disabled:opacity-60"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 text-white font-semibold py-3 hover:bg-primary-700 transition disabled:opacity-60"
               >
                 {submitting ? (
                   <>
@@ -331,17 +382,13 @@ const Team = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <p className="text-sm font-semibold text-primary-600">Time ativo</p>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {members.length}{' '}
-                <span className="text-base font-medium text-gray-500">
-                  membro{members.length === 1 ? '' : 's'} ({helpers.length} helpers)
-                </span>
-              </h2>
-            </div>
+        <div className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.06)] p-6 space-y-5">
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide">Time ativo</p>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {totalMembers} membro{totalMembers === 1 ? '' : 's'}{' '}
+              <span className="text-base font-medium text-gray-500">({helpers.length} helpers)</span>
+            </h2>
           </div>
 
           {loading ? (
@@ -351,7 +398,7 @@ const Team = () => {
           ) : error ? (
             <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-sm text-red-600">{error}</div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {members.map((member) => {
                 const dayState = helperDayData[member.id];
                 const selectedDay = helperSelectedDay[member.id] ?? 'today';
@@ -360,96 +407,51 @@ const Team = () => {
                 const dayError = dayState?.[selectedDay]?.error ?? '';
 
                 return (
-                <div
-                  key={member.id}
-                  className="rounded-2xl border border-gray-100 px-4 py-3 bg-gray-50/70 space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="text-base font-semibold text-gray-900">{member.name}</p>
-                      <p className="text-sm text-gray-500 flex items-center gap-2">
-                        <Mail size={14} /> {member.email}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                        <ShieldCheck size={12} />
-                        {roleLabels[member.role ?? 'HELPER'] ?? 'Colaborador'}
-                      </p>
-                    </div>
-                    <div className="text-sm text-gray-500 flex items-center gap-3 flex-wrap">
-                      <span className="inline-flex items-center gap-2">
-                        <Phone size={14} />
-                        {member.contactPhone || member.whatsappNumber || 'Sem telefone'}
-                      </span>
-                      {member.role === 'HELPER' && normalizePhone(member.contactPhone ?? member.whatsappNumber) && (
-                        <a
-                          href={`sms:${normalizePhone(member.contactPhone ?? member.whatsappNumber)}`}
-                          className="inline-flex items-center gap-1 text-primary-600 font-semibold"
-                        >
-                          <MessageCircle size={14} /> SMS
-                        </a>
-                      )}
-                    </div>
-                  </div>
-
-                  {member.role === 'HELPER' && (
-                    <button
-                      type="button"
-                      onClick={() => toggleHelperDetails(member.id)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-primary-100 text-primary-700 font-semibold py-2 text-sm hover:bg-primary-50 transition"
-                    >
-                      <BarChart3 size={16} />
-                      {expandedHelperId === member.id ? 'Fechar rota' : 'Ver rotas'}
-                    </button>
-                  )}
-
-                  {member.role === 'HELPER' && expandedHelperId === member.id && (
-                    <div className="border-t border-gray-200 pt-4 space-y-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="inline-flex bg-white border border-gray-200 rounded-full p-1">
-                          {(['today', 'tomorrow'] as DayKey[]).map((day) => (
-                            <button
-                              key={day}
-                              type="button"
-                              onClick={() => {
-                                setHelperSelectedDay((prev) => ({ ...prev, [member.id]: day }));
-                                if (!helperDayData[member.id]?.[day]) {
-                                  fetchHelperDay(member.id, day);
-                                }
-                              }}
-                              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition ${
-                                selectedDay === day ? 'bg-primary-600 text-white shadow' : 'text-gray-600'
-                              }`}
-                            >
-                              {day === 'today' ? 'Hoje' : 'Amanhã'}
-                            </button>
-                          ))}
+                  <div
+                    key={member.id}
+                    className="rounded-[22px] border border-gray-100 bg-white/90 p-4 md:p-5 shadow-sm space-y-4"
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900">{member.name}</p>
+                        <div className="text-sm text-gray-500 flex items-center gap-2">
+                          <Mail size={14} /> {member.email}
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                          {dayData?.date && (
-                            <p className="capitalize">
-                              {new Date(dayData.date).toLocaleDateString('pt-BR', {
-                                weekday: 'long',
-                                day: '2-digit',
-                                month: 'short',
-                              })}
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => fetchHelperDay(member.id, selectedDay)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition font-semibold"
-                          >
-                            Atualizar rotas
-                          </button>
-                          <a
-                            href="/app/financeiro"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-50 text-primary-700 font-semibold border border-primary-100"
-                          >
-                            Ver custos no Financeiro
-                          </a>
+                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                          <ShieldCheck size={12} />
+                          {roleLabels[member.role ?? 'HELPER'] ?? 'Colaborador'}
                         </div>
                       </div>
-                      
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-gray-600">
+                          <Phone size={14} />
+                          {member.contactPhone || member.whatsappNumber || 'Sem telefone'}
+                        </span>
+                        {member.role === 'HELPER' && normalizePhone(member.contactPhone ?? member.whatsappNumber) && (
+                          <a
+                            href={`sms:${normalizePhone(member.contactPhone ?? member.whatsappNumber)}`}
+                            className="inline-flex items-center gap-1 rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-primary-700"
+                          >
+                            <MessageCircle size={14} /> SMS
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {member.role === 'HELPER' && (
+                      <button
+                        type="button"
+                        onClick={() => toggleHelperDetails(member.id)}
+                        className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-100 transition"
+                      >
+                        <BarChart3 size={16} />
+                        {expandedHelperId === member.id ? 'Fechar painel' : 'Ver rotas'}
+                      </button>
+                    )}
+
+                    {member.role === 'HELPER' && expandedHelperId === member.id && (
+                      <div className="space-y-4 border-t border-gray-200 pt-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div className="inline-flex bg-white border border-gray-200 rounded-full p-1">
                             {(['today', 'tomorrow'] as DayKey[]).map((day) => (
                               <button
@@ -469,34 +471,59 @@ const Team = () => {
                               </button>
                             ))}
                           </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                            {dayData?.date && (
+                              <p className="capitalize">
+                                {new Date(dayData.date).toLocaleDateString('pt-BR', {
+                                  weekday: 'long',
+                                  day: '2-digit',
+                                  month: 'short',
+                                })}
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => fetchHelperDay(member.id, selectedDay)}
+                              className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 font-semibold text-gray-600 hover:border-primary-200"
+                            >
+                              Atualizar rotas
+                            </button>
+                            <a
+                              href="/app/financeiro"
+                              className="inline-flex items-center gap-1 rounded-full border border-primary-100 bg-primary-50 px-3 py-1.5 font-semibold text-primary-700"
+                            >
+                              Ver custos no Financeiro
+                            </a>
+                          </div>
+                        </div>
 
-                          {dayLoading ? (
-                            <div className="flex items-center justify-center py-6">
-                              <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />
+                        {dayLoading ? (
+                          <div className="flex items-center justify-center py-6">
+                            <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />
+                          </div>
+                        ) : dayError ? (
+                          <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-sm text-red-600">{dayError}</div>
+                        ) : dayData?.appointments.length ? (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                              {[
+                                { label: 'Serviços', value: dayData?.summary.total ?? 0 },
+                                { label: 'Pendentes', value: dayData?.summary.pending ?? 0 },
+                                { label: 'Em andamento', value: dayData?.summary.inProgress ?? 0 },
+                                { label: 'Concluídos', value: dayData?.summary.completed ?? 0 },
+                                {
+                                  label: 'Pagamento helper',
+                                  value: usdFormatter.format(dayData?.summary.payoutTotal ?? 0),
+                                },
+                              ].map((card) => (
+                                <div key={card.label} className="bg-white rounded-2xl border border-gray-100 px-3 py-2">
+                                  <p className="text-[11px] text-gray-500 uppercase tracking-wide">{card.label}</p>
+                                  <p className="text-lg font-semibold text-gray-900">{card.value}</p>
+                                </div>
+                              ))}
                             </div>
-                          ) : dayError ? (
-                            <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-sm text-red-600">{dayError}</div>
-                          ) : dayData?.appointments.length ? (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                {[
-                                  { label: 'Serviços', value: dayData?.summary.total ?? 0 },
-                                  { label: 'Pendentes', value: dayData?.summary.pending ?? 0 },
-                                  { label: 'Em andamento', value: dayData?.summary.inProgress ?? 0 },
-                                  { label: 'Concluídos', value: dayData?.summary.completed ?? 0 },
-                                  {
-                                    label: 'Pagamento helper',
-                                    value: usdFormatter.format(dayData?.summary.payoutTotal ?? 0),
-                                  },
-                                ].map((card) => (
-                                  <div key={card.label} className="bg-white rounded-xl border border-gray-100 px-3 py-2">
-                                    <p className="text-[11px] text-gray-500 uppercase tracking-wide">{card.label}</p>
-                                    <p className="text-lg font-semibold text-gray-900">{card.value}</p>
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="space-y-3">
-                                {dayData?.appointments.map((appointment) => {
+                            <div className="space-y-3">
+                              {dayData?.appointments.map((appointment) => {
                                   const progress = getChecklistProgress(appointment);
                                   const durationLabel = formatDuration(appointment);
                                   const smsLink = normalizePhone(appointment.customer.phone)
@@ -678,8 +705,8 @@ const Team = () => {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </section>
+  </div>
   );
 };
 

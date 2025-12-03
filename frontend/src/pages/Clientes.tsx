@@ -608,6 +608,11 @@ const Clientes = () => {
     }
   };
 
+  const handleNewContractClick = () => {
+    setActiveTab('contracts');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleWizardSubmit = async (blueprint: ContractBlueprint, action: 'send' | 'sign') => {
     if (!blueprint.client.id) {
       setWizardStatus({ type: 'error', message: 'Selecione um cliente antes de gerar o contrato.' });
@@ -796,77 +801,105 @@ const Clientes = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Central de clientes</h1>
-          <p className="text-sm text-gray-500 mt-1">Cadastre informações, contratos e histórico em um só lugar.</p>
+    <div className="p-4 md:p-8 space-y-8">
+      <div className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_60px_rgba(15,23,42,0.06)] px-6 py-6 lg:py-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-2 text-center lg:text-left">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Client success hub</p>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900">Central de clientes</h1>
+            <p className="text-sm text-gray-500">
+              Organize cadastros, contratos e acesso ao portal em um fluxo visual.
+            </p>
+          </div>
         </div>
-        <div className="inline-flex bg-gray-100 rounded-full p-1">
+        <div className="flex flex-wrap items-center justify-center gap-2 bg-gray-100 rounded-full p-1">
           {[
-            { key: 'list', label: 'Lista de clientes' },
-            { key: 'contracts', label: 'Contratos' },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                activeTab === tab.key ? 'bg-white shadow text-gray-900' : 'text-gray-500'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { key: 'list', label: 'Clientes' },
+            { key: 'contracts', label: 'Contracts' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition ${
+                  isActive ? 'bg-white text-gray-900 shadow' : 'text-gray-500'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {activeTab === 'list' ? (
         <>
-          {/* Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-primary-600 font-semibold">Clientes ativos</p>
-              <p className="text-sm text-gray-500">
-                Você possui <span className="font-semibold text-gray-900">{clientes.length}</span> cadastros.
+          {/* Stats & quick actions */}
+          <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+            <div className="rounded-[28px] bg-gradient-to-br from-[#0d0b2d] via-[#181641] to-[#311858] text-white px-6 py-6 space-y-4 shadow-[0_25px_60px_rgba(15,23,42,0.35)]">
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
+                <span>Clientes</span>
+                <span className="text-white/30">•</span>
+                <span>Portal + contratos</span>
+              </div>
+              <div className="flex flex-wrap items-end gap-6">
+                <div>
+                  <p className="text-sm text-white/70">Cadastros totais</p>
+                  <p className="text-4xl font-bold">{clientes.length}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-white/70">Com acesso ao app</p>
+                  <p className="text-2xl font-semibold">{customersWithPortal}</p>
+                </div>
+              </div>
+              <p className="text-sm text-white/70">
+                Conecte cada Client ao portal e automatize contratos e feedbacks.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={handleExportClientes}
-                className="flex items-center justify-center space-x-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <span>Exportar CSV</span>
-              </button>
-              <button
-                onClick={openCreateModal}
-                className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                <Plus size={20} />
-                <span>Adicionar Cliente</span>
-              </button>
+
+            <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ações rápidas</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={handleExportClientes}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Exportar CSV
+                </button>
+                <button
+                  onClick={openCreateModal}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gray-900 text-white px-4 py-3 text-sm font-semibold shadow-lg hover:bg-black"
+                >
+                  <Plus size={18} />
+                  Novo cliente
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+          <div className="rounded-[32px] bg-gradient-to-br from-[#090c22] via-[#101437] to-[#2a0f4a] text-white shadow-[0_30px_80px_rgba(7,11,30,0.45)] p-6 space-y-5">
             <button
               type="button"
               onClick={() => setPortalAccessOpen((prev) => !prev)}
               className="w-full flex items-center justify-between text-left"
             >
-              <div>
-                <p className="text-xs uppercase tracking-wide text-primary-600 font-semibold">Acesso ao app do cliente</p>
-                <p className="text-sm text-gray-500">
-                  {customersWithPortal}/{clientes.length} clientes já possuem login. Compartilhe email e senha temporária para
-                  liberar o portal.
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">Client portal access</p>
+                <p className="text-lg font-semibold">
+                  {customersWithPortal}/{clientes.length} clients já possuem login ativo
+                </p>
+                <p className="text-sm text-white/70">
+                  Gere credenciais instantâneas e personalize o pop-up “Sua empresa parceira”.
                 </p>
               </div>
               <ChevronDown
-                className={`text-gray-500 w-5 h-5 transition-transform ${portalAccessOpen ? 'rotate-180' : ''}`}
+                className={`text-white/80 w-5 h-5 transition-transform ${portalAccessOpen ? 'rotate-180' : ''}`}
               />
             </button>
             {portalAccessOpen && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <form
                   className="grid gap-3 md:grid-cols-[1.2fr,1fr,1fr,auto]"
                   onSubmit={handlePortalAccessSubmit}
@@ -874,12 +907,12 @@ const Clientes = () => {
                   <select
                     value={portalAccessForm.customerId}
                     onChange={(e) => handlePortalAccessCustomerChange(e.target.value)}
-                    className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50"
                     required
                   >
                     <option value="">Selecione o cliente</option>
                     {clientes.map((cliente) => (
-                      <option key={cliente.id} value={cliente.id}>
+                      <option key={cliente.id} value={cliente.id} className="text-gray-900">
                         {cliente.name}
                       </option>
                     ))}
@@ -889,14 +922,14 @@ const Clientes = () => {
                     value={portalAccessForm.name}
                     onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="Nome que aparecerá no app"
-                    className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm foco:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
                   />
                   <input
                     type="email"
                     value={portalAccessForm.email}
                     onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, email: e.target.value }))}
                     placeholder="email@cliente.com"
-                    className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
                     required
                   />
                   <div className="flex gap-2">
@@ -905,42 +938,40 @@ const Clientes = () => {
                       value={portalAccessForm.password}
                       onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, password: e.target.value }))}
                       placeholder="Senha opcional"
-                      className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="flex-1 px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
                     />
                     <button
                       type="submit"
                       disabled={portalAccessSaving}
-                      className="px-4 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold disabled:opacity-60"
+                      className="px-4 py-2.5 rounded-2xl bg-white text-gray-900 text-sm font-semibold disabled:opacity-60"
                     >
                       {portalAccessSaving ? 'Gerando...' : 'Criar acesso'}
                     </button>
                   </div>
                 </form>
-                {portalAccessError && (
-                  <p className="text-sm text-red-600">{portalAccessError}</p>
-                )}
+                {portalAccessError && <p className="text-sm text-red-200">{portalAccessError}</p>}
                 {portalAccessMessage && (
-                  <div className="bg-primary-50 border border-primary-100 rounded-2xl p-3 text-sm text-primary-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-sm text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                       <p className="font-semibold">Compartilhe com {portalAccessMessage.email}</p>
-                      <p>
-                        Senha temporária: <span className="font-mono">{portalAccessMessage.password}</span>
+                      <p className="text-white/70">
+                        Senha temporária: <span className="font-mono text-white">{portalAccessMessage.password}</span>
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={handleCopyPortalPassword}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-primary-200 text-primary-700 text-xs font-semibold"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-xs font-semibold"
                     >
                       Copiar senha
                     </button>
                   </div>
                 )}
-                <div className="border-t border-gray-100 pt-3 space-y-3">
+                <div className="border-t border-white/10 pt-4 space-y-3">
                   <button
                     type="button"
                     onClick={() => setShowcasePanelOpen((prev) => !prev)}
-                    className="flex items-center justify-between w-full text-sm font-semibold text-primary-700"
+                    className="flex items-center justify-between w-full text-sm font-semibold text-white"
                   >
                     <span>Personalizar pop-up “Sua empresa parceira”</span>
                     <ChevronDown
@@ -949,17 +980,17 @@ const Clientes = () => {
                   </button>
                   {showcaseStatus && (
                     <div
-                      className={`text-sm px-4 py-2 rounded-xl ${
+                      className={`text-sm px-4 py-2 rounded-xl border ${
                         showcaseStatus.type === 'success'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                          : 'bg-red-50 text-red-600 border border-red-100'
+                          ? 'bg-emerald-50/20 border-emerald-200 text-emerald-200'
+                          : 'bg-red-50/20 border-red-200 text-red-200'
                       }`}
                     >
                       {showcaseStatus.message}
                     </div>
                   )}
                   {showcasePanelOpen && (
-                    <form className="space-y-4" onSubmit={handleShowcaseSave}>
+                    <form className="space-y-4 bg-white rounded-3xl p-4 text-gray-900" onSubmit={handleShowcaseSave}>
                       <div className="grid gap-3 md:grid-cols-2">
                         {reviewLinkFields.map((field) => (
                           <div key={field.key}>
@@ -1056,7 +1087,7 @@ const Clientes = () => {
                       <button
                         type="submit"
                         disabled={showcaseSaving}
-                        className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold disabled:opacity-60"
+                        className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold disabled:opacity-60"
                       >
                         {showcaseSaving ? 'Salvando...' : 'Salvar personalização'}
                       </button>
@@ -1068,59 +1099,45 @@ const Clientes = () => {
           </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Buscar por nome, telefone ou serviço..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {statusFilterOptions.map((option) => {
-            const isActive = statusFilter === option.value;
-            const baseClasses =
-              option.value === 'ALL'
-                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                : option.value === 'ACTIVE'
-                  ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                  : option.value === 'PAUSED'
-                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
-            const activeClasses =
-              option.value === 'ALL'
-                ? 'bg-gray-900 text-white'
-                : option.value === 'ACTIVE'
-                  ? 'bg-green-600 text-white'
-                  : option.value === 'PAUSED'
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-gray-500 text-white';
-            return (
-              <button
-                key={option.value}
-                onClick={() => setStatusFilter(option.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? activeClasses : baseClasses
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-        {loading && !initialLoading && (
-          <div className="flex items-center text-sm text-gray-500 mt-3">
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            <span>Atualizando lista...</span>
+          <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-5 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar por nome, telefone ou serviço..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {statusFilterOptions.map((option) => {
+                const isActive = statusFilter === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setStatusFilter(option.value)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                      isActive
+                        ? 'bg-gray-900 text-white shadow'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+            {loading && !initialLoading && (
+              <div className="flex items-center text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <span>Atualizando lista...</span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-[32px] shadow-[0_25px_60px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden">
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -1386,7 +1403,7 @@ const Clientes = () => {
               </div>
               <button
                 type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={handleNewContractClick}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50"
               >
                 <FileText size={16} />

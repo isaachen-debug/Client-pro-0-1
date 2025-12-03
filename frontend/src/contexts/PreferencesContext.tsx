@@ -33,6 +33,7 @@ type TranslationDictionary = Record<
       company: string;
       profile: string;
       team: string;
+      settings: string;
     };
   }
 >;
@@ -56,6 +57,7 @@ const translations: TranslationDictionary = {
       company: 'Empresa',
       profile: 'Perfil',
       team: 'Equipe',
+      settings: 'Configurações',
     },
   },
   en: {
@@ -76,6 +78,7 @@ const translations: TranslationDictionary = {
       company: 'Company',
       profile: 'Profile',
       team: 'Team',
+      settings: 'Settings',
     },
   },
   es: {
@@ -96,6 +99,7 @@ const translations: TranslationDictionary = {
       company: 'Empresa',
       profile: 'Perfil',
       team: 'Equipo',
+      settings: 'Configuración',
     },
   },
 };

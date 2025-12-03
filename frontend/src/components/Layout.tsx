@@ -29,49 +29,11 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
+import brandLogo from '../assets/brand-logo.png';
 
 const LogoMark = () => (
-  <div className="w-12 h-12 rounded-3xl bg-gradient-to-br from-green-400 via-emerald-500 to-green-600 p-[2px] shadow-lg shadow-emerald-300/30">
-    <div className="w-full h-full rounded-3xl bg-white flex items-center justify-center">
-      <svg viewBox="0 0 64 64" className="w-10 h-10 text-emerald-600">
-        <defs>
-          <linearGradient id="clientProGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#22c55e" />
-            <stop offset="100%" stopColor="#15803d" />
-          </linearGradient>
-        </defs>
-        <circle cx="32" cy="32" r="28" fill="url(#clientProGradient)" opacity="0.15" />
-        <path
-          d="M21 19h22a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H21a4 4 0 0 1-4-4V23a4 4 0 0 1 4-4Z"
-          fill="#fff"
-          stroke="url(#clientProGradient)"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M24 15v6M40 15v6"
-          stroke="url(#clientProGradient)"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M24 33l5 5 11-11"
-          stroke="#22c55e"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M18 40c4 4 9.5 6 14.5 6 8 0 13.5-3.5 18-11"
-          stroke="#15803d"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="47" cy="24" r="4" fill="#22c55e" stroke="#fff" strokeWidth="2" />
-        <path d="M45.5 24l1.5 1.5L49 23" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-      </svg>
-    </div>
+  <div className="w-12 h-12 rounded-3xl bg-white border border-gray-100 shadow-lg shadow-emerald-300/30 flex items-center justify-center overflow-hidden">
+    <img src={brandLogo} alt="Client Up logo" className="w-10 h-10 object-contain" />
   </div>
 );
 
@@ -79,7 +41,7 @@ const BrandBlock = ({ subtitle }: { subtitle: string }) => (
   <div className="flex items-center space-x-2">
     <LogoMark />
     <div>
-      <h1 className="text-lg font-bold text-gray-900 tracking-tight">Client Pro</h1>
+      <h1 className="text-lg font-bold text-gray-900 tracking-tight">Client Up</h1>
       <p className="text-xs text-gray-500">{subtitle}</p>
     </div>
   </div>
@@ -144,6 +106,16 @@ const Layout = () => {
       icon: '👤',
       path: '/app/profile',
     },
+    ...(isOwner
+      ? [
+          {
+            key: 'settings',
+            label: 'Settings',
+            icon: '⚙️',
+            path: '/app/settings',
+          },
+        ]
+      : []),
   ];
   const quickCreateActions = [
     {
@@ -209,6 +181,7 @@ const Layout = () => {
       ? [
           { path: '/app/empresa', icon: Building2, labelKey: 'nav.company' },
           { path: '/app/team', icon: Users, labelKey: 'nav.team' },
+          { path: '/app/settings', icon: SettingsIcon, labelKey: 'nav.settings' },
         ]
       : []),
     { path: '/app/profile', icon: UserCircle, labelKey: 'nav.profile' },
@@ -268,9 +241,6 @@ const Layout = () => {
             {user?.companyName || user?.name || 'Adicione sua marca'}
           </p>
           <p className="text-xs text-gray-500 truncate">{user?.email ?? 'email@clientepro.com'}</p>
-          <p className="text-xs text-primary-600 font-medium">
-            Use o menu “Perfil” para enviar logo e ajustar cores do app.
-          </p>
         </div>
       </div>
     </div>
@@ -407,11 +377,15 @@ const Layout = () => {
 
               <div className="flex flex-col items-center gap-3 text-center">
                 <div
-                  className={`relative w-20 h-20 rounded-full flex items-center justify-center text-2xl font-semibold ${
+                  className={`relative w-20 h-20 rounded-full flex items-center justify-center text-2xl font-semibold overflow-hidden ${
                     isDarkTheme ? 'bg-white text-gray-900' : 'bg-gray-100 text-gray-900'
                   }`}
                 >
-                  {initials}
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user?.name ?? 'Avatar'} className="w-full h-full object-cover" />
+                  ) : (
+                    initials
+                  )}
                   <span
                     className={`absolute bottom-2 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 ${
                       isDarkTheme ? 'border-[#05070c]' : 'border-white'
@@ -439,14 +413,17 @@ const Layout = () => {
                   >
                     Edit profile
                   </button>
-                  <button
-                    type="button"
-                    className={`flex-1 rounded-2xl py-2 font-semibold text-sm flex items-center justify-center gap-2 border ${
-                      isDarkTheme ? 'border-white/15 bg-white/5 text-white' : 'border-gray-200 bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <Bot size={16} /> AI StandUp
-                  </button>
+                  <div className="flex-1">
+                    <button
+                      type="button"
+                      onClick={() => alert('Em breve você vai acompanhar resumos automáticos do time por aqui.')}
+                      className={`w-full rounded-2xl py-2 font-semibold text-sm flex items-center justify-center gap-2 border ${
+                        isDarkTheme ? 'border-white/15 bg-white/5 text-white' : 'border-gray-200 bg-gray-100 text-gray-900'
+                      }`}
+                    >
+                      <Bot size={16} /> AI StandUp
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -454,7 +431,7 @@ const Layout = () => {
                 {[
                   { label: 'My Calendar', icon: CalendarDays, path: '/app/agenda' },
                   { label: 'Mute notifications', icon: BellOff },
-                  { label: 'Settings', icon: SettingsIcon, path: '/app/profile' },
+                  { label: 'Settings', icon: SettingsIcon, path: '/app/settings' },
                   { label: 'Notification settings', icon: Bell },
                   { label: 'Invite users', icon: UserPlus },
                   { label: 'Help & resources', icon: HelpCircle },
@@ -598,7 +575,7 @@ const Layout = () => {
                       type="button"
                       className={`flex items-center gap-1 text-base font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}
                     >
-                      {user?.companyName || 'Client Pro'}
+                      {user?.companyName || 'Client Up'}
                       <ChevronDown size={16} className={mobileSecondaryTextClass} />
                     </button>
                   </div>
@@ -653,7 +630,7 @@ const Layout = () => {
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Instale o Client Pro</p>
+                    <p className="text-sm font-semibold text-gray-900">Instale o Client Up</p>
                     <p className="text-xs text-gray-500">
                       Adicione o app na tela inicial para acessar mais rápido.
                     </p>
@@ -670,7 +647,7 @@ const Layout = () => {
                     onClick={install}
                     className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors"
                   >
-                    Instalar Client Pro
+                    Instalar Client Up
                   </button>
                 </div>
               </div>
@@ -791,7 +768,7 @@ const Layout = () => {
                 <div className="flex items-center justify-between text-white">
                   <div>
                     <p className="text-sm uppercase tracking-[0.3em] text-white/70">Launcher</p>
-                    <p className="text-2xl font-semibold">Explore Client Pro</p>
+                    <p className="text-2xl font-semibold">Explore Client Up</p>
                   </div>
                   <button
                     type="button"

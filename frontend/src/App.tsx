@@ -18,8 +18,11 @@ import Team from './pages/Team';
 import HelperLayout from './pages/helper/HelperLayout';
 import HelperToday from './pages/helper/Today';
 import HelperAppointmentDetail from './pages/helper/AppointmentDetail';
+import HelperSettings from './pages/helper/Settings';
 import ClientHome from './pages/client/Home';
 import ClientLayout from './pages/client/Layout';
+import ClientSettings from './pages/client/Settings';
+import OwnerSettings from './pages/OwnerSettings';
 
 function App() {
   return (
@@ -49,6 +52,7 @@ function App() {
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="empresa" element={<Empresa />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="settings" element={<OwnerSettings />} />
               <Route path="team" element={<Team />} />
               <Route path="invoice/:id" element={<Invoice />} />
             </Route>
@@ -65,6 +69,7 @@ function App() {
             >
               <Route index element={<Navigate to="today" replace />} />
               <Route path="today" element={<HelperToday />} />
+              <Route path="settings" element={<HelperSettings />} />
               <Route path="appointments/:id" element={<HelperAppointmentDetail />} />
             </Route>
 
@@ -80,6 +85,7 @@ function App() {
             >
               <Route index element={<Navigate to="home" replace />} />
               <Route path="home" element={<ClientHome />} />
+              <Route path="settings" element={<ClientSettings />} />
             </Route>
 
             <Route path="/" element={<Navigate to="/login" replace />} />

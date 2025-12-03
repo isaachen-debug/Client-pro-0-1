@@ -3,25 +3,406 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserRole } from '../types';
 import { FileText, MessageSquare, Smartphone } from 'lucide-react';
-import logoFull from '../assets/client-pro-logo.svg';
+import logoFull from '../assets/brand-logo.png';
 import loginHero from '../assets/login-hero.png';
 
 type LoginPersona = UserRole;
 
-const personaCopy: Record<LoginPersona, { title: string; description: string }> = {
-  OWNER: {
-    title: 'Entrar como Owner',
-    description:
-      'Use seu acesso de Owner para controlar seu cleaning business: Clients, Partners, contratos, agenda e financeiro.',
+type Language = 'en' | 'pt';
+
+const LANGUAGE_STORAGE_KEY = 'clientup:language';
+
+const getInitialLanguage = (): Language => {
+  if (typeof window === 'undefined') return 'en';
+  const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  return stored === 'pt' ? 'pt' : 'en';
+};
+
+type SlideCopy = { title: string; description: string; highlight: string; subcopy: string };
+type WorkflowKnot = { title: string; description: string; accent: string };
+type SolutionsHighlight = { title: string; description: string };
+type AiCardCopy = { title: string; description: string; badge: string };
+type PersonaCopyMap = Record<LoginPersona, { title: string; description: string }>;
+type Translation = {
+  navLinks: { href: string; label: string }[];
+  loginButton: string;
+  hero: {
+    badge: string;
+    title: string;
+    description: string;
+    chips: { sms: string; contracts: string; portal: string };
+    primaryCta: string;
+    secondaryCta: string;
+    note: string;
+  };
+  mobile: {
+    brandTag: string;
+    slides: SlideCopy[];
+    primaryCta: string;
+    ownerBtn: string;
+    clientBtn: string;
+  };
+  workSprawl: { badge: string; title: string; description: string; cards: WorkflowKnot[] };
+  featureMatrix: { badge: string; title: string; description: string };
+  superAgents: { badge: string; title: string; description: string; button: string };
+  ai: { badge: string; title: string; description: string; cards: AiCardCopy[] };
+  solutions: { badge: string; title: string; description: string; tabs: string[]; highlights: SolutionsHighlight[] };
+  finalCta: { badge: string; title: string; description: string; primary: string; client: string; owner: string; note: string };
+  personaCopy: PersonaCopyMap;
+  mismatchMessages: Record<LoginPersona, string>;
+  modal: {
+    ownerBadge: string;
+    ownerSubtitle: string;
+    ownerDescription: string;
+    clientBadge: string;
+    clientSubtitle: string;
+    clientDescription: string;
+    question: string;
+    personaPrompt: string;
+    infoBoxTitle: string;
+    forgotPassword: string;
+    createOwner: string;
+  };
+  form: { emailPlaceholder: string; passwordPlaceholder: string; submitIdle: string; submitLoading: string };
+  errors: { default: string };
+};
+
+const translations: Record<Language, Translation> = {
+  en: {
+    navLinks: [
+      { href: '#platform', label: 'Platform' },
+      { href: '#agents', label: 'Super Agents' },
+      { href: '#solutions', label: 'Solutions' },
+      { href: '#cta', label: 'Start' },
+    ],
+    loginButton: 'Sign in',
+    hero: {
+      badge: 'Client Up · Operating system for cleaning businesses',
+      title: 'Maximize human productivity with a panel that unites Owners, Partners, and Clients.',
+      description:
+        'Replace spreadsheets, chat groups, and scattered apps. Client Up brings schedules, smart SMS, contracts, finance, and the Client portal into one experience.',
+      chips: {
+        sms: 'Automated SMS',
+        contracts: 'Dynamic contracts',
+        portal: 'Client portal',
+      },
+      primaryCta: 'Get started – Owner / Partner',
+      secondaryCta: 'Sign in as Client',
+      note: 'Free forever to test your operation. No credit card required.',
+    },
+    mobile: {
+      brandTag: 'Client Up',
+      slides: [
+        {
+          title: 'Your cleaning business in one place.',
+          description: 'With Partners and Clients aligned by SMS, you gain time to grow.',
+          highlight: 'Win a free day every week.',
+          subcopy: 'Focused dashboard, automated SMS, and a Client portal with your brand.',
+        },
+        {
+          title: 'Operations guided by SMS.',
+          description: 'Send intelligent reminders before the route and forget improvisation.',
+          highlight: 'Everything ready before the visit.',
+          subcopy: 'Partners get the full briefing on their phone; Clients confirm in seconds.',
+        },
+        {
+          title: 'Portal with your brand look.',
+          description: 'Contracts, photos, and “Your partner company” pop-up in one tap.',
+          highlight: 'VIP experience for Clients.',
+          subcopy: 'Share news, before/after shots, and keep relationships active.',
+        },
+      ],
+      primaryCta: 'Get started',
+      ownerBtn: "I'm Owner or Partner",
+      clientBtn: "I'm Client",
+    },
+    workSprawl: {
+      badge: 'End work sprawl',
+      title: 'Fewer apps. More focus on who delivers.',
+      description:
+        'Without Client Up, your operation gets lost in apps, AI, and scattered context. With it, SMS, contracts, and dashboards live in one continuous flow.',
+      cards: [
+        {
+          title: 'App Sprawl',
+          description: 'Kills collaboration when each team uses a different app.',
+          accent: 'text-emerald-500',
+        },
+        {
+          title: 'AI Sprawl',
+          description: 'Destroys productivity when each AI stores data in its own silo.',
+          accent: 'text-sky-500',
+        },
+        {
+          title: 'Context Sprawl',
+          description: 'Removes visibility when no one knows where information lives.',
+          accent: 'text-amber-500',
+        },
+      ],
+    },
+    featureMatrix: {
+      badge: 'Tudo o que você precisa',
+      title: '100+ resources for Owners, Partners, and Clients',
+      description:
+        'Pick the modules you need and keep a coherent panel: Projects, Docs, Brain, Chat, automations, forms, finance, and more.',
+    },
+    superAgents: {
+      badge: 'Super Agents™',
+      title: 'A new era of humans with applied AI.',
+      description:
+        'Create agents that distribute tasks, save Client preferences, remind Partners via SMS, and feed finance automatically.',
+      button: 'Build your own agent',
+    },
+    ai: {
+      badge: '@Brain',
+      title: 'The only AI that works where you work.',
+      description:
+        'Use AI to answer questions, generate SMS, summarize visits, and trigger alerts without leaving Client Up.',
+      cards: [
+        { badge: 'Ambient answers', title: '@Brain Agent', description: '24/7 assistant that searches data, drafts messages, and answers the team.' },
+        {
+          badge: 'Context in seconds',
+          title: 'Ambient Answers',
+          description: 'Clients don’t ask “where is the link?” anymore. AI replies inside the chat.',
+        },
+        {
+          badge: 'Never reassign manually',
+          title: 'Project Manager',
+          description: 'Delegate tasks, generate checklists, and review status without spreadsheets.',
+        },
+      ],
+    },
+    solutions: {
+      badge: 'AI solutions for every team',
+      title: 'Your favorite workflow, powered with Agents.',
+      description: 'Pick the type of operation and let the platform suggest automations, checklists, and comms.',
+      tabs: ['Projects', 'Marketing', 'Product & Eng', 'IT', 'HR', 'Leadership'],
+      highlights: [
+        { title: 'Intake Agent standardizes kickoffs', description: 'Centralize briefs and onboarding checklists without dozens of forms.' },
+        { title: 'Assign Agent defines owners', description: 'Smart rules distribute responsibilities according to your plan.' },
+        { title: 'Timeline Agent watches deliveries', description: 'Intelligent alerts before any delay in the schedule.' },
+        { title: 'Live Answers keeps everyone informed', description: 'Clients get answers instantly via the portal, no calls required.' },
+      ],
+    },
+    finalCta: {
+      badge: 'Time is priceless',
+      title: 'Right client, right partner, everything ready in one panel.',
+      description:
+        'Save hours every week with smart SMS, dynamic contracts, and a Client portal that looks like your brand.',
+      primary: 'Open login',
+      client: 'Sign in as Client',
+      owner: 'Create Owner account',
+      note: 'Try it today. No card, easy cancelation.',
+    },
+    personaCopy: {
+      OWNER: {
+        title: 'Sign in as Owner',
+        description: 'Use your Owner login to control Clients, Partners, contracts, schedule, and finances.',
+      },
+      HELPER: {
+        title: 'Sign in as Partner',
+        description: 'Use the email and password sent by the Owner to view your route, SMS notes, and checklists.',
+      },
+      CLIENT: {
+        title: 'Sign in as Client',
+        description: 'Use the email where you get confirmations to follow visits, photos, and contracts.',
+      },
+    },
+    mismatchMessages: {
+      OWNER: 'This email belongs to a Partner or Client profile. Pick the correct option to sign in.',
+      HELPER: 'This email is linked to the full Owner panel. Go back and choose “Owner”.',
+      CLIENT: 'This email is associated with the internal panel (Owner or Partner). Use the correct option.',
+    },
+    modal: {
+      ownerBadge: 'Owner / Partner panel',
+      ownerSubtitle: 'Sign in to control your operation',
+      ownerDescription: 'Choose Owner or Partner to access schedule, SMS, finance, and the internal portal.',
+      clientBadge: 'Client portal',
+      clientSubtitle: 'Sign in to follow your visits',
+      clientDescription: 'Use the email where you get confirmations to see timeline, photos, and contracts.',
+      question: 'How do you use Client Up?',
+      personaPrompt: 'Select the profile that matches your access.',
+      infoBoxTitle: 'Need a hint?',
+      forgotPassword: 'Forgot your password?',
+      createOwner: 'Create Owner account',
+    },
+    form: {
+      emailPlaceholder: 'Access email',
+      passwordPlaceholder: 'Password',
+      submitIdle: 'Sign in now',
+      submitLoading: 'Signing in...',
+    },
+    errors: {
+      default: 'Unable to sign in. Please check your credentials.',
+    },
   },
-  HELPER: {
-    title: 'Entrar como Partner',
-    description:
-      'Use o e-mail e senha enviados pelo Owner para ver sua rota do dia, recados por SMS e checklists.',
-  },
-  CLIENT: {
-    title: 'Entrar como Client',
-    description: 'Use o e-mail onde você recebe confirmações para acompanhar suas limpezas, fotos e contratos.',
+  pt: {
+    navLinks: [
+      { href: '#platform', label: 'Plataforma' },
+      { href: '#agents', label: 'Super Agents' },
+      { href: '#solutions', label: 'Soluções' },
+      { href: '#cta', label: 'Começar' },
+    ],
+    loginButton: 'Fazer login',
+    hero: {
+      badge: 'Client Up · Operating system para cleaning businesses',
+      title: 'Maximize a produtividade humana, com um painel que une Owners, Partners e Clients.',
+      description:
+        'Substitua planilhas, grupos e apps soltos. O Client Up reúne agenda, SMS inteligentes, contratos, financeiro e portal do Client em uma única experiência.',
+      chips: {
+        sms: 'SMS automáticos',
+        contracts: 'Contratos dinâmicos',
+        portal: 'Portal do Client',
+      },
+      primaryCta: 'Get started – Owner / Partner',
+      secondaryCta: 'Entrar como Client',
+      note: 'Free forever para testar com a sua operação. Sem cartão de crédito.',
+    },
+    mobile: {
+      brandTag: 'Client Up',
+      slides: [
+        {
+          title: 'Sua limpeza em um só lugar.',
+          description: 'Com Partners e Clients alinhados por SMS, sobra tempo para crescer o negócio.',
+          highlight: 'Ganhe um dia livre por semana.',
+          subcopy: 'Painel focado, SMS automáticos e portal para Clients com a cara da sua marca.',
+        },
+        {
+          title: 'Operação guiada por SMS.',
+          description: 'Envie recados inteligentes antes da rota e evite ligações e improviso.',
+          highlight: 'Tudo preparado antes da visita.',
+          subcopy: 'Partners recebem briefing completo no celular; Clients confirmam em segundos.',
+        },
+        {
+          title: 'Portal com a cara da sua marca.',
+          description: 'Contratos, fotos, medidores e pop-up “Sua empresa parceira” em um toque.',
+          highlight: 'Experiência VIP para Clients.',
+          subcopy: 'Compartilhe novidades, antes/depois e mantenha o relacionamento sempre ativo.',
+        },
+      ],
+      primaryCta: 'Começar agora',
+      ownerBtn: 'Sou Owner ou Partner',
+      clientBtn: 'Sou Client',
+    },
+    workSprawl: {
+      badge: 'Acabe com o Work Sprawl',
+      title: 'Menos apps. Mais foco em quem entrega.',
+      description:
+        'Sem Client Up, sua operação se perde em apps, IA e contexto espalhados. Com ele, SMS, contratos e dashboards vivem em um fluxo contínuo.',
+      cards: [
+        {
+          title: 'App Sprawl',
+          description: 'Derruba a colaboração quando cada time usa um app.',
+          accent: 'text-emerald-500',
+        },
+        {
+          title: 'AI Sprawl',
+          description: 'Mata a produtividade quando cada IA guarda dados em um silo.',
+          accent: 'text-sky-500',
+        },
+        {
+          title: 'Context Sprawl',
+          description: 'Acaba com a visibilidade quando ninguém sabe onde está a informação.',
+          accent: 'text-amber-500',
+        },
+      ],
+    },
+    featureMatrix: {
+      badge: 'Everything you need',
+      title: '100+ recursos para Owners, Partners e Clients',
+      description:
+        'Escolha os módulos e mantenha um painel coerente: Projects, Docs, Brain, Chat, automações, formulários, financeiro e mais.',
+    },
+    superAgents: {
+      badge: 'Super Agents™',
+      title: 'Uma nova era de humanos com IA aplicada à operação.',
+      description:
+        'Crie agentes que distribuem tarefas, salvam preferências dos Clients, lembram Partners por SMS e alimentam o financeiro automaticamente.',
+      button: 'Crie seu próprio agent',
+    },
+    ai: {
+      badge: '@Brain',
+      title: 'A única IA que trabalha onde você trabalha.',
+      description:
+        'Use IA para responder perguntas, gerar SMS, resumir visitas e disparar alertas sem sair do Client Up.',
+      cards: [
+        { badge: 'Ambient answers', title: '@Brain Agent', description: 'Assistente 24/7 que busca dados, cria mensagens e responde ao time.' },
+        {
+          badge: 'Contexto em segundos',
+          title: 'Ambient Answers',
+          description: 'Clients não perguntam mais “onde está o link?”. A IA responde direto no chat.',
+        },
+        {
+          badge: 'Nunca mais reatribua manualmente',
+          title: 'Project Manager',
+          description: 'Delegue tarefas, gere checklists e revise status sem abrir planilhas.',
+        },
+      ],
+    },
+    solutions: {
+      badge: 'AI solutions para todo time',
+      title: 'Seu workflow favorito, turbinado com Agents.',
+      description: 'Selecione o tipo de operação e deixe a plataforma sugerir automações, checklists e comunicações.',
+      tabs: ['Projects', 'Marketing', 'Product & Eng', 'IT', 'HR', 'Leadership'],
+      highlights: [
+        { title: 'Intake Agent padroniza kickoffs', description: 'Centralize briefings e checklists iniciais sem formulários soltos.' },
+        { title: 'Assign Agent define donos das tarefas', description: 'Regras inteligentes distribuem responsabilidades conforme o plano.' },
+        { title: 'Timeline Agent vigia entregas', description: 'Alertas inteligentes antes de qualquer atraso na agenda.' },
+        { title: 'Live Answers mantém todos informados', description: 'Clients recebem respostas na hora via portal, sem precisar ligar.' },
+      ],
+    },
+    finalCta: {
+      badge: 'Time is priceless',
+      title: 'Cliente certo, Partner certo, tudo pronto em um só painel.',
+      description:
+        'Economize horas por semana com SMS inteligentes, contratos dinâmicos e portal do Client com a cara da sua marca.',
+      primary: 'Abrir pop-up de login',
+      client: 'Entrar como Client',
+      owner: 'Criar conta Owner',
+      note: 'Experimente hoje. Sem cartão, cancelamento simples.',
+    },
+    personaCopy: {
+      OWNER: {
+        title: 'Entrar como Owner',
+        description:
+          'Use seu acesso de Owner para controlar seu cleaning business: Clients, Partners, contratos, agenda e financeiro.',
+      },
+      HELPER: {
+        title: 'Entrar como Partner',
+        description:
+          'Use o e-mail e senha enviados pelo Owner para ver sua rota do dia, recados por SMS e checklists.',
+      },
+      CLIENT: {
+        title: 'Entrar como Client',
+        description: 'Use o e-mail onde você recebe confirmações para acompanhar suas limpezas, fotos e contratos.',
+      },
+    },
+    mismatchMessages: {
+      OWNER: 'Este e-mail pertence a um perfil de Partner ou Client. Escolha a opção correta para entrar.',
+      HELPER: 'Este e-mail está vinculado ao painel completo de Owner. Volte e escolha “Owner”.',
+      CLIENT: 'Este e-mail está associado ao painel interno (Owner ou Partner). Use a opção correta.',
+    },
+    modal: {
+      ownerBadge: 'Painel do Owner / Partner',
+      ownerSubtitle: 'Entre para controlar sua operação',
+      ownerDescription: 'Escolha Owner ou Partner para acessar agenda, SMS e portal interno.',
+      clientBadge: 'Portal do Client',
+      clientSubtitle: 'Entre para acompanhar suas visitas',
+      clientDescription: 'Use o e-mail onde recebe confirmações. Você verá timeline, fotos e contratos.',
+      question: 'Como você usa o Client Up?',
+      personaPrompt: 'Selecione o perfil que corresponde ao seu acesso.',
+      infoBoxTitle: 'Precisa de ajuda?',
+      forgotPassword: 'Esqueceu a senha?',
+      createOwner: 'Criar conta como Owner',
+    },
+    form: {
+      emailPlaceholder: 'E-mail de acesso',
+      passwordPlaceholder: 'Senha',
+      submitIdle: 'Entrar agora',
+      submitLoading: 'Entrando...',
+    },
+    errors: {
+      default: 'Não foi possível fazer login. Verifique suas credenciais.',
+    },
   },
 };
 
@@ -31,16 +412,17 @@ const roleRedirect: Record<UserRole, string> = {
   CLIENT: '/client/home',
 };
 
-const mismatchMessages: Record<LoginPersona, string> = {
-  OWNER: 'Este e-mail pertence a um perfil de Partner ou Client. Escolha a opção correta para entrar.',
-  HELPER: 'Este e-mail está vinculado ao painel completo de Owner. Volte e escolha “Owner”.',
-  CLIENT: 'Este e-mail está associado ao painel interno (Owner ou Partner). Use a opção correta para entrar.',
-};
-
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated, user, resetSession } = useAuth();
+  const [language, setLanguage] = useState<Language>(() => getInitialLanguage());
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    }
+  }, [language]);
+  const t = translations[language];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,26 +430,8 @@ const Login = () => {
   const [persona, setPersona] = useState<LoginPersona>('OWNER');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginSegment, setLoginSegment] = useState<'ownerPartner' | 'client' | null>(null);
-  const mobileSlides = [
-    {
-      title: 'Sua limpeza em um só lugar.',
-      description: 'Com Partners e Clients alinhados por SMS, sobra tempo para crescer o negócio.',
-      highlight: 'Ganhe um dia livre por semana.',
-      subcopy: 'Painel focado, SMS automáticos e portal para Clients com a cara da sua marca.',
-    },
-    {
-      title: 'Operação guiada por SMS.',
-      description: 'Envie recados inteligentes antes da rota e evite ligações e improviso.',
-      highlight: 'Tudo preparado antes da visita.',
-      subcopy: 'Partners recebem briefing completo no celular; Clients confirmam em segundos.',
-    },
-    {
-      title: 'Portal com a cara da sua marca.',
-      description: 'Contratos, fotos, medidores e pop-up “Sua empresa parceira” em um toque.',
-      highlight: 'Experiência VIP para Clients.',
-      subcopy: 'Compartilhe novidades, antes/depois e mantenha o relacionamento sempre ativo.',
-    },
-  ];
+  const navigationLinks = t.navLinks;
+  const mobileSlides = t.mobile.slides;
   const [mobileSlideIndex, setMobileSlideIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
@@ -103,9 +467,7 @@ const Login = () => {
       }, 0);
     } catch (err: any) {
       const message =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        'Não foi possível fazer login. Verifique suas credenciais.';
+        err?.response?.data?.error || err?.response?.data?.message || t.errors.default;
       setError(message);
     } finally {
       setLoading(false);
@@ -123,6 +485,7 @@ const Login = () => {
     setShowLoginModal(true);
   };
 
+  const personaCopy = t.personaCopy;
   const personaOptions =
     loginSegment === 'client'
       ? [{ key: 'CLIENT', label: 'Client' }]
@@ -134,11 +497,35 @@ const Login = () => {
     loginSegment === 'client'
       ? personaCopy.CLIENT
       : personaCopy[persona === 'CLIENT' ? 'OWNER' : persona];
+  const mismatchMessages = t.mismatchMessages;
+  const trustLogos = ['Wayfair', 'Deloitte', 'Pfizer', 'Adobe', 'American Express', 'NBCUniversal'];
+  const workflowKnots = t.workSprawl.cards;
+  const featureMatrixItems = [
+    'Projects',
+    'Docs',
+    'Brain',
+    'Chat',
+    'Forms',
+    'Automation',
+    'Proofing',
+    'Templates',
+    'Time Tracking',
+    'Dashboards',
+    'Mind Maps',
+    'Integrations',
+  ];
 
-  const navigationLinks = [
-    { href: '#benefits', label: 'Benefícios' },
-    { href: '#feature-preview', label: 'Preview do app' },
-    { href: '#testimonials', label: 'Feedbacks' },
+  const aiCards = t.ai.cards;
+  const solutionTabs = t.solutions.tabs;
+  const solutionHighlights = t.solutions.highlights;
+  const heroChips = [
+    { icon: MessageSquare, label: t.hero.chips.sms, accent: 'text-emerald-500' },
+    { icon: FileText, label: t.hero.chips.contracts, accent: 'text-sky-500' },
+    { icon: Smartphone, label: t.hero.chips.portal, accent: 'text-amber-500' },
+  ];
+  const languageOptions: { key: Language; label: string }[] = [
+    { key: 'en', label: 'EN' },
+    { key: 'pt', label: 'PT' },
   ];
 
   const goToSlide = (index: number) => {
@@ -165,7 +552,7 @@ const Login = () => {
       <header className="hidden sm:block w-full border-b border-white/70 bg-white/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <img src={logoFull} alt="Client Pro logo" className="h-12 w-auto" />
+            <img src={logoFull} alt="Client Up logo" className="h-16 w-auto" />
           </div>
           <nav className="flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-600">
             {navigationLinks.map((link) => (
@@ -173,21 +560,53 @@ const Login = () => {
                 {link.label}
               </a>
             ))}
-            <button
-              type="button"
-              onClick={() => openLoginModal('ownerPartner')}
-              className="inline-flex items-center px-4 py-2 rounded-full bg-primary-600 text-white text-xs uppercase tracking-wide"
-            >
-              Fazer login
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="inline-flex items-center rounded-full border border-gray-200 overflow-hidden text-xs font-semibold">
+                {languageOptions.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setLanguage(option.key)}
+                    className={`px-2.5 py-1 transition ${
+                      language === option.key ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => openLoginModal('ownerPartner')}
+                className="inline-flex items-center px-4 py-2 rounded-full bg-primary-600 text-white text-xs uppercase tracking-wide"
+              >
+                {t.loginButton}
+              </button>
+            </div>
           </nav>
         </div>
       </header>
 
-      <section className="sm:hidden bg-[#03050c] text-white pt-10 pb-16">
-        <div className="max-w-md mx-auto flex flex-col gap-8">
+      <section className="sm:hidden bg-[#03050c] text-white pt-8 pb-10">
+        <div className="max-w-sm mx-auto flex flex-col gap-6 px-4">
+          <div className="flex justify-center">
+            <div className="inline-flex items-center rounded-full border border-white/20 overflow-hidden text-[11px] font-semibold">
+              {languageOptions.map((option) => (
+                <button
+                  key={`mobile-lang-${option.key}`}
+                  type="button"
+                  onClick={() => setLanguage(option.key)}
+                  className={`px-3 py-1 transition ${
+                    language === option.key ? 'bg-white text-gray-900' : 'text-white/60'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div
-            className="relative overflow-hidden rounded-[40px] border border-white/10 bg-gradient-to-b from-[#06090f] via-[#05070c] to-[#020307]"
+            className="relative overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-b from-[#06090f] via-[#05070c] to-[#020307]"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
@@ -196,24 +615,24 @@ const Login = () => {
               style={{ transform: `translateX(-${mobileSlideIndex * 100}%)` }}
             >
               {mobileSlides.map((slide) => (
-                <div key={slide.title} className="w-full flex-shrink-0 flex flex-col items-center gap-8 py-10 text-center px-6">
-                  <div className="space-y-3">
-                    <img src={logoFull} alt="Client Pro" className="h-9 mx-auto" />
-                    <p className="text-xs uppercase tracking-[0.3em] text-emerald-300 font-semibold">Client Pro</p>
-                    <h1 className="text-3xl font-bold">{slide.title}</h1>
+                <div
+                  key={slide.title}
+                  className="w-full flex-shrink-0 flex flex-col items-center gap-6 py-8 text-center px-4"
+                >
+                  <div className="space-y-2">
+                    <img src={logoFull} alt="Client Up" className="h-10 mx-auto" />
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-300 font-semibold">
+                      {t.mobile.brandTag}
+                    </p>
+                    <h1 className="text-2xl font-bold leading-tight">{slide.title}</h1>
                     <p className="text-sm text-white/70">{slide.description}</p>
                   </div>
-                  <div className="w-56 h-56 rounded-[40px] border border-white/10 bg-gradient-to-br from-white/8 via-white/0 to-transparent shadow-[0_30px_60px_rgba(0,0,0,0.45)] flex items-center justify-center overflow-hidden">
-                    <img src={loginHero} alt="Client Pro app preview" className="w-full h-full object-contain" />
+                  <div className="w-48 h-48 rounded-[32px] border border-white/10 bg-gradient-to-br from-white/8 via-white/0 to-transparent shadow-[0_20px_45px_rgba(0,0,0,0.45)] flex items-center justify-center overflow-hidden">
+                    <img src={loginHero} alt="Client Up app preview" className="w-full h-full object-contain" />
                   </div>
-                  <div className="space-y-3">
-                    <p className="text-lg font-semibold">{slide.highlight}</p>
+                  <div className="space-y-2">
+                    <p className="text-base font-semibold">{slide.highlight}</p>
                     <p className="text-sm text-white/70">{slide.subcopy}</p>
-                    <div className="flex items-center justify-center gap-1 text-white/35 text-xs">
-                      {['•', '•', '•'].map((dot, index) => (
-                        <span key={`${slide.title}-dot-${index}`}>{dot}</span>
-                      ))}
-                    </div>
                   </div>
                 </div>
               ))}
@@ -232,467 +651,301 @@ const Login = () => {
               />
             ))}
           </div>
-          <div className="w-full flex flex-col gap-3 px-6">
+          <div className="w-full flex flex-col gap-3">
             <button
               type="button"
               onClick={() => openLoginModal('ownerPartner')}
-              className="w-full rounded-full bg-emerald-500 text-gray-900 font-semibold py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)]"
+              className="w-full rounded-2xl bg-emerald-500 text-gray-900 font-semibold py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)]"
             >
-              Get started
+              {t.mobile.primaryCta}
             </button>
-            <div className="flex gap-2">
+            <div className="flex gap-2 text-sm">
               <button
-                className="flex-1 rounded-2xl border border-white/20 py-3 text-sm"
+                className="flex-1 rounded-2xl border border-white/20 py-2.5"
                 onClick={() => openLoginModal('ownerPartner')}
               >
-                Sou Owner ou Partner
+                {t.mobile.ownerBtn}
               </button>
               <button
-                className="flex-1 rounded-2xl border border-white/20 py-3 text-sm"
+                className="flex-1 rounded-2xl border border-white/20 py-2.5"
                 onClick={() => openLoginModal('client')}
               >
-                Sou Client
+                {t.mobile.clientBtn}
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* HERO PRINCIPAL – desktop */}
-      <section className="hidden sm:block relative overflow-hidden bg-[#03050c]">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -left-10 w-72 h-72 bg-[#0f172a] rounded-full blur-[160px]" />
-          <div className="absolute top-0 right-[-40px] w-80 h-80 bg-[#065f46] rounded-full blur-[180px]" />
-          <div className="absolute bottom-[-140px] left-1/2 -translate-x-1/2 w-[150%] h-56 bg-gradient-to-t from-[#03050c] via-transparent to-transparent blur-[140px]" />
-        </div>
-
-        <div className="relative max-w-6xl mx-auto px-6 pt-16 pb-20 grid gap-10 lg:grid-cols-[1.3fr,1fr] items-center text-white">
-          {/* Texto / brand */}
-          <div className="space-y-7 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-emerald-200 text-xs font-semibold shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
-              <span>Operating system para o seu cleaning business</span>
-            </div>
-
+      {/* HERO DESKTOP */}
+      <section id="hero" className="hidden sm:block bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-16 grid gap-12 lg:grid-cols-[1.2fr,0.9fr] items-center">
+          <div className="space-y-6 text-center lg:text-left">
+            <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gray-100 text-xs font-semibold text-gray-700">
+              {t.hero.badge}
+            </p>
             <div className="space-y-4">
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                Seu cleaning business, seus Partners e Clients em um só painel.
-              </h1>
-              <p className="text-base lg:text-lg text-white/70 max-w-2xl mx-auto lg:mx-0">
-                Planeje SMS, contratos e rotas num único lugar. No mobile ou desktop, o Client Pro centraliza tudo e mantém Owners, Partners e Clients sincronizados.
-              </p>
+              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">{t.hero.title}</h1>
+              <p className="text-base lg:text-lg text-gray-600 max-w-2xl mx-auto lg:mx-0">{t.hero.description}</p>
             </div>
-
-            <div className="flex flex-wrap items-center gap-3 text-sm text-white/75 justify-center lg:justify-start">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
-                <MessageSquare size={16} className="text-emerald-300" />
-                SMS automáticos
-              </div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
-                <FileText size={16} className="text-sky-300" />
-                Contratos com timeline
-              </div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
-                <Smartphone size={16} className="text-amber-300" />
-                Portal do Client
-              </div>
+            <div className="flex flex-wrap items-center gap-3 justify-center lg:justify-start text-sm text-gray-700">
+              {heroChips.map((chip) => (
+                <span
+                  key={chip.label}
+                  className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1"
+                >
+                  <chip.icon size={16} className={chip.accent} /> {chip.label}
+                </span>
+              ))}
             </div>
-
-            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => openLoginModal('ownerPartner')}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-500 text-gray-900 px-4 py-3 text-sm font-semibold shadow-[0_20px_40px_rgba(34,197,94,0.35)] hover:bg-primary-400 transition"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gray-900 text-white px-4 py-3 text-sm font-semibold shadow-lg hover:bg-black"
               >
-                Sou Owner ou Partner
+                {t.hero.primaryCta}
               </button>
               <button
                 type="button"
                 onClick={() => openLoginModal('client')}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 text-white px-4 py-3 text-sm font-semibold border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:bg-white/15 transition"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-gray-900 px-4 py-3 text-sm font-semibold border border-gray-200 hover:border-gray-300"
               >
-                Sou Client
+                {t.hero.secondaryCta}
               </button>
             </div>
-            <p className="text-xs text-white/50">
-              Abriremos um pop-up seguro para você entrar. Escolha seu tipo de acesso.
-            </p>
+            <p className="text-xs text-gray-500">{t.hero.note}</p>
           </div>
 
-          {/* Espaço ilustrativo */}
-          <div className="relative w-full max-w-md mx-auto">
-            <div className="relative rounded-[40px] bg-gradient-to-b from-white to-white/85 border border-white/20 shadow-[0_30px_90px_rgba(3,5,12,0.8)] p-6">
-              <div className="bg-[#03050c] rounded-[32px] p-6 flex flex-col items-center gap-6">
-                <div className="w-60 h-60 rounded-[36px] border border-white/5 bg-gradient-to-b from-white/20 via-white/5 to-transparent flex items-center justify-center shadow-[0_30px_60px_rgba(0,0,0,0.45)]">
-                  <img src={loginHero} alt="Client Pro preview" className="w-48 h-48 object-contain" />
-                </div>
-                <div className="flex flex-col gap-2 text-left w-full text-white/85">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-2">
-                    <MessageSquare size={16} className="text-emerald-300" />
-                    SMS para Partners antes da rota.
+          <div className="relative">
+            <div className="rounded-[40px] bg-gradient-to-br from-[#ff8cf0] via-[#8e7dff] to-[#5dd6ff] p-[2px] shadow-[0_30px_80px_rgba(15,23,42,0.25)]">
+              <div className="rounded-[38px] bg-white text-gray-900 p-6 space-y-4">
+                <div className="rounded-3xl bg-gradient-to-br from-[#0e0f29] via-[#121434] to-[#070814] px-6 py-8 text-white space-y-6">
+                  <div className="text-left space-y-1">
+                    <p className="text-sm font-semibold text-white/60 uppercase tracking-wide">Hoje às 9h</p>
+                    <p className="text-2xl font-bold">Cleaning schedule</p>
+                    <p className="text-sm text-white/70">3 visitas · 2 Partners · $420 em receita</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-2">
-                    <FileText size={16} className="text-sky-300" />
-                    Contratos com addons e assinatura.
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-2">
-                    <Smartphone size={16} className="text-amber-300" />
-                    Portal com antes/depois e feedback.
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -top-6 -left-6 rounded-2xl bg-white text-gray-900 text-xs font-semibold px-4 py-2 shadow-lg flex items-center gap-2">
-                <span className="text-emerald-500">●</span> Hoje: 3 visitas confirmadas
-              </div>
-              <div className="absolute -bottom-6 right-0 rounded-2xl bg-white/90 text-gray-900 text-xs font-semibold px-4 py-2 shadow-lg flex items-center gap-2">
-                ⭐ Portal do Client atualizado
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SEÇÃO “O que você obtém com Client Pro” – cards maiores */}
-      <section id="benefits" className="bg-white py-12 md:py-16 hidden lg:block">
-        <div className="max-w-5xl mx-auto px-4 space-y-8">
-          <div className="text-center space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
-              O que você obtém com Client Pro
-            </p>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">Tudo que seu cleaning business precisa num só app</p>
-            <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
-              Do primeiro contrato ao último SMS do dia, o Client Pro conecta Owners, Partners e Clients em um fluxo só.
-            </p>
-          </div>
-
-          <div className="flex gap-3 overflow-x-auto sm:grid sm:grid-cols-3 sm:overflow-visible snap-x snap-mandatory pb-4 sm:pb-0">
-            <div className="bg-[#fde8d3] rounded-2xl border border-[#fbd1ad] px-4 py-4 text-left shadow-sm space-y-2 flex-shrink-0 w-64 sm:w-auto snap-center">
-              <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg">📍</div>
-              <p className="text-xs font-semibold text-[#d97706] uppercase tracking-wide">Agenda & rotas</p>
-              <p className="text-sm text-gray-700">Veja hoje e amanhã para cada Partner, sem abrir mil conversas.</p>
-            </div>
-            <div className="bg-[#e8f7f1] rounded-2xl border border-[#c9ecdf] px-4 py-4 text-left shadow-sm space-y-2 flex-shrink-0 w-64 sm:w-auto snap-center">
-              <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg">💬</div>
-              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">SMS como canal oficial</p>
-              <p className="text-sm text-gray-700">Recados ligados às visitas, direto no bolso de Partners e Clients.</p>
-            </div>
-            <div className="bg-[#e9f0ff] rounded-2xl border border-[#cadcff] px-4 py-4 text-left shadow-sm space-y-2 flex-shrink-0 w-64 sm:w-auto snap-center">
-              <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg">⭐</div>
-              <p className="text-xs font-semibold text-sky-600 uppercase tracking-wide">Portal do Client</p>
-              <p className="text-sm text-gray-700">Contratos, fotos e histórico num lugar bonito com a cara da sua marca.</p>
-            </div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="flex gap-4 bg-[#fff0e0] rounded-2xl p-5 border border-[#f9d3ad]">
-              <div className="mt-1 w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-500 text-lg">
-                📅
-              </div>
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-gray-900">Agenda visual e contratos conectados</p>
-                <p className="text-sm text-gray-600">
-                  Configure frequência, valor e “o que está incluído” uma vez. O contrato vira checklist para Partners e
-                  informação clara para Clients.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 bg-[#e7faf2] rounded-2xl p-5 border border-[#c1eedc]">
-              <div className="mt-1 w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-500 text-lg">
-                💬
-              </div>
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-gray-900">Operação guiada por SMS</p>
-                <p className="text-sm text-gray-600">
-                  Cada visita pode gerar recados por SMS com foco claro: rota, preferências do Client e próximos passos
-                  para o Partner.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 bg-[#eef3ff] rounded-2xl p-5 border border-[#cfdcff]">
-              <div className="mt-1 w-10 h-10 rounded-xl bg-white flex items-center justify-center text-sky-500 text-lg">
-                ⭐
-              </div>
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-gray-900">Experiência VIP para o Client</p>
-                <p className="text-sm text-gray-600">
-                  Portal com timeline, fotos antes e depois, medalhas de feedback e o pop-up “Sua empresa parceira” com a cara
-                  da sua marca.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 bg-[#f5edff] rounded-2xl p-5 border border-[#e0d0ff]">
-              <div className="mt-1 w-10 h-10 rounded-xl bg-white flex items-center justify-center text-purple-500 text-lg">
-                📊
-              </div>
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-gray-900">Visão clara de custos e lucro</p>
-                <p className="text-sm text-gray-600">
-                  Veja quanto cada Partner recebe, custos extras e quanto realmente sobra por Client e por tipo de serviço.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 text-left shadow-sm">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Owners que já organizam tudo com o Client Pro
-            </p>
-            <p className="text-sm text-gray-700">
-              “Antes eu vivia perdida em grupos e prints. Agora mando um SMS pelo Client Pro e cada Partner sabe exatamente o que
-              fazer em cada Client.”
-            </p>
-            <p className="mt-1 text-xs text-gray-500">Ana, Owner de um cleaning business residencial</p>
-          </div>
-        </div>
-      </section>
-
-      {/* SEÇÃO “Veja o Client Pro em ação” – prévias estilo telas de app */}
-      <section id="feature-preview" className="bg-[#f4f6fb] py-12 md:py-16 border-t border-gray-100 hidden lg:block">
-        <div className="max-w-6xl mx-auto px-4 space-y-8">
-          <div className="text-center space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
-              Veja o Client Pro em ação
-            </p>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">Como Owners, Partners e Clients enxergam o app</p>
-            <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
-              Painéis pensados para cada papel na operação: você vê o todo, Partners veem a rota e Clients veem a experiência.
-            </p>
-          </div>
-
-          <div className="flex gap-4 overflow-x-auto md:grid md:grid-cols-3 md:overflow-visible snap-x snap-mandatory pb-4 md:pb-0">
-            {/* Owner preview */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center flex-shrink-0 w-72 md:w-auto snap-center">
-              <p className="text-xs font-semibold text-primary-600 uppercase tracking-wide mb-2">Owner view</p>
-              <div className="relative w-full max-w-[260px] aspect-[9/16] rounded-[32px] bg-gray-900/5 border border-gray-200 shadow-inner overflow-hidden">
-                <div className="absolute inset-x-8 top-4 h-2 rounded-full bg-gray-200" />
-                <div className="absolute inset-x-6 top-8 bottom-6 rounded-2xl bg-white overflow-hidden flex flex-col">
-                  <div className="px-4 pt-3 pb-2 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hoje</p>
-                    <p className="text-sm font-semibold text-gray-900">Agenda & SMS</p>
-                  </div>
-                  <div className="flex-1 overflow-hidden px-3 py-2 space-y-2">
-                    <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2">
+                  <div className="space-y-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-semibold text-gray-900">Casa Sarah</p>
-                        <p className="text-[11px] text-gray-500">08:30 · Partner Ana</p>
+                        <p className="font-semibold">Sarah · Standard clean</p>
+                        <p className="text-xs text-white/60">SMS enviado com foco em cozinha</p>
                       </div>
-                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        SMS enviado
-                      </span>
+                      <span className="text-xs text-emerald-300">Done</span>
                     </div>
-                    <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-semibold text-gray-900">Office Main St.</p>
-                        <p className="text-[11px] text-gray-500">10:00 · Partner Lucas</p>
+                        <p className="font-semibold">Office Main St.</p>
+                        <p className="text-xs text-white/60">Contrato atualizado + fotos</p>
                       </div>
-                      <span className="text-[11px] text-gray-500">Pronto para SMS</span>
-                    </div>
-                    <div className="mt-2 rounded-xl border border-dashed border-gray-200 px-3 py-2">
-                      <p className="text-[11px] text-gray-500">
-                        Veja quanto cada visita rende e quanto vai para cada Partner.
-                      </p>
+                      <span className="text-xs text-amber-300">Next</span>
                     </div>
                   </div>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-gray-600 text-center max-w-[220px]">
-                Donos enxergam rotas, contratos e SMS em um painel só.
-              </p>
-            </div>
-
-            {/* Partner preview */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center flex-shrink-0 w-72 md:w-auto snap-center">
-              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-2">Partner view</p>
-              <div className="relative w-full max-w-[260px] aspect-[9/16] rounded-[32px] bg-gray-900/5 border border-gray-200 shadow-inner overflow-hidden">
-                <div className="absolute inset-x-8 top-4 h-2 rounded-full bg-gray-200" />
-                <div className="absolute inset-x-6 top-8 bottom-6 rounded-2xl bg-white overflow-hidden flex flex-col">
-                  <div className="px-4 pt-3 pb-2 border-b border-gray-100 flex items-center justify-between">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white text-gray-900 flex items-center justify-center font-semibold">
+                      <img src={loginHero} alt="Client Up app" className="w-10 h-10 object-contain" />
+                    </div>
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Today · Partner</p>
-                      <p className="text-sm font-semibold text-gray-900">3 visits · $210 payout</p>
-                    </div>
-                    <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold">
-                      On route
-                    </span>
-                  </div>
-                  <div className="flex-1 overflow-hidden px-3 py-2 space-y-2">
-                    <div className="rounded-xl border border-gray-100 px-3 py-2">
-                      <p className="text-xs font-semibold text-gray-900">Sarah · Standard clean</p>
-                      <p className="text-[11px] text-gray-500">SMS: “Foque na cozinha e quarto das crianças.”</p>
-                      <ul className="mt-1 space-y-0.5 text-[11px] text-gray-600">
-                        <li>▢ Dusting & vacuum</li>
-                        <li>▢ Kitchen counters & sink</li>
-                        <li>▢ Bathroom reset</li>
-                      </ul>
-                    </div>
-                    <div className="rounded-xl bg-gray-50 px-3 py-2 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold text-gray-900">Next · Office Main St.</p>
-                        <p className="text-[11px] text-gray-500">ETA 32 min · route via Maps</p>
-                      </div>
-                      <span className="text-[11px] text-primary-700 font-semibold">Open route</span>
+                      <p className="text-xs uppercase tracking-wide text-white/60">Portal Client</p>
+                      <p className="text-sm font-semibold">“Antes e depois” enviados</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-gray-600 text-center max-w-[220px]">
-                Partners recebem rota, checklist e recados por SMS conectados à visita.
-              </p>
             </div>
-
-            {/* Client preview */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col items-center flex-shrink-0 w-72 md:w-auto snap-center">
-              <p className="text-xs font-semibold text-sky-600 uppercase tracking-wide mb-2">Client view</p>
-              <div className="relative w-full max-w-[260px] aspect-[9/16] rounded-[32px] bg-gray-900/5 border border-gray-200 shadow-inner overflow-hidden">
-                <div className="absolute inset-x-8 top-4 h-2 rounded-full bg-gray-200" />
-                <div className="absolute inset-x-6 top-8 bottom-6 rounded-2xl bg-white overflow-hidden flex flex-col">
-                  <div className="px-4 pt-3 pb-2 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Client portal</p>
-                    <p className="text-sm font-semibold text-gray-900">Próxima visita · Quinta, 9h</p>
-                  </div>
-                  <div className="flex-1 overflow-hidden px-3 py-2 space-y-2">
-                    <div className="rounded-xl bg-primary-50 px-3 py-2">
-                      <p className="text-xs font-semibold text-primary-800">Sua empresa parceira</p>
-                      <p className="text-[11px] text-primary-800/80">
-                        Equipe treinada, comunicação por SMS e foco nos detalhes da sua casa.
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-gray-100 px-3 py-2">
-                      <p className="text-xs font-semibold text-gray-900">Plano & contrato</p>
-                      <p className="text-[11px] text-gray-500">Weekly · $140 / visit · inclui cozinha, banheiros e areas sociais.</p>
-                    </div>
-                    <div className="rounded-xl bg-gray-50 px-3 py-2">
-                      <p className="text-xs font-semibold text-gray-900 mb-1">Última visita</p>
-                      <p className="text-[11px] text-gray-500">Fotos salvas e medalha “Cozinha impecável” recebida.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-gray-600 text-center max-w-[220px]">
-                Clients enxergam o que foi combinado, histórico de visitas e sua marca em destaque.
-              </p>
+            <div className="absolute -top-6 -left-6 bg-white shadow-xl rounded-2xl px-4 py-2 text-xs font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Operação estável hoje
+            </div>
+            <div className="absolute -bottom-6 right-0 bg-gray-900 text-white shadow-xl rounded-2xl px-4 py-2 text-xs font-semibold flex items-center gap-2">
+              ⭐ Client portal atualizado
             </div>
           </div>
         </div>
       </section>
 
-      {/* Seção de depoimentos */}
-      <section id="testimonials" className="bg-[#f1f5ff] py-12 md:py-16 hidden lg:block">
-        <div className="max-w-5xl mx-auto px-4 space-y-8">
+
+
+      {/* Logo trust row */}
+      <section className="hidden sm:block bg-white">
+        <div className="max-w-6xl mx-auto px-6 py-8 border-b border-gray-100 flex flex-wrap items-center justify-center gap-6 text-gray-400 text-xs font-semibold tracking-wide uppercase">
+          {trustLogos.map((logo) => (
+            <span key={logo} className="text-gray-400">{logo}</span>
+          ))}
+        </div>
+      </section>
+
+      {/* Work sprawl narrative */}
+      <section id="platform" className="hidden sm:block bg-white py-16">
+        <div className="max-w-5xl mx-auto px-6 text-center space-y-10">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t.workSprawl.badge}</p>
+            <h2 className="text-3xl font-bold text-gray-900">{t.workSprawl.title}</h2>
+            <p className="text-gray-600 max-w-3xl mx-auto">{t.workSprawl.description}</p>
+          </div>
+          <div className="relative">
+            <div className="h-2 bg-gray-100 rounded-full" />
+            <div className="absolute inset-0 flex items-center justify-between px-4">
+              {workflowKnots.map((knot) => (
+                <div
+                  key={knot.title}
+                  className="w-32 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm text-left"
+                >
+                  <p className={`text-xs font-semibold ${knot.accent}`}>{knot.title}</p>
+                  <p className="text-[11px] text-gray-500 mt-1">{knot.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature matrix */}
+      <section className="hidden sm:block bg-gray-50 py-16">
+        <div className="max-w-6xl mx-auto px-6 space-y-8">
           <div className="text-center space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">Feedbacks reais</p>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">Owners e Partners que já usam o Client Pro</p>
-            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-              A cada nova limpeza, menos improviso e mais padrão. Veja como o painel mudou a rotina deles.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t.featureMatrix.badge}</p>
+            <h2 className="text-3xl font-bold text-gray-900">{t.featureMatrix.title}</h2>
+            <p className="text-gray-600 max-w-3xl mx-auto">{t.featureMatrix.description}</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {featureMatrixItems.map((feature, index) => {
+              const highlight = index < 4;
+              return (
+                <div
+                  key={feature}
+                  className={`rounded-2xl px-4 py-5 text-center text-sm font-semibold ${
+                    highlight
+                      ? 'bg-white border border-gray-100 text-gray-900 shadow-sm'
+                      : 'bg-gray-100/70 border border-transparent text-gray-500'
+                  }`}
+                >
+                  {feature}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Super Agents */}
+      <section id="agents" className="hidden sm:block bg-white py-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="rounded-[40px] bg-gradient-to-br from-[#ff8ef2] via-[#ff7b7b] to-[#ffa64d] text-white p-10 relative overflow-hidden">
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at top, #fff, transparent 55%)' }} />
+            <div className="relative grid gap-8 lg:grid-cols-[1.1fr,0.9fr] items-center">
+              <div className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em]">{t.superAgents.badge}</p>
+                <h2 className="text-3xl font-bold leading-tight">{t.superAgents.title}</h2>
+                <p className="text-sm text-white/80">{t.superAgents.description}</p>
+                <button
+                  type="button"
+                  onClick={() => openLoginModal('ownerPartner')}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-gray-900 px-6 py-3 text-sm font-semibold"
+                >
+                  {t.superAgents.button}
+                </button>
+              </div>
+              <div className="rounded-3xl bg-white/10 border border-white/30 p-6 space-y-4 backdrop-blur">
+                <div className="rounded-2xl bg-white/90 text-gray-900 px-4 py-3 shadow-lg">
+                  <p className="text-xs font-semibold text-gray-500">Agent status</p>
+                  <p className="text-lg font-semibold">Delegando qualquer tarefa em segundos</p>
+                </div>
+                <div className="rounded-2xl bg-white/10 border border-white/30 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-white/70">Works 24/7</p>
+                  <p className="text-sm font-semibold">Entrega checklists antes da rota</p>
+                </div>
+                <div className="rounded-2xl bg-white/10 border border-white/30 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-white/70">Infinite memory</p>
+                  <p className="text-sm font-semibold">Guarda preferências fixas dos Clients</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dark AI section */}
+      <section className="hidden sm:block bg-black text-white py-16">
+        <div className="max-w-6xl mx-auto px-6 space-y-10">
+          <div className="text-center space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">{t.ai.badge}</p>
+            <h2 className="text-3xl font-bold">{t.ai.title}</h2>
+            <p className="text-white/70 max-w-3xl mx-auto">{t.ai.description}</p>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {aiCards.map((card) => (
+              <div key={card.title} className="rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/10 p-6 space-y-3">
+                <p className="text-xs uppercase tracking-wide text-white/50">{card.badge}</p>
+                <h3 className="text-xl font-semibold">{card.title}</h3>
+                <p className="text-sm text-white/70">{card.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Solutions */}
+      <section id="solutions" className="hidden sm:block bg-white py-16">
+        <div className="max-w-5xl mx-auto px-6 space-y-8">
+          <div className="text-center space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t.solutions.badge}</p>
+            <h2 className="text-3xl font-bold text-gray-900">{t.solutions.title}</h2>
+            <p className="text-gray-600">{t.solutions.description}</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {solutionTabs.map((tab, index) => (
+              <span
+                key={tab}
+                className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                  index === 0 ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {tab}
+              </span>
+            ))}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {[
-              {
-                name: 'Carla Oliveira',
-                role: 'Owner · 12 Partners · 260 Clients',
-                text: '“Eu levava 2h toda segunda para montar rotas. Agora envio SMS direto do Client Pro e cada Partner já sabe o foco do dia.”',
-              },
-              {
-                name: 'Lucas Mendes',
-                role: 'Partner há 3 anos',
-                text: '“Abro meu app, vejo SMS com recados do Owner e sigo a rota. Nunca tinha visto checklist virar pagamento tão rápido.”',
-              },
-              {
-                name: 'Patrícia Lima',
-                role: 'Owner · Especializada em Airbnb',
-                text: '“O portal do Client salvou minha reputação com hosts. Eles veem fotos e contratos, e eu sei quanto cada visita rendeu.”',
-              },
-              {
-                name: 'Thiago Costa',
-                role: 'Partner & field lead',
-                text: '“Antes eu dependia de prints. Agora recebo SMS com as preferências daquele Client. Entrego mais e ganho bônus.”',
-              },
-            ].map((testimonial) => (
-              <div key={testimonial.name} className="bg-white border border-[#d9e3ff] rounded-2xl p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{testimonial.name}</p>
-                    <p className="text-xs text-gray-500">{testimonial.role}</p>
-                  </div>
-                  <div className="text-amber-400 text-sm">★★★★★</div>
-                </div>
-                <p className="mt-3 text-sm text-gray-700 leading-relaxed">{testimonial.text}</p>
+            {solutionHighlights.map((solution) => (
+              <div key={solution.title} className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 text-left space-y-2">
+                <p className="text-sm font-semibold text-gray-900">{solution.title}</p>
+                <p className="text-sm text-gray-500">{solution.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Seção resultados */}
-      <section className="bg-[#eef4ff] py-12 md:py-16 border-t border-gray-100 hidden lg:block">
-        <div className="max-w-4xl mx-auto px-4 space-y-6 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">Resultados de operações reais</p>
-          <p className="text-2xl md:text-3xl font-bold text-gray-900">“Em 3 meses, organizei 180 visitas e reduzi 40% das falhas.”</p>
-          <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
-            Fran, Owner de uma cleaning company em Austin, usou o Client Pro para sincronizar Partners, Clients e contratos. Ela
-            reduziu refações e aumentou o faturamento por visita com extras bem registrados.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              { label: 'Visitas organizadas', value: '180' },
-              { label: 'SMS enviados automático', value: '320+' },
-              { label: 'Novos contratos assinados', value: '27' },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-2xl bg-white border border-white shadow-lg px-4 py-5 flex flex-col items-center"
-              >
-                <p className="text-3xl font-bold text-primary-600">{stat.value}</p>
-                <p className="text-xs text-gray-500 uppercase tracking-wide mt-2 text-center">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <p className="text-sm text-gray-600">
-              Quer resultados parecidos? Entre como Owner e comece a testar com sua equipe.
-            </p>
+      {/* Final CTA */}
+      <section id="cta" className="hidden sm:block bg-gradient-to-br from-[#06010a] via-[#12061c] to-[#32104d] text-white py-16">
+        <div className="max-w-5xl mx-auto px-6 text-center space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">{t.finalCta.badge}</p>
+          <h2 className="text-3xl font-bold">{t.finalCta.title}</h2>
+          <p className="text-white/70 max-w-3xl mx-auto">{t.finalCta.description}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => openLoginModal('ownerPartner')}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-gray-900 px-6 py-3 text-sm font-semibold"
+            >
+              {t.finalCta.primary}
+            </button>
+            <button
+              type="button"
+              onClick={() => openLoginModal('client')}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white/90"
+            >
+              {t.finalCta.client}
+            </button>
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-600 text-white px-5 py-2 text-sm font-semibold hover:bg-primary-700 transition"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white/90"
             >
-              Criar conta Owner
+              {t.finalCta.owner}
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* CTA final */}
-      <section className="bg-white py-12 hidden lg:block">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="rounded-3xl border border-gray-100 bg-gradient-to-br from-amber-50 via-white to-emerald-50 shadow-lg px-6 py-8 md:px-10 md:py-10 flex flex-col md:flex-row items-center gap-6">
-            <div className="flex-1 text-center md:text-left space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
-                Client Pro inspira com organização & resultado
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                Tenha sua operação na mão, com Partners e Clients no mesmo fluxo.
-              </p>
-              <p className="text-sm text-gray-600">
-                Faça login como Owner para centralizar agenda, SMS, contratos e portal do Client.
-              </p>
-            </div>
-            <div className="flex flex-col items-center gap-3 w-full md:w-auto">
-              <button
-                type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-6 py-3 text-sm font-semibold hover:bg-primary-700 transition"
-              >
-                Abrir pop-up de login
-              </button>
-              <p className="text-[11px] text-gray-500 text-center">
-                Clientes? Use o e-mail onde você recebe confirmações. Partners? Use o acesso enviado pelo Owner.
-              </p>
-            </div>
-          </div>
+          <p className="text-xs text-white/50">{t.finalCta.note}</p>
         </div>
       </section>
 
@@ -711,24 +964,21 @@ const Login = () => {
             </button>
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
-                {loginSegment === 'client' ? 'Portal do Client' : 'Painel do Owner / Partner'}
+                {loginSegment === 'client' ? t.modal.clientBadge : t.modal.ownerBadge}
               </p>
               <p className="text-xl font-semibold text-gray-900">
-                {loginSegment === 'client'
-                  ? 'Entre para acompanhar suas visitas'
-                  : 'Entre para controlar sua operação'}
+                {loginSegment === 'client' ? t.modal.clientSubtitle : t.modal.ownerSubtitle}
               </p>
               <p className="text-sm text-gray-600">
-                {loginSegment === 'client'
-                  ? 'Use o e-mail onde recebe confirmações. Você verá timeline, fotos e contratos.'
-                  : 'Escolha Owner ou Partner para acessar agenda, SMS e portal interno.'}
+                {loginSegment === 'client' ? t.modal.clientDescription : t.modal.ownerDescription}
               </p>
             </div>
 
             <div>
               <p className="text-sm font-semibold text-gray-900 mb-2">
-                Como você usa o Client Pro?
+                {t.modal.question}
               </p>
+              <p className="text-xs text-gray-500 mb-3">{t.modal.personaPrompt}</p>
               <div className={`grid gap-2 ${personaOptions.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 {personaOptions.map((option) => {
                   const active = persona === option.key;
@@ -750,7 +1000,8 @@ const Login = () => {
                 })}
               </div>
               <div className="mt-3 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
-                <p className="text-xs font-semibold text-emerald-700">{personaDescription.title}</p>
+              <p className="text-[10px] uppercase tracking-wide text-emerald-600">{t.modal.infoBoxTitle}</p>
+              <p className="text-xs font-semibold text-emerald-700">{personaDescription.title}</p>
                 <p className="text-[11px] text-emerald-600 mt-1 leading-relaxed">{personaDescription.description}</p>
               </div>
             </div>
@@ -762,7 +1013,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                  placeholder="E-mail de acesso"
+                  placeholder={t.form.emailPlaceholder}
                   required
                 />
               </div>
@@ -772,7 +1023,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                  placeholder="Senha"
+                  placeholder={t.form.passwordPlaceholder}
                   required
                 />
               </div>
@@ -788,20 +1039,20 @@ const Login = () => {
                 disabled={loading}
                 className="w-full flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {loading ? 'Entrando...' : 'Entrar agora'}
+                {loading ? t.form.submitLoading : t.form.submitIdle}
               </button>
             </form>
 
             <div className="text-center">
               <button type="button" className="text-primary-600 text-sm font-semibold hover:underline">
-                Esqueceu a senha?
+                {t.modal.forgotPassword}
               </button>
               <div className="h-px bg-gray-200 my-4" />
               <Link
                 to="/register"
                 className="inline-flex items-center justify-center w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
               >
-                Criar conta como Owner
+                {t.modal.createOwner}
               </Link>
             </div>
           </div>
