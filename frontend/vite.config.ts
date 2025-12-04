@@ -33,7 +33,11 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: true
+        enabled: false
+      },
+      workbox: {
+        cleanupOutdatedCaches: true,
+        navigateFallback: '/index.html'
       }
     })
   ],

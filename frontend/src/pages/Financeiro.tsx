@@ -54,6 +54,7 @@ const Financeiro = () => {
   const [savingPayout, setSavingPayout] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [removingExpenseId, setRemovingExpenseId] = useState<string | null>(null);
+  const [showFinanceTip, setShowFinanceTip] = useState(true);
 
   useEffect(() => {
     fetchFinanceiroData();
@@ -412,6 +413,12 @@ const Financeiro = () => {
     { label: 'Pendentes', value: formatCurrency(costSummary.pendingExpenses) },
   ] as const;
 
+  useEffect(() => {
+    if (!showFinanceTip) return;
+    const timer = window.setTimeout(() => setShowFinanceTip(false), 7000);
+    return () => window.clearTimeout(timer);
+  }, [showFinanceTip]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -422,14 +429,22 @@ const Financeiro = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-      <section className="relative overflow-hidden rounded-none md:rounded-[36px] bg-gradient-to-br from-[#190530] via-[#0e152c] to-[#02201a] text-white -mx-4 md:mx-0 px-4 md:px-0">
-        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between max-w-6xl mx-auto">
+      <section className="relative overflow-hidden rounded-none md:rounded-[40px] bg-gradient-to-br from-[#190530] via-[#0e152c] to-[#02201a] text-white shadow-[0_30px_90px_rgba(3,5,12,0.45)] -mx-4 md:mx-0 px-4 md:px-0">
+        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-4">
             <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Finance Hub</p>
-            <h1 className="text-3xl md:text-4xl font-semibold">Financeiro FlowOps-style</h1>
-            <p className="text-sm text-white/70 max-w-2xl">
-              Monitore recebimentos, cobranças pendentes e custos das helpers com visuais consistentes com o novo layout.
-            </p>
+            {showFinanceTip && (
+              <div className="inline-flex items-center gap-3 text-sm font-medium text-white/80 bg-white/10 border border-white/15 rounded-2xl px-4 py-2 shadow-[0_15px_35px_rgba(5,8,20,0.35)] transition">
+                <span>Monitore recebimentos, cobranças e custos em tempo real.</span>
+                <button
+                  type="button"
+                  onClick={() => setShowFinanceTip(false)}
+                  className="text-xs font-semibold uppercase tracking-wide text-white/70 hover:text-white"
+                >
+                  Fechar
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2 text-sm font-semibold">
               <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
                 <Clock size={16} className="text-white/70" />
@@ -555,7 +570,7 @@ const Financeiro = () => {
             })}
           </div>
 
-          <div className="rounded-none md:rounded-[24px] border border-gray-100 md:border-l-4 md:border-primary-200 bg-white shadow-sm -mx-4 md:mx-0 p-5 md:p-6">
+          <div className="rounded-[24px] border border-gray-100 md:border-l-4 md:border-primary-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-500">Transações</p>

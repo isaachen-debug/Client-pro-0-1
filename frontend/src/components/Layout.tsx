@@ -27,6 +27,7 @@ import {
   AppWindow,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TouchEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
@@ -62,6 +63,11 @@ const Layout = () => {
   const [mobileWorkspaceExpanded, setMobileWorkspaceExpanded] = useState(false);
   const [workspaceQuery, setWorkspaceQuery] = useState('');
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
+  const [mobileHeaderCondensed, setMobileHeaderCondensed] = useState(false);
+  const [createTouchStart, setCreateTouchStart] = useState<number | null>(null);
+  const [createTouchDelta, setCreateTouchDelta] = useState(0);
+  const [launchTouchStart, setLaunchTouchStart] = useState<number | null>(null);
+  const [launchTouchDelta, setLaunchTouchDelta] = useState(0);
   const quickActionHandlersRef = useRef(new Map<QuickActionKey, () => void>());
   const registerQuickAction = useCallback((key: QuickActionKey, handler: () => void) => {
     quickActionHandlersRef.current.set(key, handler);
@@ -110,7 +116,7 @@ const Layout = () => {
       ref={workspaceMenuRef}
       className={`${className} ${
         isDarkTheme ? 'bg-[#060911] border border-white/15 text-white' : 'bg-white border border-gray-200 text-gray-900'
-      } rounded-3xl shadow-[0_25px_45px_rgba(15,23,42,0.25)] p-4 space-y-3 z-30`}
+      } rounded-3xl shadow-[0_25px_45px_rgba(15,23,42,0.25)] p-4 space-y-3 z-30 animate-dropdown`}
     >
       <div className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">Workspace</p>
@@ -161,6 +167,49 @@ const Layout = () => {
         <SettingsIcon size={16} />
         Configurações
       </button>
+      <div
+        className={`pt-3 space-y-2 border-t ${isDarkTheme ? 'border-white/10' : 'border-gray-100'}`}
+      >
+        <p className={`text-[11px] uppercase tracking-wide ${isDarkTheme ? 'text-white/50' : 'text-gray-500'}`}>Equipe</p>
+        <button
+          type="button"
+          onClick={() => handleWorkspaceMenuAction('/app/team?view=invite')}
+          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+            isDarkTheme ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10' : 'bg-gray-100 border border-gray-200 text-gray-900 hover:bg-gray-200'
+          }`}
+        >
+          <UserPlus size={16} />
+          Invite users
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            handleWorkspaceMenuAction(
+              undefined,
+              () => alert('Helper resources: em breve uma central de materiais para seu time.')
+            )
+          }
+          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+            isDarkTheme ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <HelpCircle size={16} />
+          Helper resources
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={() => handleWorkspaceMenuAction(undefined, handleLogout)}
+        className={`w-full flex items-center justify-between rounded-2xl px-3 py-2 text-sm font-semibold ${
+          isDarkTheme ? 'bg-red-500/10 text-red-200 border border-red-400/30 hover:bg-red-500/20' : 'bg-red-50 text-red-600 border border-red-100 hover:bg-red-100'
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <Power size={16} />
+          Logout
+        </span>
+        <ChevronRight size={14} />
+      </button>
     </div>
   );
   const quickActionContextValue = useMemo(
@@ -176,6 +225,7 @@ const Layout = () => {
     }
   }, [mobileWorkspaceExpanded]);
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -185,6 +235,17 @@ const Layout = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const target = contentScrollRef.current;
+    if (!target) return;
+    const handleScroll = () => {
+      setMobileHeaderCondensed(target.scrollTop > 48);
+    };
+    handleScroll();
+    target.addEventListener('scroll', handleScroll, { passive: true });
+    return () => target.removeEventListener('scroll', handleScroll);
   }, []);
   const quickActionGridItems = [
     {
@@ -291,8 +352,14 @@ const Layout = () => {
     },
   ];
   const isDarkTheme = theme === 'dark';
-  const mobileHeaderContainerClass = `md:hidden border-b ${isDarkTheme ? 'bg-[#03050c] text-white border-white/10' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`;
-  const mobileHeaderPanelClass = `rounded-[32px] px-4 pt-4 pb-6 space-y-4 ${isDarkTheme ? 'border border-white/12 bg-gradient-to-b from-[#090d19] to-[#04060d] shadow-[0_20px_60px_rgba(0,0,0,0.45)] text-white' : 'border border-gray-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,0.08)] text-gray-900'}`;
+  const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2.5 py-2.5 space-y-1.5' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
+  const mobileHeaderPanelSurface = isDarkTheme
+    ? 'border border-white/12 bg-gradient-to-b from-[#090d19] to-[#04060d] shadow-[0_20px_60px_rgba(0,0,0,0.45)] text-white'
+    : 'border border-gray-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,0.08)] text-gray-900';
+  const mobileHeaderContainerClass = `md:hidden border-b sticky top-0 z-40 backdrop-blur-xl ${
+    isDarkTheme ? 'bg-[#03050c]/95 text-white border-white/10' : 'bg-white/95 text-gray-900 border-gray-200 shadow-sm'
+  }`;
+  const mobileHeaderPanelClass = `${mobileHeaderSpacingClass} ${mobileHeaderPanelSurface} transition-all duration-300`;
   const mobileIconButtonClass = `${isDarkTheme ? 'bg-white/10 border border-white/15 text-white' : 'bg-gray-100 border border-gray-200 text-gray-900'} rounded-2xl flex items-center justify-center`;
   const mobileInputWrapperClass = `rounded-2xl flex items-center gap-2 px-4 py-2.5 ${isDarkTheme ? 'bg-white/10 border border-white/10' : 'bg-gray-50 border border-gray-200'}`;
   const mobileInputClass = `bg-transparent flex-1 text-sm placeholder:text-current/40 focus:outline-none ${isDarkTheme ? 'text-white' : 'text-gray-900'}`;
@@ -353,6 +420,42 @@ const Layout = () => {
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
+  };
+
+  const onCreateTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    setCreateTouchStart(event.touches[0].clientY);
+  };
+
+  const onCreateTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (createTouchStart === null) return;
+    const delta = event.touches[0].clientY - createTouchStart;
+    setCreateTouchDelta(delta > 0 ? delta : 0);
+  };
+
+  const onCreateTouchEnd = () => {
+    if (createTouchDelta > 80) {
+      setQuickCreateOpen(false);
+    }
+    setCreateTouchStart(null);
+    setCreateTouchDelta(0);
+  };
+
+  const onLaunchTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    setLaunchTouchStart(event.touches[0].clientY);
+  };
+
+  const onLaunchTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (launchTouchStart === null) return;
+    const delta = event.touches[0].clientY - launchTouchStart;
+    setLaunchTouchDelta(delta > 0 ? delta : 0);
+  };
+
+  const onLaunchTouchEnd = () => {
+    if (launchTouchDelta > 80) {
+      setMorePanelOpen(false);
+    }
+    setLaunchTouchStart(null);
+    setLaunchTouchDelta(0);
   };
 
   const currentQuickAction = useMemo<QuickActionKey | null>(() => {
@@ -621,10 +724,7 @@ const Layout = () => {
               <div className="space-y-1 text-sm">
                 {[
                   { label: 'My Calendar', icon: CalendarDays, path: '/app/agenda' },
-                  { label: 'Settings', icon: SettingsIcon, path: '/app/settings' },
                   { label: 'Notification settings', icon: Bell },
-                  { label: 'Invite users', icon: UserPlus },
-                  { label: 'Help & resources', icon: HelpCircle },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -694,15 +794,6 @@ const Layout = () => {
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleLogout}
-                className={`w-full flex items-center justify-center gap-2 rounded-2xl py-2 text-sm font-semibold transition border ${
-                  isDarkTheme ? 'bg-white/10 border-white/15 text-red-200 hover:bg-white/15' : 'bg-red-50 border-red-100 text-red-600 hover:bg-red-100'
-                }`}
-              >
-                <Power size={16} /> Logout
-              </button>
             </div>
           </aside>
         </div>
@@ -719,7 +810,7 @@ const Layout = () => {
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className={`w-12 h-12 ${mobileIconButtonClass}`}
+                    className={`${mobileHeaderCondensed ? 'w-10 h-10' : 'w-12 h-12'} ${mobileIconButtonClass} transition-all duration-200`}
                   >
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${
@@ -736,12 +827,14 @@ const Layout = () => {
                     </div>
                   </button>
                   <div>
-                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
+                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass} transition-opacity duration-200 ${mobileHeaderCondensed ? 'opacity-80' : 'opacity-100'}`}>{currentSectionTitle}</p>
                     <button
                       type="button"
                       onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
                       aria-expanded={mobileWorkspaceExpanded}
-                      className={`flex items-center gap-1 text-base font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}
+                      className={`flex items-center gap-1 font-semibold ${
+                        mobileHeaderCondensed ? 'text-sm' : 'text-base'
+                      } ${isDarkTheme ? 'text-white' : 'text-gray-900'} transition-colors`}
                     >
                       {user?.companyName || 'Client Up'}
                       <ChevronDown
@@ -757,9 +850,9 @@ const Layout = () => {
                   <button
                     type="button"
                     onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                    className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${
+                    className={`${mobileHeaderCondensed ? 'w-10 h-10' : 'w-11 h-11'} rounded-full flex items-center justify-center overflow-hidden ${
                       isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-gray-100 border border-gray-200'
-                    }`}
+                    } transition-all duration-200`}
                     aria-label="Abrir menu rápido"
                   >
                     <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
@@ -917,7 +1010,7 @@ const Layout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto pb-28 sm:pb-0">
+        <main ref={contentScrollRef} className="flex-1 overflow-auto pb-28 sm:pb-0">
           {canInstall && !dismissed && (
             <div className="px-4 pt-4">
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
@@ -998,7 +1091,7 @@ const Layout = () => {
               <button
                 type="button"
                 onClick={handleFabClick}
-                className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-gray-900 shadow-[0_15px_30px_rgba(0,0,0,0.35)] border border-white/60 flex items-center justify-center"
+                className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-gray-900 border border-white/60 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1"
               >
                 <Plus size={28} />
               </button>
@@ -1008,7 +1101,13 @@ const Layout = () => {
           {quickCreateOpen && (
             <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
               <div className="flex-1" onClick={() => setQuickCreateOpen(false)} />
-              <div className="rounded-t-[32px] bg-white p-6 space-y-5 border-t border-gray-200">
+              <div
+                className="rounded-t-[32px] bg-white p-6 space-y-5 border-t border-gray-200 animate-sheet-up"
+                style={{ transform: createTouchDelta ? `translateY(${createTouchDelta}px)` : undefined }}
+                onTouchStart={onCreateTouchStart}
+                onTouchMove={onCreateTouchMove}
+                onTouchEnd={onCreateTouchEnd}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Create</p>
@@ -1057,7 +1156,13 @@ const Layout = () => {
           {morePanelOpen && (
             <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70 backdrop-blur-md">
               <div className="flex-1" onClick={() => setMorePanelOpen(false)} />
-              <div className="rounded-t-[36px] bg-gradient-to-br from-[#120624] via-[#0c152e] to-[#04231f] p-6 space-y-5 border-t border-emerald-400/30 text-white">
+              <div
+                className="rounded-t-[36px] bg-gradient-to-br from-[#120624] via-[#0c152e] to-[#04231f] p-6 space-y-5 border-t border-emerald-400/30 text-white animate-launch-up"
+                style={{ transform: launchTouchDelta ? `translateY(${launchTouchDelta}px)` : undefined }}
+                onTouchStart={onLaunchTouchStart}
+                onTouchMove={onLaunchTouchMove}
+                onTouchEnd={onLaunchTouchEnd}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.3em] text-emerald-300/70">Launchpad</p>

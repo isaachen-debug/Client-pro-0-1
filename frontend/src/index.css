@@ -85,3 +85,65 @@ body {
   animation: navGlow 4.5s ease-in-out infinite;
 }
 
+@keyframes dropdownPop {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdownPop 0.2s ease forwards;
+  transform-origin: top right;
+}
+
+@keyframes fabGlow {
+  0% {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow: 0 22px 40px rgba(0, 0, 0, 0.45);
+  }
+  100% {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
+  }
+}
+
+.animate-fab-glow {
+  animation: fabGlow 3.2s ease-in-out infinite;
+}
+
+@keyframes sheetSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(35px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheetSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(45px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-sheet-up {
+  animation: sheetSlideUp 0.35s ease forwards;
+}
+
+.animate-launch-up {
+  animation: sheetSlideDown 0.35s ease forwards;
+}
+

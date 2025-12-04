@@ -152,8 +152,10 @@ const Dashboard = () => {
       )}
 
       {/* Hero Stats */}
-      <div className="relative mt-6">
-        <div className={`${heroContainerClass} p-4 md:p-6 space-y-4 md:space-y-6 border border-gray-100 rounded-[28px] md:rounded-[36px] shadow-[0_20px_60px_rgba(15,23,42,0.05)]`}>
+      <div className="relative mt-1 md:mt-4 -mx-4 md:mx-0">
+        <div
+          className={`${heroContainerClass} p-4 md:p-6 space-y-4 md:space-y-6 rounded-none border-x-0 shadow-[0_20px_60px_rgba(15,23,42,0.05)] sm:rounded-[28px] sm:border sm:border-gray-100 sm:shadow-[0_25px_60px_rgba(15,23,42,0.08)] md:rounded-[36px]`}
+        >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className={`text-[10px] uppercase tracking-[0.4em] ${isDarkTheme ? 'text-emerald-200' : 'text-emerald-600'}`}>Overview</p>
