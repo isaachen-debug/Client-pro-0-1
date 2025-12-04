@@ -239,13 +239,17 @@ const Layout = () => {
 
   useEffect(() => {
     const target = contentScrollRef.current;
-    if (!target) return;
     const handleScroll = () => {
-      setMobileHeaderCondensed(target.scrollTop > 48);
+      const scrollTop = target ? target.scrollTop : window.scrollY;
+      setMobileHeaderCondensed(scrollTop > 48);
     };
     handleScroll();
-    target.addEventListener('scroll', handleScroll, { passive: true });
-    return () => target.removeEventListener('scroll', handleScroll);
+    target?.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      target?.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
   const quickActionGridItems = [
     {
@@ -808,46 +812,50 @@ const Layout = () => {
           <div className={`px-4 pt-4 ${mobileWorkspaceExpanded ? 'pb-6' : 'pb-4'}`}>
             <div className={mobileHeaderPanelClass}>
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className={`${mobileHeaderCondensed ? 'w-10 h-10' : 'w-12 h-12'} ${mobileIconButtonClass} transition-all duration-200`}
-                  >
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${
-                        isDarkTheme ? 'bg-white/20 border border-white/20' : 'bg-white border border-gray-200'
-                      }`}
-                    >
-                      {user?.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
-                          {initials}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                  <div>
-                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass} transition-opacity duration-200 ${mobileHeaderCondensed ? 'opacity-80' : 'opacity-100'}`}>{currentSectionTitle}</p>
+                {mobileHeaderCondensed ? (
+                  <p className={`text-[11px] font-semibold tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
+                ) : (
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
-                      aria-expanded={mobileWorkspaceExpanded}
-                      className={`flex items-center gap-1 font-semibold ${
-                        mobileHeaderCondensed ? 'text-sm' : 'text-base'
-                      } ${isDarkTheme ? 'text-white' : 'text-gray-900'} transition-colors`}
+                      onClick={() => setSidebarOpen(true)}
+                      className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
                     >
-                      {user?.companyName || 'Client Up'}
-                      <ChevronDown
-                        size={16}
-                        className={`${mobileSecondaryTextClass} transition-transform ${
-                          mobileWorkspaceExpanded ? 'rotate-180' : ''
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${
+                          isDarkTheme ? 'bg-white/20 border border-white/20' : 'bg-white border border-gray-200'
                         }`}
-                      />
+                      >
+                        {user?.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+                            {initials}
+                          </span>
+                        )}
+                      </div>
                     </button>
+                    <div>
+                      <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
+                      <button
+                        type="button"
+                        onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
+                        aria-expanded={mobileWorkspaceExpanded}
+                        className={`flex items-center gap-1 text-base font-semibold ${
+                          isDarkTheme ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
+                        {user?.companyName || 'Client Up'}
+                        <ChevronDown
+                          size={16}
+                          className={`${mobileSecondaryTextClass} transition-transform ${
+                            mobileWorkspaceExpanded ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="relative">
                   <button
                     type="button"
