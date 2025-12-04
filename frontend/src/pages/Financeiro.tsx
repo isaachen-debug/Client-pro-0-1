@@ -422,8 +422,8 @@ const Financeiro = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] md:rounded-[36px] border border-white/10 bg-gradient-to-br from-[#190530] via-[#0e152c] to-[#02201a] text-white shadow-[0_25px_70px_rgba(5,4,15,0.55)]">
-        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <section className="relative overflow-hidden rounded-none md:rounded-[36px] bg-gradient-to-br from-[#190530] via-[#0e152c] to-[#02201a] text-white -mx-4 md:mx-0 px-4 md:px-0">
+        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between max-w-6xl mx-auto">
           <div className="space-y-4">
             <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Finance Hub</p>
             <h1 className="text-3xl md:text-4xl font-semibold">Financeiro FlowOps-style</h1>
@@ -555,7 +555,7 @@ const Financeiro = () => {
             })}
           </div>
 
-          <div className="rounded-2xl md:rounded-[28px] border border-gray-100 md:border-l-4 md:border-primary-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.07)] p-5 md:p-6">
+          <div className="rounded-none md:rounded-[24px] border border-gray-100 md:border-l-4 md:border-primary-200 bg-white shadow-sm -mx-4 md:mx-0 p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-500">Transações</p>

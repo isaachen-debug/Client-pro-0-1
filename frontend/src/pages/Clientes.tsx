@@ -573,7 +573,7 @@ const Clientes = () => {
               </p>
             </div>
 
-            <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-4 space-y-3">
+            <div className="rounded-2xl border-l-4 border-emerald-200 bg-white shadow-sm p-4 space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ações rápidas</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button

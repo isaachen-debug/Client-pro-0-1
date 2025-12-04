@@ -153,14 +153,7 @@ const Dashboard = () => {
 
       {/* Hero Stats */}
       <div className="relative mt-6">
-        <div className="pointer-events-none absolute inset-x-0 -top-4 flex justify-center">
-          <div
-            className={`w-full rounded-t-[32px] border border-b-0 ${
-              isDarkTheme ? 'border-white/20' : 'border-gray-200'
-            }`}
-          />
-        </div>
-        <div className={`${heroContainerClass} p-4 md:p-6 space-y-4 md:space-y-6`}>
+        <div className={`${heroContainerClass} p-4 md:p-6 space-y-4 md:space-y-6 border border-gray-100 rounded-[28px] md:rounded-[36px] shadow-[0_20px_60px_rgba(15,23,42,0.05)]`}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className={`text-[10px] uppercase tracking-[0.4em] ${isDarkTheme ? 'text-emerald-200' : 'text-emerald-600'}`}>Overview</p>
@@ -172,8 +165,8 @@ const Dashboard = () => {
             {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
           </div>
         </div>
-        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-300 text-gray-900 p-4 md:p-5 shadow-lg">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-[0.65fr,0.35fr]">
+          <div className="rounded-[24px] bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-300 text-gray-900 p-4 md:p-5 shadow-lg">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold uppercase tracking-wide">Receita do mês</span>
               <div className="w-10 h-10 rounded-2xl bg-white/40 flex items-center justify-center">
@@ -183,22 +176,20 @@ const Dashboard = () => {
             <p className="text-3xl font-bold mt-4">R$ {data.totalRevenueMonth.toFixed(2)}</p>
             <p className="text-sm text-gray-900/70">Receita confirmada até o momento.</p>
           </div>
-          <div className="rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-700 text-white p-4 md:p-5 shadow-lg">
+          <div className="rounded-xl border-l-4 border-purple-300 bg-white text-gray-900 p-4 md:p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold uppercase tracking-wide">Pagamentos pendentes</span>
-              <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
-                <Clock size={18} />
-              </div>
+              <Clock size={20} className="text-purple-500" />
             </div>
             <p className="text-3xl font-bold mt-4">R$ {data.pendingPaymentsMonth.toFixed(2)}</p>
-            <p className="text-sm text-white/80">Aguardando confirmação no mês atual.</p>
+            <p className="text-sm text-gray-600">Aguardando confirmação no mês atual.</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           <button
             type="button"
             onClick={() => navigate('/app/clientes')}
-            className={smallCardContainer}
+            className={`${smallCardContainer} md:rounded-[20px]`}
           >
             <div className="text-left">
               <p className={`text-[11px] uppercase tracking-wide ${heroLabelClass}`}>Clientes ativos</p>
@@ -212,7 +203,7 @@ const Dashboard = () => {
           <button
             type="button"
             onClick={() => navigate('/app/agenda')}
-            className={smallCardContainer}
+            className={`${smallCardContainer} md:border-l-4 md:border-emerald-200 md:bg-white`}
           >
             <div className="text-left">
               <p className={`text-[11px] uppercase tracking-wide ${heroLabelClass}`}>Serviços agendados</p>
