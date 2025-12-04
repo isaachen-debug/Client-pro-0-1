@@ -815,7 +815,7 @@ const Layout = () => {
                 {mobileHeaderCondensed ? (
                   <p className={`text-[11px] font-semibold tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
                 ) : (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
                     <div className="relative">
                       <button
                         type="button"
@@ -825,7 +825,7 @@ const Layout = () => {
                       >
                         <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
                       </button>
-                      {workspaceMenuOpen && <WorkspaceMenu className="absolute right-0 mt-3 w-56" />}
+                      {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-56" />}
                     </div>
                     <button
                       type="button"
@@ -846,7 +846,7 @@ const Layout = () => {
                         )}
                       </div>
                     </button>
-                    <div>
+                    <div className="min-w-0">
                       <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
                       <button
                         type="button"

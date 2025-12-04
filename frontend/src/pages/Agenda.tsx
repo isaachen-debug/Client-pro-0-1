@@ -101,17 +101,19 @@ const Agenda = ({ initialMode }: AgendaPageProps) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {quickFilters.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:border-primary-200 hover:text-primary-600 transition"
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
+        {viewMode === 'month' && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {quickFilters.map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:border-primary-200 hover:text-primary-600 transition"
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>{viewMode === 'week' ? <AgendaSemanal embedded quickCreateNonce={quickCreateNonce} /> : <AgendaMensal embedded />}</div>
