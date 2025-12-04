@@ -17,15 +17,17 @@ import {
   ChevronDown,
   Bot,
   CalendarDays,
-  BellOff,
   Bell,
   Settings as SettingsIcon,
   HelpCircle,
   Mail,
   Star,
   Power,
+  ChevronRight,
+  CreditCard,
+  AppWindow,
 } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
@@ -38,8 +40,8 @@ const LogoMark = () => (
   </div>
 );
 
-const BrandBlock = ({ subtitle }: { subtitle: string }) => (
-  <div className="flex items-center space-x-2">
+const BrandBlock = ({ subtitle, className = '' }: { subtitle: string; className?: string }) => (
+  <div className={`flex items-center space-x-2 ${className}`}>
     <LogoMark />
     <div>
       <h1 className="text-lg font-bold text-gray-900 tracking-tight">Client Up</h1>
@@ -59,6 +61,8 @@ const Layout = () => {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [morePanelOpen, setMorePanelOpen] = useState(false);
   const [mobileWorkspaceExpanded, setMobileWorkspaceExpanded] = useState(false);
+  const [workspaceQuery, setWorkspaceQuery] = useState('');
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const quickActionHandlersRef = useRef(new Map<QuickActionKey, () => void>());
   const registerQuickAction = useCallback((key: QuickActionKey, handler: () => void) => {
     quickActionHandlersRef.current.set(key, handler);
@@ -77,12 +81,112 @@ const Layout = () => {
     }
     return false;
   }, []);
+
+  const handleWorkspaceNavigate = useCallback(
+    (path: string) => {
+      navigate(path);
+      setMobileWorkspaceExpanded(false);
+      setWorkspaceQuery('');
+      setWorkspaceMenuOpen(false);
+    },
+    [navigate],
+  );
+
+  const handleWorkspaceMenuAction = useCallback(
+    (path?: string, action?: () => void) => {
+      if (path) {
+        navigate(path);
+      }
+      if (action) {
+        action();
+      }
+      setWorkspaceMenuOpen(false);
+      setMobileWorkspaceExpanded(false);
+    },
+    [navigate],
+  );
+
+  const WorkspaceMenu = ({ className }: { className: string }) => (
+    <div
+      ref={workspaceMenuRef}
+      className={`${className} ${
+        isDarkTheme ? 'bg-[#060911] border border-white/15 text-white' : 'bg-white border border-gray-200 text-gray-900'
+      } rounded-3xl shadow-[0_25px_45px_rgba(15,23,42,0.25)] p-4 space-y-3 z-30`}
+    >
+      <div className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">Workspace</p>
+        <p className={`text-sm ${isDarkTheme ? 'text-white/70' : 'text-gray-600'}`}>Gerencie plano, apps e perfil rapidamente.</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => handleWorkspaceMenuAction('/app/financeiro#plans')}
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+          isDarkTheme ? 'bg-emerald-500/10 border border-emerald-400/30 text-emerald-200 hover:bg-emerald-500/20' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'
+        }`}
+      >
+        <CreditCard size={16} />
+        Plans & Billing
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          handleWorkspaceMenuAction(
+            undefined,
+            () => alert('Client Up Apps: em breve um hub completo para novos produtos.')
+          )
+        }
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+          isDarkTheme ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10' : 'bg-gray-100 border border-gray-200 text-gray-900 hover:bg-gray-200'
+        }`}
+      >
+        <AppWindow size={16} />
+        Apps
+      </button>
+      <button
+        type="button"
+        onClick={() => handleWorkspaceMenuAction('/app/profile')}
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+          isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
+        <UserCircle size={16} />
+        Meu perfil
+      </button>
+      <button
+        type="button"
+        onClick={() => handleWorkspaceMenuAction('/app/settings')}
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+          isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
+        <SettingsIcon size={16} />
+        Configurações
+      </button>
+    </div>
+  );
   const quickActionContextValue = useMemo(
     () => ({
       registerQuickAction,
     }),
     [registerQuickAction],
   );
+
+  useEffect(() => {
+    if (!mobileWorkspaceExpanded) {
+      setWorkspaceQuery('');
+    }
+  }, [mobileWorkspaceExpanded]);
+  const workspaceMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (workspaceMenuRef.current && !workspaceMenuRef.current.contains(event.target as Node)) {
+        setWorkspaceMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const quickActionGridItems = [
     {
       key: 'dashboard',
@@ -213,6 +317,31 @@ const Layout = () => {
     { path: '/app/profile', icon: UserCircle, labelKey: 'nav.profile' },
   ];
 
+  const workspaceLinks = useMemo(
+    () => [
+      { key: 'dashboard', label: t('nav.dashboard'), path: '/app/dashboard', icon: LayoutDashboard },
+      { key: 'today', label: t('nav.today'), path: '/app/start', icon: PlayCircle },
+      { key: 'clients', label: t('nav.clients'), path: '/app/clientes', icon: Users },
+      { key: 'agenda', label: t('nav.agenda'), path: '/app/agenda', icon: Calendar },
+      { key: 'finance', label: t('nav.finance'), path: '/app/financeiro', icon: DollarSign },
+      ...(user?.role === 'OWNER'
+        ? [
+            { key: 'company', label: t('nav.company'), path: '/app/empresa', icon: Building2 },
+            { key: 'team', label: t('nav.team'), path: '/app/team', icon: Users },
+            { key: 'settings', label: t('nav.settings'), path: '/app/settings', icon: SettingsIcon },
+          ]
+        : []),
+      { key: 'profile', label: t('nav.profile'), path: '/app/profile', icon: UserCircle },
+    ],
+    [t, user?.role],
+  );
+
+  const filteredWorkspaceLinks = useMemo(() => {
+    const query = workspaceQuery.trim().toLowerCase();
+    if (!query) return [];
+    return workspaceLinks.filter((link) => link.label.toLowerCase().includes(query)).slice(0, 4);
+  }, [workspaceQuery, workspaceLinks]);
+
   const initials = user?.name
     ? user.name
         .split(' ')
@@ -241,6 +370,17 @@ const Layout = () => {
     }
     return null;
   }, [location.pathname, location.search]);
+
+  const currentSectionTitle = useMemo(() => {
+    const linkMatch = workspaceLinks.find((link) => location.pathname.startsWith(link.path));
+    if (linkMatch) {
+      return linkMatch.label;
+    }
+    if (location.pathname.startsWith('/app/start')) {
+      return t('nav.today');
+    }
+    return 'Workspace';
+  }, [location.pathname, workspaceLinks, t]);
 
   const handleFabClick = () => {
     if (currentQuickAction && triggerQuickAction(currentQuickAction)) {
@@ -317,16 +457,16 @@ const Layout = () => {
       type: 'route' as const,
     },
     {
-      key: 'more',
-      label: 'More',
+      key: 'launch',
+      label: 'Launch',
       icon: Grid,
-      type: 'more' as const,
+      type: 'launcher' as const,
     },
   ];
 
 
   const handleMobileNav = (item: (typeof mobileNavItems)[number]) => {
-    if (item.type === 'more') {
+    if (item.type === 'launcher') {
       setMorePanelOpen(true);
       return;
     }
@@ -341,8 +481,15 @@ const Layout = () => {
       <aside className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-72 bg-[#f8f6fb] border-r border-[#eadff8] h-screen sticky top-0">
           <div className="px-5 pt-6 pb-4 space-y-4">
-            <div className="flex items-center justify-start">
-              <BrandBlock subtitle={t('layout.brandSubtitle')} />
+            <div className="flex items-center justify-start relative">
+              <button
+                type="button"
+                onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+                className="inline-flex items-center text-left group"
+              >
+                <BrandBlock subtitle="Gestão de clientes e agenda" className="text-left" />
+              </button>
+              {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-72" />}
             </div>
             <div className="rounded-2xl bg-white border border-[#eadff8] px-4 py-2 flex items-center gap-2">
               <Search size={16} className="text-gray-400" />
@@ -441,13 +588,9 @@ const Layout = () => {
                     }`}
                   />
                 </div>
-                <p className="text-xl font-semibold">{user?.name || 'Owner'}</p>
-                <div
-                  className={`w-full rounded-2xl px-4 py-2 text-left text-sm ${
-                    isDarkTheme ? 'bg-white/10 border border-white/15 text-white/60' : 'bg-gray-50 border border-gray-200 text-gray-600'
-                  }`}
-                >
-                  Set a status
+                <div>
+                  <p className="text-xl font-semibold">{user?.name || 'Owner'}</p>
+                  <p className={isDarkTheme ? 'text-white/60 text-sm' : 'text-gray-500 text-sm'}>{user?.email}</p>
                 </div>
                 <div className="flex items-center gap-3 w-full">
                   <button
@@ -479,7 +622,6 @@ const Layout = () => {
               <div className="space-y-1 text-sm">
                 {[
                   { label: 'My Calendar', icon: CalendarDays, path: '/app/agenda' },
-                  { label: 'Mute notifications', icon: BellOff },
                   { label: 'Settings', icon: SettingsIcon, path: '/app/settings' },
                   { label: 'Notification settings', icon: Bell },
                   { label: 'Invite users', icon: UserPlus },
@@ -583,7 +725,7 @@ const Layout = () => {
                     <Menu size={22} />
                   </button>
                   <div>
-                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>Workspace</p>
+                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
                     <button
                       type="button"
                       onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
@@ -600,15 +742,83 @@ const Layout = () => {
                     </button>
                   </div>
                 </div>
-                <div
-                  className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${
-                    isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>{initials}</span>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+                    className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${
+                      isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-gray-100 border border-gray-200'
+                    }`}
+                    aria-label="Abrir menu rápido"
+                  >
+                    <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
+                  </button>
+                  {workspaceMenuOpen && (
+                    <div
+                      ref={workspaceMenuRef}
+                      className={`absolute right-0 mt-3 w-56 rounded-3xl border ${
+                        isDarkTheme ? 'bg-[#060911] border-white/15' : 'bg-white border-gray-200'
+                      } shadow-[0_25px_45px_rgba(15,23,42,0.25)] p-4 space-y-3 z-20`}
+                    >
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">workspace</p>
+                        <p className={`text-sm ${isDarkTheme ? 'text-white/80' : 'text-gray-600'}`}>
+                          Personalize seu plano e explore novos apps.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleWorkspaceMenuAction('/app/financeiro#plans')}
+                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+                          isDarkTheme
+                            ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
+                            : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'
+                        }`}
+                      >
+                        <CreditCard size={16} />
+                        <span>Plans & Billing</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleWorkspaceMenuAction(undefined, () =>
+                            alert('Client Up Apps: em breve um hub completo para novos produtos.')
+                          )
+                        }
+                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+                          isDarkTheme
+                            ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
+                            : 'bg-gray-100 border border-gray-200 text-gray-900 hover:bg-gray-200'
+                        }`}
+                      >
+                        <AppWindow size={16} />
+                        <span>Apps</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleWorkspaceMenuAction('/app/profile')}
+                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+                          isDarkTheme
+                            ? 'text-white/70 hover:text-white'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        <UserCircle size={16} />
+                        <span>Meu perfil</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleWorkspaceMenuAction('/app/settings')}
+                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+                          isDarkTheme
+                            ? 'text-white/70 hover:text-white'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        <SettingsIcon size={16} />
+                        <span>Configurações</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -620,6 +830,8 @@ const Layout = () => {
                       <input
                         type="text"
                         placeholder="Buscar agenda, Clients ou contratos"
+                        value={workspaceQuery}
+                        onChange={(e) => setWorkspaceQuery(e.target.value)}
                         className={mobileInputClass}
                       />
                       <button
@@ -630,8 +842,61 @@ const Layout = () => {
                         Agenda
                       </button>
                     </div>
-                    <div className={`${mobileSecondaryTextClass} text-sm mt-3`}>
-                      <p>Veja métricas detalhadas no Dashboard.</p>
+                    <div className="mt-3 space-y-2">
+                      {workspaceQuery ? (
+                        filteredWorkspaceLinks.length ? (
+                          filteredWorkspaceLinks.map((link) => {
+                            const Icon = link.icon;
+                            return (
+                              <button
+                                key={link.key}
+                                type="button"
+                                onClick={() => handleWorkspaceNavigate(link.path)}
+                                className={`w-full flex items-center justify-between rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+                                  isDarkTheme ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                }`}
+                              >
+                                <span className="flex items-center gap-2">
+                                  <Icon size={16} />
+                                  {link.label}
+                                </span>
+                                <ChevronRight size={16} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <p className={`${mobileSecondaryTextClass} text-xs`}>Nenhum módulo encontrado.</p>
+                        )
+                      ) : (
+                        <div className={`${mobileSecondaryTextClass} text-sm`}>
+                          <p>Veja métricas detalhadas no Dashboard.</p>
+                        </div>
+                      )}
+
+                      {!workspaceQuery && (
+                        <div className="grid grid-cols-2 gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => navigate('/app/financeiro#plans')}
+                            className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
+                              isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
+                            }`}
+                          >
+                            Plans
+                            <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => alert('Apps adicionais do ecossistema Client Up chegam em breve.')}
+                            className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
+                              isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
+                            }`}
+                          >
+                            Apps
+                            <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
@@ -679,7 +944,7 @@ const Layout = () => {
         <>
           <div className="md:hidden fixed inset-x-4 bottom-4 z-40">
             <div className="relative">
-              <div className="bg-gradient-to-r from-[#1c0f2a] via-[#130a1f] to-[#1c0f2a] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-[32px] px-6 py-4 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-[#1c0f2a] via-[#130a1f] to-[#1c0f2a] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-[32px] px-6 py-4 flex items-center justify-between animate-nav-glow">
                 <div className="flex items-center gap-6">
                   {mobileNavItems.slice(0, 2).map((item) => {
                     const Icon = item.icon;
@@ -779,27 +1044,27 @@ const Layout = () => {
             </div>
           )}
           {morePanelOpen && (
-            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70 backdrop-blur-md">
               <div className="flex-1" onClick={() => setMorePanelOpen(false)} />
-              <div className="rounded-t-[36px] bg-gradient-to-br from-[#681c94] via-[#7f24a8] to-[#a432b9] p-6 space-y-5 border-t border-white/20">
-                <div className="flex items-center justify-between text-white">
+              <div className="rounded-t-[36px] bg-gradient-to-br from-[#120624] via-[#0c152e] to-[#04231f] p-6 space-y-5 border-t border-emerald-400/30 text-white">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm uppercase tracking-[0.3em] text-white/70">Launcher</p>
+                    <p className="text-sm uppercase tracking-[0.3em] text-emerald-300/70">Launchpad</p>
                     <p className="text-2xl font-semibold">Explore Client Up</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setMorePanelOpen(false)}
-                    className="w-10 h-10 rounded-full bg-white/15 border border-white/20 flex items-center justify-center"
+                    className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center"
                   >
                     <X size={20} />
                   </button>
                 </div>
-                <div className="rounded-2xl bg-white/15 border border-white/20 flex items-center gap-2 px-4 py-2">
+                <div className="rounded-2xl bg-white/5 border border-white/10 flex items-center gap-2 px-4 py-2">
                   <Search size={16} className="text-white/60" />
                   <input
                     type="text"
-                    placeholder="Buscar apps ou ações"
+                    placeholder="Buscar módulos rápidos"
                     className="bg-transparent flex-1 text-sm text-white placeholder:text-white/60 focus:outline-none"
                   />
                 </div>
@@ -812,7 +1077,7 @@ const Layout = () => {
                         setMorePanelOpen(false);
                         navigate(item.path);
                       }}
-                      className="rounded-3xl bg-white/10 border border-white/15 py-4 flex flex-col items-center gap-2 hover:bg-white/15 transition"
+                      className="rounded-3xl bg-white/5 border border-white/10 py-4 flex flex-col items-center gap-2 hover:bg-emerald-500/10 hover:border-emerald-400/40 transition"
                     >
                       <div className="text-2xl">{item.icon}</div>
                       <p className="text-xs font-semibold">{item.label}</p>

@@ -422,8 +422,7 @@ const Financeiro = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] border border-[#151935] bg-[#0d1021] text-white shadow-[0_18px_45px_rgba(5,4,15,0.35)] md:border-white/10 md:bg-[#05040f] md:shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4c1d95] to-[#0f172a] opacity-90 hidden md:block" />
+      <section className="relative overflow-hidden rounded-[32px] md:rounded-[36px] border border-white/10 bg-gradient-to-br from-[#190530] via-[#0e152c] to-[#02201a] text-white shadow-[0_25px_70px_rgba(5,4,15,0.55)]">
         <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-4">
             <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Finance Hub</p>
@@ -528,14 +527,21 @@ const Financeiro = () => {
       {activeTab === 'receitas' && (
         <section className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {receiptHighlightCards.map((card) => {
+            {receiptHighlightCards.map((card, index) => {
               const Icon = card.icon;
+              const isAccentCard = index % 2 === 1;
               return (
                 <div
                   key={card.label}
-                  className="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_30px_80px_rgba(15,23,42,0.06)]"
+                  className={`relative overflow-hidden p-5 ${
+                    isAccentCard
+                      ? 'rounded-[30px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.06)]'
+                      : 'rounded-2xl border-l-4 border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white shadow-sm'
+                  }`}
                 >
-                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${card.accent}`} />
+                  {isAccentCard && (
+                    <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${card.accent}`} />
+                  )}
                   <div className="relative flex items-center justify-between mb-6">
                     <span className="text-sm font-medium text-gray-500">{card.label}</span>
                     <span className="inline-flex items-center justify-center rounded-2xl bg-gray-900/5 p-2">
@@ -549,7 +555,7 @@ const Financeiro = () => {
             })}
           </div>
 
-          <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.07)] p-5 md:p-6">
+          <div className="rounded-2xl md:rounded-[28px] border border-gray-100 md:border-l-4 md:border-primary-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.07)] p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-500">Transações</p>
@@ -640,10 +646,14 @@ const Financeiro = () => {
       {activeTab === 'custos' && (
         <section className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {costOverviewCards.map((card) => (
+            {costOverviewCards.map((card, index) => (
               <div
                 key={card.label}
-                className="rounded-3xl border border-gray-100 bg-white/90 backdrop-blur-sm p-4 shadow-[0_20px_50px_rgba(15,23,42,0.05)]"
+                className={`p-4 ${
+                  index % 2 === 0
+                    ? 'rounded-xl border border-gray-200 bg-gray-50 shadow-sm'
+                    : 'rounded-3xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-[0_20px_50px_rgba(15,23,42,0.05)]'
+                }`}
               >
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-1">{card.value}</p>

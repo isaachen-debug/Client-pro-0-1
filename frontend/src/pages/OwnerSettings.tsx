@@ -65,21 +65,21 @@ const OwnerSettings = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-6xl mx-auto">
-      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#05040f] text-white shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#4c1d95] via-[#312e81] to-[#0f172a] opacity-90" />
+      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#03070b] text-white shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#120921] via-[#101b32] to-[#04241d] opacity-95" />
         <div className="relative p-6 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-4">
             <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Profile & Settings</p>
             <h1 className="text-3xl md:text-4xl font-semibold">Centralize identidade, idioma e segurança</h1>
-            <p className="text-sm text-white/70 max-w-2xl">
+            <p className="text-sm text-white/70 max-w-sm md:max-w-2xl">
               Atualize as informações da empresa, personalize o portal do cliente e gerencie a segurança da sua conta.
             </p>
-            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+            <div className="flex flex-wrap gap-2 text-xs font-semibold w-full max-w-sm">
               <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
                 Plano:{' '}
                 <span className="uppercase tracking-wide">{(user?.planStatus ?? 'trial').toLowerCase()}</span>
               </span>
-              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
+              <span className="hidden sm:inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
                 Equipe ativa monitorada
               </span>
             </div>
