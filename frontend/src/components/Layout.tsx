@@ -800,7 +800,7 @@ const Layout = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         {/* Header Mobile */}
         <header className={mobileHeaderContainerClass}>
           <div className={`px-4 pt-4 ${mobileWorkspaceExpanded ? 'pb-6' : 'pb-4'}`}>
