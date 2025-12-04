@@ -413,12 +413,6 @@ const Financeiro = () => {
     { label: 'Pendentes', value: formatCurrency(costSummary.pendingExpenses) },
   ] as const;
 
-  useEffect(() => {
-    if (!showFinanceTip) return;
-    const timer = window.setTimeout(() => setShowFinanceTip(false), 7000);
-    return () => window.clearTimeout(timer);
-  }, [showFinanceTip]);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">

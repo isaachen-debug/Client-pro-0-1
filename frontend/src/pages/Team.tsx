@@ -106,7 +106,7 @@ const Team = () => {
   const [portalAccessSaving, setPortalAccessSaving] = useState(false);
   const [portalAccessMessage, setPortalAccessMessage] = useState<{ email: string; password: string } | null>(null);
   const [portalAccessError, setPortalAccessError] = useState('');
-  const [portalAccessOpen, setPortalAccessOpen] = useState(true);
+  const [portalAccessOpen, setPortalAccessOpen] = useState(false);
   const [showcasePanelOpen, setShowcasePanelOpen] = useState(false);
   const [reviewLinksForm, setReviewLinksForm] = useState<OwnerReviewLinks>({
     google: user?.reviewLinks?.google ?? '',

@@ -43,6 +43,7 @@ const Profile = () => {
     confirmPassword: '',
   });
   const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showHeroDetails, setShowHeroDetails] = useState(true);
 
   const trialInfo = useMemo(() => {
     if (!user?.trialEnd) return null;
@@ -173,23 +174,34 @@ const Profile = () => {
           <div className="space-y-4">
             <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Perfil & Preferências</p>
             <h1 className="text-3xl md:text-4xl font-semibold">Deixe o Client Up com a cara da sua empresa</h1>
-            <p className="text-sm text-white/70 max-w-2xl">
-              Atualize identidade visual, canais de contato e preferências de idioma/tema para oferecer uma experiência consistente
-              a helpers e clientes.
-            </p>
-            <div className="flex flex-wrap gap-2 text-xs font-semibold">
-              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
-                Plano:{' '}
-                <span className="uppercase tracking-wide">{(user.planStatus ?? 'TRIAL').toLowerCase()}</span>
-              </span>
-              {trialInfo && (
-                <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
-                  {trialInfo.daysLeft >= 0
-                    ? `${trialInfo.daysLeft} dia(s) de teste restantes`
-                    : 'Período de testes encerrado'}
-                </span>
-              )}
-            </div>
+            {showHeroDetails && (
+              <>
+                <p className="text-sm text-white/70 max-w-2xl">
+                  Atualize identidade visual, canais de contato e preferências de idioma/tema para oferecer uma experiência
+                  consistente a helpers e clientes.
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                  <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
+                    Plano:{' '}
+                    <span className="uppercase tracking-wide">{(user.planStatus ?? 'TRIAL').toLowerCase()}</span>
+                  </span>
+                  {trialInfo && (
+                    <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
+                      {trialInfo.daysLeft >= 0
+                        ? `${trialInfo.daysLeft} dia(s) de teste restantes`
+                        : 'Período de testes encerrado'}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowHeroDetails((prev) => !prev)}
+              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/70 border border-white/20 rounded-full px-3 py-1 hover:text-white hover:border-white/40 transition"
+            >
+              {showHeroDetails ? 'Ocultar info' : 'Mostrar info'}
+            </button>
           </div>
           <div className="w-full md:w-auto flex flex-col gap-3">
             <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
