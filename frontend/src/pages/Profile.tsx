@@ -43,7 +43,7 @@ const Profile = () => {
     confirmPassword: '',
   });
   const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [showHeroDetails, setShowHeroDetails] = useState(true);
+  const [showHeroDetails, setShowHeroDetails] = useState(false);
 
   const trialInfo = useMemo(() => {
     if (!user?.trialEnd) return null;
