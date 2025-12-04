@@ -816,36 +816,35 @@ const Layout = () => {
                   <p className={`text-[11px] font-semibold tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
                 ) : (
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="relative">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
-                        aria-label="Abrir menu rápido"
+                        onClick={() => setSidebarOpen(true)}
+                        className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
                       >
-                        <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
+                        <div
+                          className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${
+                            isDarkTheme ? 'bg-white/20 border border-white/20' : 'bg-white border border-gray-200'
+                          }`}
+                        >
+                          {user?.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+                              {initials}
+                            </span>
+                          )}
+                        </div>
                       </button>
-                      {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-56" />}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSidebarOpen(true)}
-                      className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
-                    >
-                      <div
-                        className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${
-                          isDarkTheme ? 'bg-white/20 border border-white/20' : 'bg-white border border-gray-200'
-                        }`}
+                      <button
+                        type="button"
+                        onClick={() => alert('Agent IA: em breve um assistente que conecta agenda, clientes e propostas.')}
+                        className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-900 font-semibold text-sm transition-all duration-200 dark:bg-white/10 dark:border-white/15 dark:text-white"
+                        aria-label="Agent em breve"
                       >
-                        {user?.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
-                            {initials}
-                          </span>
-                        )}
-                      </div>
-                    </button>
+                        AI
+                      </button>
+                    </div>
                     <div className="min-w-0">
                       <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
                       <button
@@ -999,6 +998,17 @@ const Layout = () => {
                   </button>
                 </div>
               </div>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
+                        aria-label="Abrir menu rápido"
+                      >
+                        <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
+                      </button>
+                      {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-56" />}
+                    </div>
             </div>
           )}
           <Outlet />
