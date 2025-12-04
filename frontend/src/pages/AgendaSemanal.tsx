@@ -27,9 +27,10 @@ const isSameSeries = (a: Appointment, b: Appointment) => {
 
 type AgendaSemanalProps = {
   embedded?: boolean;
+  quickCreateNonce?: number;
 };
 
-const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
+const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanalProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [agendamentos, setAgendamentos] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +111,15 @@ const AgendaSemanal = ({ embedded = false }: AgendaSemanalProps) => {
     };
     loadHelpers();
   }, []);
+  useEffect(() => {
+    if (!quickCreateNonce) return;
+    const baseDate = new Date();
+    prepareCreateForm(baseDate);
+    setSelectedDay(baseDate);
+    setShowDayActions(false);
+    setShowEditModal(false);
+    setShowCreateModal(true);
+  }, [quickCreateNonce]);
 
   const fetchAgendamentos = async () => {
     try {

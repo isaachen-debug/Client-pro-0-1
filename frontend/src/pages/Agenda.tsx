@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { addDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Search, Calendar as CalendarIcon } from 'lucide-react';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal from './AgendaSemanal';
+import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 
 type AgendaView = 'week' | 'month';
 
@@ -31,9 +32,15 @@ const Agenda = ({ initialMode }: AgendaPageProps) => {
     }
   }, [viewMode]);
 
+  const [quickCreateNonce, setQuickCreateNonce] = useState(0);
   const handleChangeView = (mode: AgendaView) => {
     setViewMode(mode);
   };
+  const handleAgendaQuickCreate = useCallback(() => {
+    setViewMode('week');
+    setQuickCreateNonce((nonce) => nonce + 1);
+  }, []);
+  useRegisterQuickAction('agenda:add', handleAgendaQuickCreate);
 
   const today = new Date();
   const weekEnd = addDays(today, 6);
@@ -107,9 +114,7 @@ const Agenda = ({ initialMode }: AgendaPageProps) => {
         </div>
       </div>
 
-      <div>
-        {viewMode === 'week' ? <AgendaSemanal embedded /> : <AgendaMensal embedded />}
-      </div>
+      <div>{viewMode === 'week' ? <AgendaSemanal embedded quickCreateNonce={quickCreateNonce} /> : <AgendaMensal embedded />}</div>
     </div>
   );
 };

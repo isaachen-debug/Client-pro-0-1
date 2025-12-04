@@ -1,19 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-import {
-  Plus,
-  Search,
-  MoreVertical,
-  Phone,
-  MapPin,
-  Loader2,
-  Edit3,
-  FileText,
-  Copy,
-  CheckCircle,
-  AlertTriangle,
-  Download,
-  ChevronDown,
-} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, Search, MoreVertical, Phone, MapPin, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import {
   AccessMethod,
@@ -26,15 +12,13 @@ import {
   Customer,
   CustomerStatus,
   ServiceFrequency,
-  CompanyShowcase,
-  CompanyShowcaseSection,
-  OwnerReviewLinks,
 } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { parseDateFromInput } from '../utils/date';
 import { useAuth } from '../contexts/AuthContext';
 import ContractWizard from '../components/contracts/ContractWizard';
+import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
@@ -83,51 +67,6 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'contrato';
 
-const generateSectionId = () =>
-  typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `section-${Date.now()}-${Math.random()}`;
-
-const createDefaultShowcase = (): CompanyShowcase => ({
-  headline: 'Por que confiar na nossa equipe?',
-  description: 'Equipe treinada, comunicação transparente e foco nos detalhes.',
-  layout: 'grid',
-  sections: [
-    {
-      id: generateSectionId(),
-      title: 'Equipe certificada',
-      description: 'Profissionais verificados e treinados continuamente.',
-      emoji: '🛡️',
-    },
-    {
-      id: generateSectionId(),
-      title: 'Checklist personalizado',
-      description: 'Você escolhe o foco e registramos cada etapa.',
-      emoji: '📝',
-    },
-  ],
-});
-
-const normalizeShowcase = (showcase?: CompanyShowcase | null): CompanyShowcase => {
-  const fallback = createDefaultShowcase();
-  if (!showcase) return fallback;
-  const sections =
-    Array.isArray(showcase.sections) && showcase.sections.length
-      ? showcase.sections.map((section, index) => ({
-          id: section.id ?? generateSectionId(),
-          title: section.title ?? `Destaque ${index + 1}`,
-          description: section.description ?? '',
-          emoji: section.emoji ?? '✨',
-        }))
-      : fallback.sections;
-  return {
-    headline: showcase.headline ?? fallback.headline,
-    description: showcase.description ?? fallback.description,
-    layout: showcase.layout === 'stacked' ? 'stacked' : 'grid',
-    sections,
-  };
-};
-
 type CustomerFormState = {
   name: string;
   phone: string;
@@ -173,7 +112,7 @@ const CONTRACT_STATUS_CLASSES: Record<ContractStatus, string> = {
 };
 
 const Clientes = () => {
-  const { user, updateProfile } = useAuth();
+  const { user } = useAuth();
   const [clientes, setClientes] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -208,160 +147,8 @@ const Clientes = () => {
   const [updatingContractId, setUpdatingContractId] = useState<string | null>(null);
   const [copiedContractId, setCopiedContractId] = useState<string | null>(null);
   const [downloadingContractId, setDownloadingContractId] = useState<string | null>(null);
-  const [portalAccessForm, setPortalAccessForm] = useState({
-    customerId: '',
-    name: '',
-    email: '',
-    password: '',
-  });
-  const [portalAccessSaving, setPortalAccessSaving] = useState(false);
-  const [portalAccessMessage, setPortalAccessMessage] = useState<{ email: string; password: string } | null>(null);
-  const [portalAccessError, setPortalAccessError] = useState('');
-  const [portalAccessOpen, setPortalAccessOpen] = useState(true);
-  const [showcasePanelOpen, setShowcasePanelOpen] = useState(false);
-  const [reviewLinksForm, setReviewLinksForm] = useState<OwnerReviewLinks>({
-    google: user?.reviewLinks?.google ?? '',
-    nextdoor: user?.reviewLinks?.nextdoor ?? '',
-    instagram: user?.reviewLinks?.instagram ?? '',
-    facebook: user?.reviewLinks?.facebook ?? '',
-    website: user?.reviewLinks?.website ?? user?.companyWebsite ?? '',
-  });
-  const [showcaseForm, setShowcaseForm] = useState<CompanyShowcase>(() =>
-    normalizeShowcase(user?.companyShowcase ?? null),
-  );
-  const [showcaseStatus, setShowcaseStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [wizardStatus, setWizardStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const customersWithPortal = useMemo(() => clientes.filter((cliente) => !!cliente.email).length, [clientes]);
-
-  useEffect(() => {
-    setShowcaseForm(normalizeShowcase(user?.companyShowcase ?? null));
-    setReviewLinksForm({
-      google: user?.reviewLinks?.google ?? '',
-      nextdoor: user?.reviewLinks?.nextdoor ?? '',
-      instagram: user?.reviewLinks?.instagram ?? '',
-      facebook: user?.reviewLinks?.facebook ?? '',
-      website: user?.reviewLinks?.website ?? user?.companyWebsite ?? '',
-    });
-  }, [user?.companyShowcase, user?.reviewLinks, user?.companyWebsite]);
-
-  const reviewLinkFields: Array<{ key: keyof OwnerReviewLinks; label: string; placeholder: string }> = [
-    { key: 'website', label: 'Site oficial', placeholder: 'https://suaempresa.com' },
-    { key: 'google', label: 'Google Meu Negócio', placeholder: 'https://g.page/suaempresa/review' },
-    { key: 'nextdoor', label: 'Nextdoor', placeholder: 'https://nextdoor.com/pages/suaempresa' },
-    { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/suaempresa' },
-    { key: 'facebook', label: 'Facebook / Meta', placeholder: 'https://facebook.com/suaempresa' },
-  ];
-  const canAddShowcaseSection = showcaseForm.sections.length < 5;
-
-  const handleReviewLinkInput = (key: keyof OwnerReviewLinks, value: string) => {
-    setReviewLinksForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  const updateShowcaseForm = (updates: Partial<CompanyShowcase>) => {
-    setShowcaseForm((prev) => ({
-      ...prev,
-      ...updates,
-    }));
-  };
-
-  const handleShowcaseSectionChange = (
-    id: string,
-    field: keyof CompanyShowcaseSection,
-    value: string,
-  ) => {
-    setShowcaseForm((prev) => ({
-      ...prev,
-      sections: prev.sections.map((section) => (section.id === id ? { ...section, [field]: value } : section)),
-    }));
-  };
-
-  const addShowcaseSection = () => {
-    setShowcaseForm((prev) => ({
-      ...prev,
-      sections: [
-        ...prev.sections,
-        {
-          id: generateSectionId(),
-          title: '',
-          description: '',
-          emoji: '✨',
-        },
-      ],
-    }));
-  };
-
-  const removeShowcaseSection = (id: string) => {
-    setShowcaseForm((prev) => {
-      const remaining = prev.sections.filter((section) => section.id !== id);
-      return {
-        ...prev,
-        sections: remaining.length ? remaining : createDefaultShowcase().sections,
-      };
-    });
-  };
-
-  const handleShowcaseSave = async (event: FormEvent) => {
-    event.preventDefault();
-    setShowcaseStatus(null);
-    setShowcaseSaving(true);
-
-    const cleanedLinks = Object.entries(reviewLinksForm).reduce<OwnerReviewLinks>((acc, [key, value]) => {
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (trimmed) {
-          acc[key as keyof OwnerReviewLinks] = trimmed;
-        }
-      }
-      return acc;
-    }, {});
-
-    const trimmedWebsite = (reviewLinksForm.website ?? '').trim();
-    if (!trimmedWebsite && cleanedLinks.website) {
-      delete cleanedLinks.website;
-    }
-
-    const sanitizedSections = showcaseForm.sections
-      .map((section) => ({
-        id: section.id || generateSectionId(),
-        title: section.title?.trim() || '',
-        description: section.description?.trim() || '',
-        emoji: section.emoji?.trim() || '✨',
-      }))
-      .filter((section) => section.title || section.description);
-
-    try {
-      const payload = {
-        companyWebsite: trimmedWebsite || null,
-        reviewLinks: Object.keys(cleanedLinks).length ? cleanedLinks : null,
-        companyShowcase: {
-          headline: showcaseForm.headline?.trim() || undefined,
-          description: showcaseForm.description?.trim() || undefined,
-          layout: showcaseForm.layout,
-          sections: sanitizedSections.length ? sanitizedSections : createDefaultShowcase().sections,
-        },
-      };
-
-      const updated = await updateProfile(payload);
-      setShowcaseForm(normalizeShowcase(updated.companyShowcase ?? null));
-      setReviewLinksForm({
-        google: updated.reviewLinks?.google ?? '',
-        nextdoor: updated.reviewLinks?.nextdoor ?? '',
-        instagram: updated.reviewLinks?.instagram ?? '',
-        facebook: updated.reviewLinks?.facebook ?? '',
-        website: updated.reviewLinks?.website ?? updated.companyWebsite ?? '',
-      });
-      setShowcaseStatus({ type: 'success', message: 'Personalização salva com sucesso.' });
-    } catch (error: any) {
-      const message = error?.response?.data?.error || 'Não foi possível salvar as personalizações.';
-      setShowcaseStatus({ type: 'error', message });
-    } finally {
-      setShowcaseSaving(false);
-    }
-  };
 
   useEffect(() => {
     const handleOutsideClick = () => setMenuOpenId(null);
@@ -383,27 +170,6 @@ const Clientes = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
-
-  useEffect(() => {
-    if (!clientes.length) return;
-    setPortalAccessForm((prev) => {
-      if (prev.customerId) {
-        const current = clientes.find((cliente) => cliente.id === prev.customerId);
-        return {
-          ...prev,
-          name: prev.name || current?.name || '',
-          email: prev.email || current?.email || '',
-        };
-      }
-      const first = clientes[0];
-      return {
-        customerId: first.id,
-        name: first.name,
-        email: first.email ?? '',
-        password: '',
-      };
-    });
-  }, [clientes]);
 
   const fetchClientes = async (query = '', statusValue: 'ALL' | CustomerStatus = statusFilter) => {
     try {
@@ -442,6 +208,7 @@ const Clientes = () => {
     resetForm();
     setShowModal(true);
   };
+  useRegisterQuickAction('clients:add', openCreateModal);
 
   const handleContractStatusChange = async (contractId: string, status: ContractStatus) => {
     try {
@@ -470,59 +237,6 @@ const Clientes = () => {
       setTimeout(() => setCopiedContractId(null), 2000);
     } catch (error) {
       console.error('Erro ao copiar contrato:', error);
-    }
-  };
-
-  const handlePortalAccessCustomerChange = (customerId: string) => {
-    const selected = clientes.find((cliente) => cliente.id === customerId);
-    setPortalAccessForm((prev) => ({
-      ...prev,
-      customerId,
-      name: selected?.name ?? '',
-      email: selected?.email ?? '',
-    }));
-    setPortalAccessError('');
-    setPortalAccessMessage(null);
-  };
-
-  const handlePortalAccessSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!portalAccessForm.customerId || !portalAccessForm.email.trim()) {
-      setPortalAccessError('Informe o cliente e o email.');
-      return;
-    }
-    try {
-      setPortalAccessSaving(true);
-      setPortalAccessError('');
-      const response = await teamApi.createClientPortalAccess(portalAccessForm.customerId, {
-        email: portalAccessForm.email.trim(),
-        name: portalAccessForm.name.trim() || undefined,
-        password: portalAccessForm.password.trim() || undefined,
-      });
-      setPortalAccessMessage({
-        email: response.user.email,
-        password: response.temporaryPassword,
-      });
-      setPortalAccessForm((prev) => ({ ...prev, password: '' }));
-      setClientes((prev) =>
-        prev.map((cliente) =>
-          cliente.id === portalAccessForm.customerId ? { ...cliente, email: response.user.email } : cliente,
-        ),
-      );
-    } catch (err: any) {
-      const message = err?.response?.data?.error || 'Não foi possível criar o acesso.';
-      setPortalAccessError(message);
-    } finally {
-      setPortalAccessSaving(false);
-    }
-  };
-
-  const handleCopyPortalPassword = async () => {
-    if (!portalAccessMessage) return;
-    try {
-      await navigator.clipboard.writeText(portalAccessMessage.password);
-    } catch (error) {
-      console.error('Erro ao copiar senha temporária:', error);
     }
   };
 
@@ -838,7 +552,7 @@ const Clientes = () => {
         <>
           {/* Stats & quick actions */}
           <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
-            <div className="rounded-[28px] bg-gradient-to-br from-[#0d0b2d] via-[#181641] to-[#311858] text-white px-6 py-6 space-y-4 shadow-[0_25px_60px_rgba(15,23,42,0.35)]">
+            <div className="rounded-[28px] border border-white/10 bg-[#151936] text-white px-6 py-6 space-y-4 shadow-[0_12px_30px_rgba(15,23,42,0.2)] md:border-none md:bg-gradient-to-br md:from-[#0d0b2d] md:via-[#181641] md:to-[#311858] md:shadow-[0_25px_60px_rgba(15,23,42,0.35)]">
               <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
                 <span>Clientes</span>
                 <span className="text-white/30">•</span>
@@ -877,225 +591,6 @@ const Clientes = () => {
                 </button>
               </div>
             </div>
-          </div>
-
-          <div className="rounded-[32px] bg-gradient-to-br from-[#090c22] via-[#101437] to-[#2a0f4a] text-white shadow-[0_30px_80px_rgba(7,11,30,0.45)] p-6 space-y-5">
-            <button
-              type="button"
-              onClick={() => setPortalAccessOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between text-left"
-            >
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.3em] text-white/60">Client portal access</p>
-                <p className="text-lg font-semibold">
-                  {customersWithPortal}/{clientes.length} clients já possuem login ativo
-                </p>
-                <p className="text-sm text-white/70">
-                  Gere credenciais instantâneas e personalize o pop-up “Sua empresa parceira”.
-                </p>
-              </div>
-              <ChevronDown
-                className={`text-white/80 w-5 h-5 transition-transform ${portalAccessOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {portalAccessOpen && (
-              <div className="space-y-5">
-                <form
-                  className="grid gap-3 md:grid-cols-[1.2fr,1fr,1fr,auto]"
-                  onSubmit={handlePortalAccessSubmit}
-                >
-                  <select
-                    value={portalAccessForm.customerId}
-                    onChange={(e) => handlePortalAccessCustomerChange(e.target.value)}
-                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50"
-                    required
-                  >
-                    <option value="">Selecione o cliente</option>
-                    {clientes.map((cliente) => (
-                      <option key={cliente.id} value={cliente.id} className="text-gray-900">
-                        {cliente.name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    value={portalAccessForm.name}
-                    onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Nome que aparecerá no app"
-                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-                  />
-                  <input
-                    type="email"
-                    value={portalAccessForm.email}
-                    onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, email: e.target.value }))}
-                    placeholder="email@cliente.com"
-                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    required
-                  />
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={portalAccessForm.password}
-                      onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, password: e.target.value }))}
-                      placeholder="Senha opcional"
-                      className="flex-1 px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    />
-                    <button
-                      type="submit"
-                      disabled={portalAccessSaving}
-                      className="px-4 py-2.5 rounded-2xl bg-white text-gray-900 text-sm font-semibold disabled:opacity-60"
-                    >
-                      {portalAccessSaving ? 'Gerando...' : 'Criar acesso'}
-                    </button>
-                  </div>
-                </form>
-                {portalAccessError && <p className="text-sm text-red-200">{portalAccessError}</p>}
-                {portalAccessMessage && (
-                  <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-sm text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="font-semibold">Compartilhe com {portalAccessMessage.email}</p>
-                      <p className="text-white/70">
-                        Senha temporária: <span className="font-mono text-white">{portalAccessMessage.password}</span>
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyPortalPassword}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-xs font-semibold"
-                    >
-                      Copiar senha
-                    </button>
-                  </div>
-                )}
-                <div className="border-t border-white/10 pt-4 space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowcasePanelOpen((prev) => !prev)}
-                    className="flex items-center justify-between w-full text-sm font-semibold text-white"
-                  >
-                    <span>Personalizar pop-up “Sua empresa parceira”</span>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform ${showcasePanelOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                  {showcaseStatus && (
-                    <div
-                      className={`text-sm px-4 py-2 rounded-xl border ${
-                        showcaseStatus.type === 'success'
-                          ? 'bg-emerald-50/20 border-emerald-200 text-emerald-200'
-                          : 'bg-red-50/20 border-red-200 text-red-200'
-                      }`}
-                    >
-                      {showcaseStatus.message}
-                    </div>
-                  )}
-                  {showcasePanelOpen && (
-                    <form className="space-y-4 bg-white rounded-3xl p-4 text-gray-900" onSubmit={handleShowcaseSave}>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        {reviewLinkFields.map((field) => (
-                          <div key={field.key}>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">{field.label}</label>
-                            <input
-                              type="url"
-                              value={reviewLinksForm[field.key] ?? ''}
-                              onChange={(e) => handleReviewLinkInput(field.key, e.target.value)}
-                              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                              placeholder={field.placeholder}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Título principal</label>
-                          <input
-                            type="text"
-                            value={showcaseForm.headline ?? ''}
-                            onChange={(e) => updateShowcaseForm({ headline: e.target.value })}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="Ex: Nosso cuidado com seu lar"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Layout</label>
-                          <select
-                            value={showcaseForm.layout}
-                            onChange={(e) => updateShowcaseForm({ layout: e.target.value as 'grid' | 'stacked' })}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          >
-                            <option value="grid">Cartões lado a lado</option>
-                            <option value="stacked">Blocos verticais</option>
-                          </select>
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Descrição</label>
-                          <textarea
-                            rows={3}
-                            value={showcaseForm.description ?? ''}
-                            onChange={(e) => updateShowcaseForm({ description: e.target.value })}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="Conte rapidamente qual a experiência que o cliente terá."
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        {showcaseForm.sections.map((section, index) => (
-                          <div key={section.id} className="border border-gray-100 rounded-2xl p-3 space-y-2">
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="text"
-                                value={section.emoji ?? ''}
-                                onChange={(e) => handleShowcaseSectionChange(section.id, 'emoji', e.target.value)}
-                                className="w-14 px-2 py-2 border border-gray-200 rounded-xl text-center"
-                                placeholder="✨"
-                              />
-                              <input
-                                type="text"
-                                value={section.title}
-                                onChange={(e) => handleShowcaseSectionChange(section.id, 'title', e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm"
-                                placeholder={`Destaque ${index + 1}`}
-                              />
-                              {showcaseForm.sections.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeShowcaseSection(section.id)}
-                                  className="text-gray-400 hover:text-red-500 text-sm"
-                                >
-                                  Remover
-                                </button>
-                              )}
-                            </div>
-                            <textarea
-                              rows={2}
-                              value={section.description}
-                              onChange={(e) => handleShowcaseSectionChange(section.id, 'description', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs text-gray-600"
-                              placeholder="Descreva o benefício em uma frase."
-                            />
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={addShowcaseSection}
-                          disabled={!canAddShowcaseSection}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-gray-300 text-sm text-gray-600 disabled:opacity-50"
-                        >
-                          Adicionar destaque
-                        </button>
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={showcaseSaving}
-                        className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold disabled:opacity-60"
-                      >
-                        {showcaseSaving ? 'Salvando...' : 'Salvar personalização'}
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
       {/* Search */}

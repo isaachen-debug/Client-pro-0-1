@@ -422,8 +422,8 @@ const Financeiro = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#05040f] text-white shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4c1d95] to-[#0f172a] opacity-90" />
+      <section className="relative overflow-hidden rounded-[32px] border border-[#151935] bg-[#0d1021] text-white shadow-[0_18px_45px_rgba(5,4,15,0.35)] md:border-white/10 md:bg-[#05040f] md:shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4c1d95] to-[#0f172a] opacity-90 hidden md:block" />
         <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-4">
             <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Finance Hub</p>

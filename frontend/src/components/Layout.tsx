@@ -25,11 +25,12 @@ import {
   Star,
   Power,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
 import brandLogo from '../assets/brand-logo.png';
+import { QuickActionProvider, QuickActionKey } from '../contexts/QuickActionContext';
 
 const LogoMark = () => (
   <div className="w-12 h-12 rounded-3xl bg-white border border-gray-100 shadow-lg shadow-emerald-300/30 flex items-center justify-center overflow-hidden">
@@ -58,6 +59,30 @@ const Layout = () => {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [morePanelOpen, setMorePanelOpen] = useState(false);
   const [mobileWorkspaceExpanded, setMobileWorkspaceExpanded] = useState(false);
+  const quickActionHandlersRef = useRef(new Map<QuickActionKey, () => void>());
+  const registerQuickAction = useCallback((key: QuickActionKey, handler: () => void) => {
+    quickActionHandlersRef.current.set(key, handler);
+    return () => {
+      const current = quickActionHandlersRef.current.get(key);
+      if (current === handler) {
+        quickActionHandlersRef.current.delete(key);
+      }
+    };
+  }, []);
+  const triggerQuickAction = useCallback((key: QuickActionKey) => {
+    const handler = quickActionHandlersRef.current.get(key);
+    if (handler) {
+      handler();
+      return true;
+    }
+    return false;
+  }, []);
+  const quickActionContextValue = useMemo(
+    () => ({
+      registerQuickAction,
+    }),
+    [registerQuickAction],
+  );
   const quickActionGridItems = [
     {
       key: 'dashboard',
@@ -202,6 +227,28 @@ const Layout = () => {
     navigate('/login', { replace: true });
   };
 
+  const currentQuickAction = useMemo<QuickActionKey | null>(() => {
+    const path = location.pathname;
+    const params = new URLSearchParams(location.search);
+    if (path.startsWith('/app/clientes')) {
+      return 'clients:add';
+    }
+    if (path.startsWith('/app/team')) {
+      return params.get('view') === 'portal' ? 'team:portal-access' : 'team:add-helper';
+    }
+    if (path.startsWith('/app/agenda') || path.startsWith('/app/semana')) {
+      return 'agenda:add';
+    }
+    return null;
+  }, [location.pathname, location.search]);
+
+  const handleFabClick = () => {
+    if (currentQuickAction && triggerQuickAction(currentQuickAction)) {
+      return;
+    }
+    setQuickCreateOpen(true);
+  };
+
   const [showProfileTip, setShowProfileTip] = useState(() => {
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('clientepro:profile-tip-dismissed') !== 'true';
@@ -288,7 +335,8 @@ const Layout = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex transition-colors duration-200">
+    <QuickActionProvider value={quickActionContextValue}>
+      <div className="min-h-screen bg-gray-50 flex transition-colors duration-200">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-72 bg-[#f8f6fb] border-r border-[#eadff8] h-screen sticky top-0">
@@ -505,42 +553,6 @@ const Layout = () => {
                 </button>
               </div>
 
-              <div className={`pt-4 space-y-2 border-t ${isDarkTheme ? 'border-white/10' : 'border-gray-200'}`}>
-                <p className={`text-xs uppercase tracking-wide ${isDarkTheme ? 'text-white/40' : 'text-gray-500'}`}>Teams</p>
-                {menuItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname.startsWith(item.path);
-                  return (
-                    <button
-                      key={`mobile-${item.path}`}
-                      type="button"
-                      onClick={() => {
-                        navigate(item.path);
-                        setSidebarOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-left ${
-                        isActive
-                          ? isDarkTheme
-                            ? 'bg-white/10 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                          : isDarkTheme
-                            ? 'text-white/70 hover:bg-white/5'
-                            : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <span className="flex items-center gap-3">
-                        <Icon size={18} />
-                        {t(item.labelKey)}
-                      </span>
-                      <ChevronDown
-                        size={16}
-                        className={`${isDarkTheme ? 'text-white/40' : 'text-gray-400'} rotate-[-90deg]`}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-
               <button
                 type="button"
                 onClick={handleLogout}
@@ -588,25 +600,16 @@ const Layout = () => {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setQuickCreateOpen(true)}
-                    className={`w-11 h-11 ${mobileIconButtonClass}`}
-                  >
-                    <Plus size={20} />
-                  </button>
-                  <div
-                    className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${
-                      isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-gray-100 border border-gray-200'
-                    }`}
-                  >
-                    {user?.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>{initials}</span>
-                    )}
-                  </div>
+                <div
+                  className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${
+                    isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>{initials}</span>
+                  )}
                 </div>
               </div>
               {mobileWorkspaceExpanded && (
@@ -718,7 +721,7 @@ const Layout = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setQuickCreateOpen(true)}
+                onClick={handleFabClick}
                 className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-gray-900 shadow-[0_15px_30px_rgba(0,0,0,0.35)] border border-white/60 flex items-center justify-center"
               >
                 <Plus size={28} />
@@ -821,7 +824,8 @@ const Layout = () => {
           )}
         </>
       )}
-    </div>
+      </div>
+    </QuickActionProvider>
   );
 };
 

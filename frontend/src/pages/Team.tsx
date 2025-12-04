@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BarChart3,
   Check,
@@ -11,8 +11,52 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
-import { teamApi, type CreateHelperPayload } from '../services/api';
-import type { HelperAppointment, HelperDayResponse, User } from '../types';
+import { customersApi, teamApi, type CreateHelperPayload } from '../services/api';
+import type { CompanyShowcase, CompanyShowcaseSection, Customer, HelperAppointment, HelperDayResponse, OwnerReviewLinks, User } from '../types';
+import { useRegisterQuickAction } from '../contexts/QuickActionContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
+
+const generateSectionId = () => Math.random().toString(36).substring(2, 10);
+
+const createDefaultShowcase = (): CompanyShowcase => ({
+  headline: 'Sua empresa parceira',
+  description: 'Explique rapidamente por que seu serviço é a escolha certa para o cliente.',
+  layout: 'grid',
+  sections: [
+    {
+      id: generateSectionId(),
+      title: 'Limpezas premium',
+      description: 'Equipe fixa, supervisão periódica e materiais inclusos.',
+      emoji: '✨',
+    },
+    {
+      id: generateSectionId(),
+      title: 'Planos flexíveis',
+      description: 'Atendimentos semanais, quinzenais ou sob demanda.',
+      emoji: '🗓️',
+    },
+  ],
+});
+
+const normalizeShowcase = (showcase?: CompanyShowcase | null): CompanyShowcase => {
+  const fallback = createDefaultShowcase();
+  if (!showcase) return fallback;
+  return {
+    headline: showcase.headline ?? fallback.headline,
+    description: showcase.description ?? fallback.description,
+    layout: showcase.layout === 'stacked' ? 'stacked' : 'grid',
+    sections:
+      Array.isArray(showcase.sections) && showcase.sections.length
+        ? showcase.sections.map((section) => ({
+            id: section.id ?? generateSectionId(),
+            title: section.title ?? '',
+            description: section.description ?? '',
+            emoji: section.emoji ?? '✨',
+          }))
+        : fallback.sections,
+  };
+};
 
 const roleLabels: Record<string, string> = {
   OWNER: 'Administradora',
@@ -29,6 +73,8 @@ const normalizePhone = (value?: string | null) => {
 type DayKey = 'today' | 'tomorrow';
 
 const Team = () => {
+  const { user, updateProfile } = useAuth();
+  const location = useLocation();
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -48,11 +94,222 @@ const Team = () => {
   const [checklistActionId, setChecklistActionId] = useState<string | null>(null);
   const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
   const [notesSavingId, setNotesSavingId] = useState<string | null>(null);
-  const helpers = useMemo(() => members.filter((member) => member.role === 'HELPER'), [members]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [portalAccessForm, setPortalAccessForm] = useState({
+    customerId: '',
+    name: '',
+    email: '',
+    password: '',
+  });
+  const [portalAccessSaving, setPortalAccessSaving] = useState(false);
+  const [portalAccessMessage, setPortalAccessMessage] = useState<{ email: string; password: string } | null>(null);
+  const [portalAccessError, setPortalAccessError] = useState('');
+  const [portalAccessOpen, setPortalAccessOpen] = useState(true);
+  const [showcasePanelOpen, setShowcasePanelOpen] = useState(false);
+  const [reviewLinksForm, setReviewLinksForm] = useState<OwnerReviewLinks>({
+    google: user?.reviewLinks?.google ?? '',
+    nextdoor: user?.reviewLinks?.nextdoor ?? '',
+    instagram: user?.reviewLinks?.instagram ?? '',
+    facebook: user?.reviewLinks?.facebook ?? '',
+    website: user?.reviewLinks?.website ?? user?.companyWebsite ?? '',
+  });
+  const [showcaseForm, setShowcaseForm] = useState<CompanyShowcase>(() => normalizeShowcase(user?.companyShowcase ?? null));
+  const [showcaseStatus, setShowcaseStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showcaseSaving, setShowcaseSaving] = useState(false);
+  const helperNameInputRef = useRef<HTMLInputElement | null>(null);
+  const portalAccessSectionRef = useRef<HTMLDivElement | null>(null);
+  const focusHelperForm = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const formBlock = document.getElementById('create-helper');
+    formBlock?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => {
+      helperNameInputRef.current?.focus();
+    }, 350);
+  }, []);
+  useRegisterQuickAction('team:add-helper', focusHelperForm);
+  const focusPortalSection = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    portalAccessSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setPortalAccessOpen(true);
+  }, []);
+  useRegisterQuickAction('team:portal-access', focusPortalSection);
+  const teamMembers = useMemo(() => members.filter((member) => member.role !== 'CLIENT'), [members]);
+  const clientMembers = useMemo(() => members.filter((member) => member.role === 'CLIENT'), [members]);
+  const helpers = useMemo(() => teamMembers.filter((member) => member.role === 'HELPER'), [teamMembers]);
+  const customersWithPortal = useMemo(() => customers.filter((customer) => !!customer.email).length, [customers]);
   const usdFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
     [],
   );
+
+  const handleReviewLinkInput = (key: keyof OwnerReviewLinks, value: string) => {
+    setReviewLinksForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const updateShowcaseForm = (updates: Partial<CompanyShowcase>) => {
+    setShowcaseForm((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+  };
+
+  const handleShowcaseSectionChange = (id: string, field: keyof CompanyShowcaseSection, value: string) => {
+    setShowcaseForm((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) => (section.id === id ? { ...section, [field]: value } : section)),
+    }));
+  };
+
+  const addShowcaseSection = () => {
+    setShowcaseForm((prev) => ({
+      ...prev,
+      sections: [
+        ...prev.sections,
+        {
+          id: generateSectionId(),
+          title: '',
+          description: '',
+          emoji: '✨',
+        },
+      ],
+    }));
+  };
+
+  const removeShowcaseSection = (id: string) => {
+    setShowcaseForm((prev) => {
+      const remaining = prev.sections.filter((section) => section.id !== id);
+      return {
+        ...prev,
+        sections: remaining.length ? remaining : createDefaultShowcase().sections,
+      };
+    });
+  };
+
+  const handlePortalAccessCustomerChange = (customerId: string) => {
+    setPortalAccessForm((prev) => {
+      const selected = customers.find((customer) => customer.id === customerId);
+      return {
+        ...prev,
+        customerId,
+        name: selected?.name ?? '',
+        email: selected?.email ?? '',
+      };
+    });
+  };
+
+  const handlePortalAccessSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setPortalAccessError('');
+    setPortalAccessMessage(null);
+    if (!portalAccessForm.customerId || !portalAccessForm.email.trim()) {
+      setPortalAccessError('Selecione um cliente e informe o e-mail.');
+      return;
+    }
+    try {
+      setPortalAccessSaving(true);
+      const response = await teamApi.createClientPortalAccess(portalAccessForm.customerId, {
+        email: portalAccessForm.email.trim(),
+        name: portalAccessForm.name.trim() || undefined,
+        password: portalAccessForm.password.trim() || undefined,
+      });
+      setPortalAccessMessage({ email: response.user.email, password: response.password });
+      setCustomers((prev) =>
+        prev.map((customer) =>
+          customer.id === portalAccessForm.customerId ? { ...customer, email: response.user.email } : customer,
+        ),
+      );
+      setPortalAccessForm((prev) => ({ ...prev, password: '' }));
+    } catch (err: any) {
+      const message = err?.response?.data?.error || 'Não foi possível criar o acesso.';
+      setPortalAccessError(message);
+    } finally {
+      setPortalAccessSaving(false);
+    }
+  };
+
+  const handleCopyPortalPassword = async () => {
+    if (!portalAccessMessage) return;
+    try {
+      await navigator.clipboard.writeText(portalAccessMessage.password);
+    } catch (err) {
+      console.error('Erro ao copiar senha:', err);
+    }
+  };
+
+  const handleShowcaseSave = async (event: FormEvent) => {
+    event.preventDefault();
+    setShowcaseStatus(null);
+    setShowcaseSaving(true);
+
+    const cleanedLinks = Object.entries(reviewLinksForm).reduce<OwnerReviewLinks>((acc, [key, value]) => {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed) {
+          acc[key as keyof OwnerReviewLinks] = trimmed;
+        }
+      }
+      return acc;
+    }, {});
+
+    const trimmedWebsite = (reviewLinksForm.website ?? '').trim();
+    if (!trimmedWebsite && cleanedLinks.website) {
+      delete cleanedLinks.website;
+    }
+
+    const sanitizedSections = showcaseForm.sections
+      .map((section) => ({
+        id: section.id || generateSectionId(),
+        title: section.title?.trim() || '',
+        description: section.description?.trim() || '',
+        emoji: section.emoji?.trim() || '✨',
+      }))
+      .filter((section) => section.title || section.description);
+
+    try {
+      const payload = {
+        companyWebsite: trimmedWebsite || null,
+        reviewLinks: Object.keys(cleanedLinks).length ? cleanedLinks : null,
+        companyShowcase: {
+          headline: showcaseForm.headline?.trim() || undefined,
+          description: showcaseForm.description?.trim() || undefined,
+          layout: showcaseForm.layout,
+          sections: sanitizedSections.length ? sanitizedSections : createDefaultShowcase().sections,
+        },
+      };
+
+      const updated = await updateProfile(payload);
+      setShowcaseForm(normalizeShowcase(updated.companyShowcase ?? null));
+      setReviewLinksForm({
+        google: updated.reviewLinks?.google ?? '',
+        nextdoor: updated.reviewLinks?.nextdoor ?? '',
+        instagram: updated.reviewLinks?.instagram ?? '',
+        facebook: updated.reviewLinks?.facebook ?? '',
+        website: updated.reviewLinks?.website ?? updated.companyWebsite ?? '',
+      });
+      setShowcaseStatus({ type: 'success', message: 'Personalização salva com sucesso.' });
+    } catch (err: any) {
+      const message = err?.response?.data?.error || 'Não foi possível salvar as personalizações.';
+      setShowcaseStatus({ type: 'error', message });
+    } finally {
+      setShowcaseSaving(false);
+    }
+  };
+
+  const loadCustomers = useCallback(async () => {
+    setCustomersLoading(true);
+    try {
+      const data = await customersApi.list();
+      setCustomers(data);
+    } catch (err) {
+      setCustomers([]);
+    } finally {
+      setCustomersLoading(false);
+    }
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -71,6 +328,49 @@ const Team = () => {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
+
+  useEffect(() => {
+    if (!customers.length) return;
+    setPortalAccessForm((prev) => {
+      if (prev.customerId) {
+        const current = customers.find((customer) => customer.id === prev.customerId);
+        return {
+          ...prev,
+          name: prev.name || current?.name || '',
+          email: prev.email || current?.email || '',
+        };
+      }
+      const first = customers[0];
+      return {
+        customerId: first.id,
+        name: first.name,
+        email: first.email ?? '',
+        password: '',
+      };
+    });
+  }, [customers]);
+
+  useEffect(() => {
+    setShowcaseForm(normalizeShowcase(user?.companyShowcase ?? null));
+    setReviewLinksForm({
+      google: user?.reviewLinks?.google ?? '',
+      nextdoor: user?.reviewLinks?.nextdoor ?? '',
+      instagram: user?.reviewLinks?.instagram ?? '',
+      facebook: user?.reviewLinks?.facebook ?? '',
+      website: user?.reviewLinks?.website ?? user?.companyWebsite ?? '',
+    });
+  }, [user?.companyShowcase, user?.reviewLinks, user?.companyWebsite]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('view') === 'portal') {
+      focusPortalSection();
+    }
+  }, [location.search, focusPortalSection]);
 
   const fetchHelperDay = async (helperId: string, day: DayKey) => {
     setHelperDayData((prev) => ({
@@ -233,14 +533,22 @@ const Team = () => {
     }
   };
 
-  const totalMembers = members.length;
-  const ownerCount = members.filter((member) => member.role === 'OWNER').length;
+  const totalMembers = teamMembers.length;
+  const ownerCount = teamMembers.filter((member) => member.role === 'OWNER').length;
   const teamHighlights = [
     { label: 'Membros totais', value: totalMembers },
     { label: 'Helpers ativos', value: helpers.length },
     { label: 'Administradoras', value: ownerCount },
     { label: 'Convites livres', value: Math.max(0, 5 - helpers.length) },
   ];
+  const reviewLinkFields: Array<{ key: keyof OwnerReviewLinks; label: string; placeholder: string }> = [
+    { key: 'website', label: 'Site oficial', placeholder: 'https://suaempresa.com' },
+    { key: 'google', label: 'Google Meu Negócio', placeholder: 'https://g.page/suaempresa/review' },
+    { key: 'nextdoor', label: 'Nextdoor', placeholder: 'https://nextdoor.com/pages/suaempresa' },
+    { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/suaempresa' },
+    { key: 'facebook', label: 'Facebook / Meta', placeholder: 'https://facebook.com/suaempresa' },
+  ];
+  const canAddShowcaseSection = showcaseForm.sections.length < 5;
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8">
@@ -335,6 +643,7 @@ const Team = () => {
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome</label>
                 <input
                   type="text"
+                  ref={helperNameInputRef}
                   value={form.name}
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                   className="w-full mt-1 px-4 py-2.5 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -380,10 +689,228 @@ const Team = () => {
               </button>
             </form>
           </div>
+
+          <div
+            ref={portalAccessSectionRef}
+            className="rounded-[32px] bg-gradient-to-br from-[#0d0b2d] via-[#181641] to-[#311858] text-white shadow-[0_30px_80px_rgba(7,11,30,0.45)] p-6 space-y-5"
+          >
+            <button
+              type="button"
+              onClick={() => setPortalAccessOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between text-left"
+            >
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">Client portal access</p>
+                <p className="text-lg font-semibold">
+                  {customersWithPortal}/{customers.length || '0'} clients com login ativo
+                </p>
+                <p className="text-sm text-white/70">
+                  Gere credenciais instantâneas e personalize o pop-up “Sua empresa parceira”.
+                </p>
+              </div>
+              <ChevronDown className={`text-white/80 w-5 h-5 transition-transform ${portalAccessOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {portalAccessOpen && (
+              <div className="space-y-5">
+                <form className="grid gap-3 md:grid-cols-[1.2fr,1fr,1fr,auto]" onSubmit={handlePortalAccessSubmit}>
+                  <select
+                    value={portalAccessForm.customerId}
+                    onChange={(e) => handlePortalAccessCustomerChange(e.target.value)}
+                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-60"
+                    required
+                    disabled={customersLoading || !customers.length}
+                  >
+                    <option value="">{customersLoading ? 'Carregando clientes...' : 'Selecione o cliente'}</option>
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id} className="text-gray-900">
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={portalAccessForm.name}
+                    onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="Nome que aparecerá no app"
+                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  />
+                  <input
+                    type="email"
+                    value={portalAccessForm.email}
+                    onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, email: e.target.value }))}
+                    placeholder="email@cliente.com"
+                    className="px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    required
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={portalAccessForm.password}
+                      onChange={(e) => setPortalAccessForm((prev) => ({ ...prev, password: e.target.value }))}
+                      placeholder="Senha opcional"
+                      className="flex-1 px-3 py-2.5 rounded-2xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={portalAccessSaving}
+                      className="px-4 py-2.5 rounded-2xl bg-white text-gray-900 text-sm font-semibold disabled:opacity-60"
+                    >
+                      {portalAccessSaving ? 'Gerando...' : 'Criar acesso'}
+                    </button>
+                  </div>
+                </form>
+                {portalAccessError && <p className="text-sm text-red-200">{portalAccessError}</p>}
+                {portalAccessMessage && (
+                  <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-sm text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">Compartilhe com {portalAccessMessage.email}</p>
+                      <p className="text-white/70">
+                        Senha temporária: <span className="font-mono text-white">{portalAccessMessage.password}</span>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyPortalPassword}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-xs font-semibold"
+                    >
+                      Copiar senha
+                    </button>
+                  </div>
+                )}
+                <div className="border-t border-white/10 pt-4 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowcasePanelOpen((prev) => !prev)}
+                    className="flex items-center justify-between w-full text-sm font-semibold text-white"
+                  >
+                    <span>Personalizar pop-up “Sua empresa parceira”</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showcasePanelOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showcaseStatus && (
+                    <div
+                      className={`text-sm px-4 py-2 rounded-xl border ${
+                        showcaseStatus.type === 'success'
+                          ? 'bg-emerald-50/20 border-emerald-200 text-emerald-200'
+                          : 'bg-red-50/20 border-red-200 text-red-200'
+                      }`}
+                    >
+                      {showcaseStatus.message}
+                    </div>
+                  )}
+                  {showcasePanelOpen && (
+                    <form className="space-y-4 bg-white rounded-3xl p-4 text-gray-900" onSubmit={handleShowcaseSave}>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {reviewLinkFields.map((field) => (
+                          <div key={field.key}>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">{field.label}</label>
+                            <input
+                              type="url"
+                              value={reviewLinksForm[field.key] ?? ''}
+                              onChange={(e) => handleReviewLinkInput(field.key, e.target.value)}
+                              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                              placeholder={field.placeholder}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Título principal</label>
+                          <input
+                            type="text"
+                            value={showcaseForm.headline ?? ''}
+                            onChange={(e) => updateShowcaseForm({ headline: e.target.value })}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            placeholder="Ex: Nosso cuidado com seu lar"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Layout</label>
+                          <select
+                            value={showcaseForm.layout}
+                            onChange={(e) => updateShowcaseForm({ layout: e.target.value as 'grid' | 'stacked' })}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="grid">Cartões lado a lado</option>
+                            <option value="stacked">Blocos verticais</option>
+                          </select>
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Descrição</label>
+                          <textarea
+                            rows={3}
+                            value={showcaseForm.description ?? ''}
+                            onChange={(e) => updateShowcaseForm({ description: e.target.value })}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            placeholder="Conte rapidamente qual a experiência que o cliente terá."
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {showcaseForm.sections.map((section, index) => (
+                          <div key={section.id} className="border border-gray-100 rounded-2xl p-3 space-y-2">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="text"
+                                value={section.emoji ?? ''}
+                                onChange={(e) => handleShowcaseSectionChange(section.id, 'emoji', e.target.value)}
+                                className="w-14 px-2 py-2 border border-gray-200 rounded-xl text-center"
+                                placeholder="✨"
+                              />
+                              <input
+                                type="text"
+                                value={section.title}
+                                onChange={(e) => handleShowcaseSectionChange(section.id, 'title', e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                                placeholder={`Destaque ${index + 1}`}
+                              />
+                              {showcaseForm.sections.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeShowcaseSection(section.id)}
+                                  className="text-gray-400 hover:text-red-500 text-sm"
+                                >
+                                  Remover
+                                </button>
+                              )}
+                            </div>
+                            <textarea
+                              rows={2}
+                              value={section.description}
+                              onChange={(e) => handleShowcaseSectionChange(section.id, 'description', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs text-gray-600"
+                              placeholder="Descreva o benefício em uma frase."
+                            />
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addShowcaseSection}
+                          disabled={!canAddShowcaseSection}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-gray-300 text-sm text-gray-600 disabled:opacity-50"
+                        >
+                          Adicionar destaque
+                        </button>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={showcaseSaving}
+                        className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold disabled:opacity-60"
+                      >
+                        {showcaseSaving ? 'Salvando...' : 'Salvar personalização'}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
 
-        <div className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.06)] p-6 space-y-5">
-          <div className="flex flex-col gap-1">
+        <div className="space-y-6">
+          <div className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.06)] p-6 space-y-5">
+            <div className="flex flex-col gap-1">
             <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide">Time ativo</p>
             <h2 className="text-2xl font-bold text-gray-900">
               {totalMembers} membro{totalMembers === 1 ? '' : 's'}{' '}
@@ -399,7 +926,7 @@ const Team = () => {
             <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-sm text-red-600">{error}</div>
           ) : (
             <div className="space-y-4">
-              {members.map((member) => {
+              {teamMembers.map((member) => {
                 const dayState = helperDayData[member.id];
                 const selectedDay = helperSelectedDay[member.id] ?? 'today';
                 const dayData = dayState?.[selectedDay]?.data ?? null;
@@ -704,6 +1231,65 @@ const Team = () => {
               )})}
             </div>
           )}
+          </div>
+
+          <div className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.06)] p-6 space-y-4">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide">Clientes com acesso</p>
+              <div className="flex items-baseline gap-2">
+                <h2 className="text-2xl font-bold text-gray-900">{clientMembers.length}</h2>
+                <span className="text-sm text-gray-500">
+                  {customersWithPortal}/{customers.length || 0} no portal
+                </span>
+              </div>
+            </div>
+
+            {clientMembers.length ? (
+              <div className="space-y-3">
+                {clientMembers.map((client) => (
+                  <div key={client.id} className="rounded-2xl border border-gray-100 p-4 space-y-2">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">{client.name}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Mail size={14} /> {client.email}
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                        Cliente
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1">
+                        <Phone size={12} />
+                        {client.contactPhone || client.whatsappNumber || 'Sem telefone'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={focusPortalSection}
+                        className="inline-flex items-center gap-1 text-primary-600 font-semibold"
+                      >
+                        <UserPlus size={12} />
+                        Gerenciar acesso
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-500 space-y-2">
+                <p>Nenhum cliente com login ativo ainda.</p>
+                <button
+                  type="button"
+                  onClick={focusPortalSection}
+                  className="inline-flex items-center gap-2 text-primary-600 font-semibold"
+                >
+                  <UserPlus size={14} />
+                  Criar acesso agora
+                </button>
+              </div>
+            )}
+          </div>
         </div>
     </section>
   </div>

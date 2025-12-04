@@ -513,7 +513,7 @@ const ClientHome = () => {
                 ))}
               </div>
             </div>
-            <div className="rounded-[30px] bg-gradient-to-br from-[#0d0b2d] via-[#191545] to-[#311859] text-white p-6 space-y-4 shadow-[0_25px_60px_rgba(15,23,42,0.4)]">
+            <div className="rounded-[30px] border border-white/10 bg-[#15173a] text-white p-6 space-y-4 shadow-[0_15px_35px_rgba(15,23,42,0.25)] md:border-none md:bg-gradient-to-br md:from-[#0d0b2d] md:via-[#191545] md:to-[#311859] md:shadow-[0_25px_60px_rgba(15,23,42,0.4)]">
               <div className="space-y-1">
                 <p className="text-xs uppercase tracking-[0.3em] text-white/70">Resumo rápido</p>
                 <p className="text-2xl font-semibold">
