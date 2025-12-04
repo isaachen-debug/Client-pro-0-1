@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 're
 import {
   BarChart3,
   Check,
+  ChevronDown,
   Loader2,
   Mail,
   MessageCircle,
@@ -216,7 +217,7 @@ const Team = () => {
         name: portalAccessForm.name.trim() || undefined,
         password: portalAccessForm.password.trim() || undefined,
       });
-      setPortalAccessMessage({ email: response.user.email, password: response.password });
+      setPortalAccessMessage({ email: response.user.email, password: response.temporaryPassword });
       setCustomers((prev) =>
         prev.map((customer) =>
           customer.id === portalAccessForm.customerId ? { ...customer, email: response.user.email } : customer,
