@@ -816,6 +816,17 @@ const Layout = () => {
                   <p className={`text-[11px] font-semibold tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
                 ) : (
                   <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
+                        aria-label="Abrir menu rápido"
+                      >
+                        <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
+                      </button>
+                      {workspaceMenuOpen && <WorkspaceMenu className="absolute right-0 mt-3 w-56" />}
+                    </div>
                     <button
                       type="button"
                       onClick={() => setSidebarOpen(true)}
@@ -856,19 +867,6 @@ const Layout = () => {
                     </div>
                   </div>
                 )}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                    className={`${mobileHeaderCondensed ? 'w-10 h-10' : 'w-11 h-11'} rounded-full flex items-center justify-center overflow-hidden ${
-                      isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-gray-100 border border-gray-200'
-                    } transition-all duration-200`}
-                    aria-label="Abrir menu rápido"
-                  >
-                    <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
-                  </button>
-                  {workspaceMenuOpen && <WorkspaceMenu className="absolute right-0 mt-3 w-56" />}
-                </div>
               </div>
               {!mobileHeaderCondensed && mobileWorkspaceExpanded && (
                 <>
