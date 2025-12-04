@@ -243,13 +243,9 @@ const Layout = () => {
 
   useEffect(() => {
     const handleWindowScroll = () => {
-      setMobileHeaderCondensed((prev) => {
-        const target = contentScrollRef.current;
-        if (target) {
-          return prev;
-        }
-        return window.scrollY > 48;
-      });
+      const target = contentScrollRef.current;
+      const scrollTop = target ? target.scrollTop : window.scrollY;
+      setMobileHeaderCondensed(scrollTop > 48);
     };
     handleWindowScroll();
     window.addEventListener('scroll', handleWindowScroll, { passive: true });
@@ -871,76 +867,10 @@ const Layout = () => {
                   >
                     <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
                   </button>
-                  {workspaceMenuOpen && (
-                    <div
-                      ref={workspaceMenuRef}
-                      className={`absolute right-0 mt-3 w-56 rounded-3xl border ${
-                        isDarkTheme ? 'bg-[#060911] border-white/15' : 'bg-white border-gray-200'
-                      } shadow-[0_25px_45px_rgba(15,23,42,0.25)] p-4 space-y-3 z-20`}
-                    >
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">workspace</p>
-                        <p className={`text-sm ${isDarkTheme ? 'text-white/80' : 'text-gray-600'}`}>
-                          Personalize seu plano e explore novos apps.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleWorkspaceMenuAction('/app/financeiro#plans')}
-                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-                          isDarkTheme
-                            ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
-                            : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'
-                        }`}
-                      >
-                        <CreditCard size={16} />
-                        <span>Plans & Billing</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleWorkspaceMenuAction(undefined, () =>
-                            alert('Client Up Apps: em breve um hub completo para novos produtos.')
-                          )
-                        }
-                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-                          isDarkTheme
-                            ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
-                            : 'bg-gray-100 border border-gray-200 text-gray-900 hover:bg-gray-200'
-                        }`}
-                      >
-                        <AppWindow size={16} />
-                        <span>Apps</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleWorkspaceMenuAction('/app/profile')}
-                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-                          isDarkTheme
-                            ? 'text-white/70 hover:text-white'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <UserCircle size={16} />
-                        <span>Meu perfil</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleWorkspaceMenuAction('/app/settings')}
-                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-                          isDarkTheme
-                            ? 'text-white/70 hover:text-white'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <SettingsIcon size={16} />
-                        <span>Configurações</span>
-                      </button>
-                    </div>
-                  )}
+                  {workspaceMenuOpen && <WorkspaceMenu className="absolute right-0 mt-3 w-56" />}
                 </div>
               </div>
-              {mobileWorkspaceExpanded && (
+              {!mobileHeaderCondensed && mobileWorkspaceExpanded && (
                 <>
                   <div className="mt-4">
                     <div className={mobileInputWrapperClass}>
@@ -990,7 +920,6 @@ const Layout = () => {
                           <p>Veja métricas detalhadas no Dashboard.</p>
                         </div>
                       )}
-
                       {!workspaceQuery && (
                         <div className="grid grid-cols-2 gap-2 pt-2">
                           <button
