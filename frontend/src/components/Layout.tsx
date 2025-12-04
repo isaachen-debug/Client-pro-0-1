@@ -352,14 +352,16 @@ const Layout = () => {
     },
   ];
   const isDarkTheme = theme === 'dark';
-  const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2.5 py-2.5 space-y-1.5' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
+  const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2 py-1.5 space-y-1' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
   const mobileHeaderPanelSurface = isDarkTheme
     ? 'border border-white/12 bg-gradient-to-b from-[#090d19] to-[#04060d] shadow-[0_20px_60px_rgba(0,0,0,0.45)] text-white'
     : 'border border-gray-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,0.08)] text-gray-900';
   const mobileHeaderContainerClass = `md:hidden border-b sticky top-0 z-40 backdrop-blur-xl ${
     isDarkTheme ? 'bg-[#03050c]/95 text-white border-white/10' : 'bg-white/95 text-gray-900 border-gray-200 shadow-sm'
   }`;
-  const mobileHeaderPanelClass = `${mobileHeaderSpacingClass} ${mobileHeaderPanelSurface} transition-all duration-300`;
+  const mobileHeaderPanelClass = `${mobileHeaderSpacingClass} ${mobileHeaderPanelSurface} transition-all duration-300 ${
+    mobileHeaderCondensed ? 'scale-[0.95]' : ''
+  }`;
   const mobileIconButtonClass = `${isDarkTheme ? 'bg-white/10 border border-white/15 text-white' : 'bg-gray-100 border border-gray-200 text-gray-900'} rounded-2xl flex items-center justify-center`;
   const mobileInputWrapperClass = `rounded-2xl flex items-center gap-2 px-4 py-2.5 ${isDarkTheme ? 'bg-white/10 border border-white/10' : 'bg-gray-50 border border-gray-200'}`;
   const mobileInputClass = `bg-transparent flex-1 text-sm placeholder:text-current/40 focus:outline-none ${isDarkTheme ? 'text-white' : 'text-gray-900'}`;
