@@ -4,7 +4,6 @@ import {
   Users,
   Calendar,
   DollarSign,
-  Menu,
   X,
   PlayCircle,
   UserCircle,
@@ -722,7 +721,19 @@ const Layout = () => {
                     onClick={() => setSidebarOpen(true)}
                     className={`w-12 h-12 ${mobileIconButtonClass}`}
                   >
-                    <Menu size={22} />
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${
+                        isDarkTheme ? 'bg-white/20 border border-white/20' : 'bg-white border border-gray-200'
+                      }`}
+                    >
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+                          {initials}
+                        </span>
+                      )}
+                    </div>
                   </button>
                   <div>
                     <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
