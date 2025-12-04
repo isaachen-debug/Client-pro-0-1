@@ -27,7 +27,7 @@ import {
   AppWindow,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { TouchEvent } from 'react';
+import type { TouchEvent, UIEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
@@ -237,19 +237,23 @@ const Layout = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleContentScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
+    setMobileHeaderCondensed(event.currentTarget.scrollTop > 48);
+  }, []);
+
   useEffect(() => {
-    const target = contentScrollRef.current;
-    const handleScroll = () => {
-      const scrollTop = target ? target.scrollTop : window.scrollY;
-      setMobileHeaderCondensed(scrollTop > 48);
+    const handleWindowScroll = () => {
+      setMobileHeaderCondensed((prev) => {
+        const target = contentScrollRef.current;
+        if (target) {
+          return prev;
+        }
+        return window.scrollY > 48;
+      });
     };
-    handleScroll();
-    target?.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      target?.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('scroll', handleScroll);
-    };
+    handleWindowScroll();
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
   }, []);
   const quickActionGridItems = [
     {
@@ -1020,7 +1024,7 @@ const Layout = () => {
         </header>
 
         {/* Page Content */}
-        <main ref={contentScrollRef} className="flex-1 overflow-auto pb-28 sm:pb-0">
+        <main ref={contentScrollRef} onScroll={handleContentScroll} className="flex-1 overflow-auto pb-28 sm:pb-0">
           {canInstall && !dismissed && (
             <div className="px-4 pt-4">
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
