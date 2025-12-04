@@ -446,7 +446,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         </div>
         <button
           onClick={() => handleDayCardClick(currentDate)}
-          className="md:hidden inline-flex items-center justify-center w-full px-4 py-3 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+          className="md:hidden inline-flex items-center justify-center w-full px-4 py-3 bg-gray-900 text-white text-sm font-semibold rounded-2xl shadow-lg hover:bg-black transition-colors"
         >
           Novo agendamento
         </button>
