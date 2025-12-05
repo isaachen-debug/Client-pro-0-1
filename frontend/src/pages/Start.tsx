@@ -3,7 +3,7 @@ import { appointmentsApi } from '../services/api';
 import { Appointment } from '../types';
 import { differenceInMinutes, format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone, Search } from 'lucide-react';
+import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone } from 'lucide-react';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 
 const statusStyles: Record<string, string> = {
