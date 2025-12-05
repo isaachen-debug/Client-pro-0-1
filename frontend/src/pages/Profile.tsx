@@ -313,187 +313,178 @@ const Profile = () => {
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
         <div className="space-y-6">
-          <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-6 space-y-6">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-primary-600 uppercase tracking-[0.3em]">Identidade</p>
-              <h2 className="text-2xl font-semibold text-gray-900">Informações da conta e visual</h2>
-              <p className="text-sm text-gray-500">Esses dados aparecem no app interno e no portal do cliente.</p>
+          {profileStatus && (
+            <div
+              className={`text-sm px-4 py-2 rounded-xl ${
+                profileStatus.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                  : 'bg-red-50 text-red-600 border border-red-100'
+              }`}
+            >
+              {profileStatus.message}
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleProfileSubmit}>
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-4 md:p-5 space-y-4">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-primary-600 uppercase tracking-[0.3em]">Dados pessoais</p>
+                <p className="text-sm text-gray-500">Informações usadas para login e comunicações internas.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome</label>
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">E-mail</label>
+                  <input
+                    type="email"
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus-border-primary-500"
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
-            {profileStatus && (
-              <div
-                className={`text-sm px-4 py-2 rounded-xl ${
-                  profileStatus.type === 'success'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                    : 'bg-red-50 text-red-600 border border-red-100'
-                }`}
-              >
-                {profileStatus.message}
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-4 md:p-5 space-y-4">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-primary-600 uppercase tracking-[0.3em]">Marca & contato</p>
+                <p className="text-sm text-gray-500">Dados exibidos no portal do cliente e para helpers.</p>
               </div>
-            )}
-
-            <form className="space-y-5" onSubmit={handleProfileSubmit}>
-              <div className="rounded-2xl border border-gray-100 bg-white/70 p-4 md:p-5 space-y-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-primary-600 uppercase tracking-[0.3em]">Dados pessoais</p>
-                  <p className="text-sm text-gray-500">Informações usadas para login e comunicações internas.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome da empresa</label>
+                  <input
+                    type="text"
+                    value={profileForm.companyName}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, companyName: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Ex: Sunflowers Cleaning"
+                  />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome</label>
-                    <input
-                      type="text"
-                      value={profileForm.name}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">E-mail</label>
-                    <input
-                      type="email"
-                      value={profileForm.email}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">WhatsApp comercial</label>
+                  <input
+                    type="tel"
+                    value={profileForm.whatsappNumber}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="(415) 555-0199"
+                  />
                 </div>
-              </div>
-
-              <div className="rounded-2xl border border-gray-100 bg-white p-4 md:p-5 space-y-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-primary-600 uppercase tracking-[0.3em]">Marca & contato</p>
-                  <p className="text-sm text-gray-500">Dados exibidos no portal do cliente e para helpers.</p>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Telefone fixo / recados</label>
+                  <input
+                    type="tel"
+                    value={profileForm.contactPhone}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="(415) 555-0100"
+                  />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome da empresa</label>
-                    <input
-                      type="text"
-                      value={profileForm.companyName}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, companyName: e.target.value }))}
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="Ex: Sunflowers Cleaning"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">WhatsApp comercial</label>
-                    <input
-                      type="tel"
-                      value={profileForm.whatsappNumber}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="(415) 555-0199"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Telefone fixo / recados</label>
-                    <input
-                      type="tel"
-                      value={profileForm.contactPhone}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="(415) 555-0100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Logo / foto</label>
-                    <div className="mt-2 flex items-center gap-4">
-                      <div className="h-16 w-16 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center">
-                        {profileForm.avatarUrl ? (
-                          <img src={profileForm.avatarUrl} alt="Logo" className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-lg font-semibold text-gray-500">{initials}</span>
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        <label className="inline-flex items-center rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 cursor-pointer hover:border-primary-300">
-                          Enviar imagem
-                          <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-                        </label>
-                        {profileForm.avatarUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setProfileForm((prev) => ({ ...prev, avatarUrl: '' }))}
-                            className="text-xs text-red-500 hover:underline"
-                          >
-                            Remover
-                          </button>
-                        )}
-                        <p className="text-xs text-gray-500">PNG ou JPG até 2MB.</p>
-                      </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Logo / foto</label>
+                  <div className="mt-2 flex items-center gap-4">
+                    <div className="h-16 w-16 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center">
+                      {profileForm.avatarUrl ? (
+                        <img src={profileForm.avatarUrl} alt="Logo" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-lg font-semibold text-gray-500">{initials}</span>
+                      )}
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cor primária</label>
-                    <div className="mt-1 flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-2">
-                      <input
-                        type="color"
-                        value={profileForm.primaryColor}
-                        onChange={(e) => setProfileForm((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                        className="h-10 w-10 cursor-pointer bg-transparent"
-                      />
-                      <span className="text-sm font-semibold text-gray-700">{profileForm.primaryColor.toUpperCase()}</span>
+                    <div className="space-y-1">
+                      <label className="inline-flex items-center rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 cursor-pointer hover:border-primary-300">
+                        Enviar imagem
+                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                      </label>
+                      {profileForm.avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setProfileForm((prev) => ({ ...prev, avatarUrl: '' }))}
+                          className="text-xs text-red-500 hover:underline"
+                        >
+                          Remover
+                        </button>
+                      )}
+                      <p className="text-xs text-gray-500">PNG ou JPG até 2MB.</p>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="rounded-2xl border border-gray-100 bg-white p-4 md:p-5 space-y-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-primary-600 uppercase tracking-[0.3em]">Experiência do app</p>
-                  <p className="text-sm text-gray-500">Selecione idioma e tema padrão para toda a equipe.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tema preferido</label>
-                    <select
-                      value={profileForm.preferredTheme}
-                      onChange={(e) =>
-                        setProfileForm((prev) => ({
-                          ...prev,
-                          preferredTheme: e.target.value as ThemeOption,
-                        }))
-                      }
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    >
-                      {themeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Idioma preferido</label>
-                    <select
-                      value={profileForm.preferredLanguage}
-                      onChange={(e) =>
-                        setProfileForm((prev) => ({
-                          ...prev,
-                          preferredLanguage: e.target.value as LanguageOption,
-                        }))
-                      }
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    >
-                      {languageOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cor primária</label>
+                  <div className="mt-1 flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-2">
+                    <input
+                      type="color"
+                      value={profileForm.primaryColor}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, primaryColor: e.target.value }))}
+                      className="h-10 w-10 cursor-pointer bg-transparent"
+                    />
+                    <span className="text-sm font-semibold text-gray-700">{profileForm.primaryColor.toUpperCase()}</span>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
-                  Conta criada em{' '}
-                  <span className="font-semibold text-gray-700">
-                    {user.createdAt ? format(new Date(user.createdAt), "dd 'de' MMMM yyyy", { locale: ptBR }) : '—'}
-                  </span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-4 md:p-5 space-y-4">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-primary-600 uppercase tracking-[0.3em]">Experiência do app</p>
+                <p className="text-sm text-gray-500">Selecione idioma e tema padrão para toda a equipe.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tema preferido</label>
+                  <select
+                    value={profileForm.preferredTheme}
+                    onChange={(e) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        preferredTheme: e.target.value as ThemeOption,
+                      }))
+                    }
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    {themeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Idioma preferido</label>
+                  <select
+                    value={profileForm.preferredLanguage}
+                    onChange={(e) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        preferredLanguage: e.target.value as LanguageOption,
+                      }))
+                    }
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
+                Conta criada em{' '}
+                <span className="font-semibold text-gray-700">
+                  {user.createdAt ? format(new Date(user.createdAt), "dd 'de' MMMM yyyy", { locale: ptBR }) : '—'}
+                </span>
+              </div>
               <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
@@ -521,7 +512,8 @@ const Profile = () => {
                   Desfazer alterações
                 </button>
               </div>
-            </form>
+            </div>
+          </form>
           </div>
 
           <div className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-6 space-y-4">
