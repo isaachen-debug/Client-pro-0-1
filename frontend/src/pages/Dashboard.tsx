@@ -152,8 +152,10 @@ const Dashboard = () => {
       )}
 
       {/* Hero Stats */}
-      <div className="relative mt-2 md:mt-4">
-        <div className={`${heroContainerClass} p-4 md:p-6 space-y-4 md:space-y-6 border border-gray-100 rounded-[28px] md:rounded-[36px] shadow-[0_20px_60px_rgba(15,23,42,0.05)]`}>
+      <div className="relative mt-1 sm:mt-2 md:mt-4">
+        <div
+          className={`${heroContainerClass} p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-6 border border-gray-100 rounded-[24px] sm:rounded-[28px] md:rounded-[36px] shadow-[0_20px_60px_rgba(15,23,42,0.05)]`}
+        >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className={`text-[10px] uppercase tracking-[0.4em] ${isDarkTheme ? 'text-emerald-200' : 'text-emerald-600'}`}>Overview</p>
@@ -166,7 +168,7 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="grid gap-3 sm:gap-4 md:grid-cols-[0.65fr,0.35fr]">
-          <div className="rounded-[24px] bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-300 text-gray-900 p-4 md:p-5 shadow-lg">
+          <div className="rounded-[20px] sm:rounded-[24px] bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-300 text-gray-900 p-3 sm:p-4 md:p-5 shadow-lg">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold uppercase tracking-wide">Receita do mês</span>
               <div className="w-10 h-10 rounded-2xl bg-white/40 flex items-center justify-center">
@@ -176,7 +178,7 @@ const Dashboard = () => {
             <p className="text-3xl font-bold mt-4">R$ {data.totalRevenueMonth.toFixed(2)}</p>
             <p className="text-sm text-gray-900/70">Receita confirmada até o momento.</p>
           </div>
-          <div className="rounded-xl border-l-4 border-purple-300 bg-white text-gray-900 p-4 md:p-5 shadow-sm">
+          <div className="rounded-xl border-l-4 border-purple-300 bg-white text-gray-900 p-3 sm:p-4 md:p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold uppercase tracking-wide">Pagamentos pendentes</span>
               <Clock size={20} className="text-purple-500" />
