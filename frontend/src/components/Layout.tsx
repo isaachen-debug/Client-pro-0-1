@@ -276,10 +276,10 @@ const Layout = () => {
   }, []);
   const quickActionGridItems = [
     {
-      key: 'start',
-      label: 'Hoje',
-      icon: '⚡',
-      path: '/app/start',
+      key: 'clientes',
+      label: 'Clientes',
+      icon: '👥',
+      path: '/app/clientes',
     },
     {
       key: 'financeiro',
@@ -547,10 +547,10 @@ const Layout = () => {
       type: 'route' as const,
     },
     {
-      key: 'clientes',
-      label: 'Clientes',
-      path: '/app/clientes',
-      icon: Users,
+      key: 'today',
+      label: 'Hoje',
+      path: '/app/start',
+      icon: PlayCircle,
       type: 'route' as const,
     },
     {
