@@ -301,8 +301,8 @@ const Profile = () => {
                       type="tel"
                       value={profileForm.whatsappNumber}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="(11) 90000-0000"
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="(415) 555-0199"
                     />
                   </div>
                   <div>
@@ -311,8 +311,8 @@ const Profile = () => {
                       type="tel"
                       value={profileForm.contactPhone}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                      className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="(11) 4002-8922"
+                    className="w-full mt-1 rounded-2xl border border-gray-200 px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="(415) 555-0100"
                     />
                   </div>
                 </div>

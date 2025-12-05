@@ -55,6 +55,10 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     status: 'AGENDADO' as AppointmentStatus,
     assignedHelperId: '',
   });
+  const currencyFormatter = useMemo(
+    () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
+    [],
+  );
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
     customerId: '',
@@ -556,7 +560,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                           {ag.customer.name}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {ag.startTime} • R$ {ag.price.toFixed(2)}
+                          {ag.startTime} • {currencyFormatter.format(ag.price)}
                         </div>
                         {ag.assignedHelper?.name && (
                           <div className="text-[11px] text-gray-500">
@@ -698,6 +702,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
           onClose={() => setShowDayActions(false)}
           onAdd={handleDayActionAdd}
           onEdit={handleDayActionEdit}
+          formatCurrency={(value) => currencyFormatter.format(value)}
         />
       )}
 
@@ -740,9 +745,10 @@ type DayActionsModalProps = {
   onAdd: () => void;
   onEdit: (appointment: Appointment) => void;
   onClose: () => void;
+  formatCurrency: (value: number) => string;
 };
 
-const DayActionsModal = ({ date, appointments, onAdd, onEdit, onClose }: DayActionsModalProps) => (
+const DayActionsModal = ({ date, appointments, onAdd, onEdit, onClose, formatCurrency }: DayActionsModalProps) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div className="fixed inset-0 bg-black/50" onClick={onClose} />
     <div className="relative bg-white rounded-2xl shadow-xl z-10 w-full max-w-md">
@@ -784,7 +790,7 @@ const DayActionsModal = ({ date, appointments, onAdd, onEdit, onClose }: DayActi
                 >
                   <p className="text-sm font-semibold text-gray-900">{appointment.customer.name}</p>
                   <p className="text-xs text-gray-500">
-                    {appointment.startTime} • R$ {appointment.price.toFixed(2)}
+                    {appointment.startTime} • {formatCurrency(appointment.price)}
                   </p>
                 </button>
               ))}

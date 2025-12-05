@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, Clock, Users, Calendar, BellRing, X as CloseIcon } from 'lucide-react';
-import { dashboardApi } from '../services/api';
-import { DashboardOverview } from '../types';
+import { DollarSign, Clock, Users, Calendar, BellRing, X as CloseIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { dashboardApi, transactionsApi } from '../services/api';
+import { DashboardOverview, TransactionStatus } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { parseDateFromInput } from '../utils/date';
@@ -34,6 +34,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const pushNotifications = usePushNotifications();
   const [pushPromptDismissed, setPushPromptDismissed] = useState(false);
+  const [completedExpanded, setCompletedExpanded] = useState(false);
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -92,6 +94,41 @@ const Dashboard = () => {
   const chartBase = 800;
   const chartMaxTarget = Math.max(data?.totalRevenueMonth ?? 0, maxRevenueValue, chartBase);
   const chartCeiling = Math.ceil(chartMaxTarget / 100) * 100 || chartBase;
+  const formatCurrency = (value: number) =>
+    value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+  const completedList = data?.recentCompletedAppointments ?? [];
+  const visibleCompleted = completedExpanded ? completedList : completedList.slice(0, 3);
+
+  const handleToggleCompletedPayment = async (
+    appointmentId: string,
+    transactionId: string | null,
+    currentStatus: TransactionStatus,
+  ) => {
+    if (!transactionId) {
+      alert('Não há cobrança vinculada a este serviço.');
+      return;
+    }
+    const nextStatus: TransactionStatus = currentStatus === 'PAGO' ? 'PENDENTE' : 'PAGO';
+    try {
+      setUpdatingPaymentId(appointmentId);
+      await transactionsApi.updateStatus(transactionId, nextStatus);
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          recentCompletedAppointments: prev.recentCompletedAppointments.map((item) =>
+            item.id === appointmentId ? { ...item, transactionStatus: nextStatus } : item,
+          ),
+        };
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar status do pagamento:', error);
+      alert('Não foi possível atualizar o status. Tente novamente.');
+    } finally {
+      setUpdatingPaymentId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -175,7 +212,7 @@ const Dashboard = () => {
                 <DollarSign size={18} />
               </div>
             </div>
-            <p className="text-3xl font-bold mt-4">R$ {data.totalRevenueMonth.toFixed(2)}</p>
+            <p className="text-3xl font-bold mt-4">{formatCurrency(data.totalRevenueMonth)}</p>
             <p className="text-sm text-gray-900/70">Receita confirmada até o momento.</p>
           </div>
           <div className="rounded-xl border-l-4 border-purple-300 bg-white text-gray-900 p-3 sm:p-4 md:p-5 shadow-sm">
@@ -183,7 +220,7 @@ const Dashboard = () => {
               <span className="text-sm font-semibold uppercase tracking-wide">Pagamentos pendentes</span>
               <Clock size={20} className="text-purple-500" />
             </div>
-            <p className="text-3xl font-bold mt-4">R$ {data.pendingPaymentsMonth.toFixed(2)}</p>
+            <p className="text-3xl font-bold mt-4">{formatCurrency(data.pendingPaymentsMonth)}</p>
             <p className="text-sm text-gray-600">Aguardando confirmação no mês atual.</p>
           </div>
         </div>
@@ -218,6 +255,21 @@ const Dashboard = () => {
           </button>
         </div>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate('/app/start')}
+          className="mt-4 w-full rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-900 to-emerald-700 text-white px-4 py-4 sm:py-5 flex items-center justify-between shadow-[0_20px_50px_rgba(15,23,42,0.18)] border border-white/10 hover:translate-y-[-2px] transition-transform"
+        >
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/70 font-semibold">Today</p>
+            <p className="text-lg sm:text-xl font-semibold">Check your routes & helpers for today</p>
+            <p className="text-sm text-white/80">See who is on the field right now.</p>
+          </div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+            Open
+            <ChevronRight size={16} />
+          </div>
+        </button>
       </div>
 
       {/* Charts and Upcoming */}
@@ -232,9 +284,7 @@ const Dashboard = () => {
               <YAxis
                 stroke="#6b7280"
                 domain={[0, chartCeiling]}
-                tickFormatter={(value) =>
-                  `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
-                }
+                tickFormatter={(value) => formatCurrency(value)}
               />
               <Tooltip
                 contentStyle={{
@@ -242,7 +292,7 @@ const Dashboard = () => {
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
                 }}
-                formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Ganhos']}
+                formatter={(value: number) => [formatCurrency(value), 'Revenue']}
               />
               <Bar dataKey="value" fill="#22c55e" radius={[8, 8, 0, 0]} />
             </BarChart>
@@ -250,39 +300,111 @@ const Dashboard = () => {
         </div>
 
         {/* Próximos Agendamentos */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Próximos Agendamentos</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Você tem {data.upcomingAppointments.length} agendamentos futuros.
-          </p>
-          <div className="space-y-4">
-            {data.upcomingAppointments.map((appointment) => (
-              <div key={appointment.id} className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-medium text-gray-600">
-                    {appointment.customer.name.substring(0, 2).toUpperCase()}
-                  </span>
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Próximos Agendamentos</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Você tem {data.upcomingAppointments.length} agendamentos futuros.
+            </p>
+            <div className="space-y-4">
+              {data.upcomingAppointments.map((appointment) => (
+                <div key={appointment.id} className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-medium text-gray-600">
+                      {appointment.customer.name.substring(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {appointment.customer.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
+                      {appointment.startTime}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {formatCurrency(appointment.price)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {appointment.customer.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
-                    {appointment.startTime}
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-semibold text-gray-900">
-                    R$ {appointment.price.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {data.upcomingAppointments.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-8">
-                Nenhum agendamento futuro
-              </p>
+              ))}
+              {data.upcomingAppointments.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  Nenhum agendamento futuro
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Clientes concluídos</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Você finalizou {completedList.length} serviços recentes.
+            </p>
+            <div className="space-y-4">
+              {visibleCompleted.map((appointment) => {
+                const paid = appointment.transactionStatus === 'PAGO';
+                const statusClass = paid
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                  : 'bg-amber-50 text-amber-700 border border-amber-100';
+                return (
+                  <div key={appointment.id} className="flex items-start space-x-3">
+                    <div className="w-10 h-10 bg-gray-900/5 text-gray-900 rounded-full flex items-center justify-center flex-shrink-0 font-semibold">
+                      {appointment.customer.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{appointment.customer.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
+                        {appointment.startTime}
+                      </p>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1 flex-shrink-0">
+                      <p className="text-sm font-semibold text-gray-900">{formatCurrency(appointment.price)}</p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleCompletedPayment(
+                            appointment.id,
+                            appointment.transactionId,
+                            appointment.transactionStatus,
+                          )
+                        }
+                        disabled={!appointment.transactionId || updatingPaymentId === appointment.id}
+                        className={`text-[11px] font-semibold px-3 py-1 rounded-full transition ${
+                          statusClass
+                        } ${
+                          !appointment.transactionId
+                            ? 'opacity-60 cursor-not-allowed'
+                            : 'hover:shadow-md cursor-pointer'
+                        } ${updatingPaymentId === appointment.id ? 'opacity-70' : ''}`}
+                      >
+                        {updatingPaymentId === appointment.id ? 'Atualizando...' : paid ? 'Pago' : 'Pendente'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {completedList.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  Nenhum serviço concluído recentemente
+                </p>
+              )}
+            </div>
+            {completedList.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setCompletedExpanded((prev) => !prev)}
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition"
+              >
+                {completedExpanded ? 'Mostrar menos' : 'Ver todos'}
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform ${completedExpanded ? 'rotate-180' : ''}`}
+                />
+              </button>
             )}
           </div>
         </div>

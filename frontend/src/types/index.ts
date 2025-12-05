@@ -403,5 +403,17 @@ export interface DashboardOverview {
     value: number;
   }[];
   upcomingAppointments: Appointment[];
+  recentCompletedAppointments: Array<{
+    id: string;
+    date: string;
+    startTime: string;
+    price: number;
+    customer: {
+      id: string;
+      name: string;
+    };
+    transactionStatus: TransactionStatus;
+    transactionId: string | null;
+  }>;
 }
 

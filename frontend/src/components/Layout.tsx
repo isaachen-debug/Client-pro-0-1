@@ -226,6 +226,7 @@ const Layout = () => {
   }, [mobileWorkspaceExpanded]);
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
+  const headerSentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -251,30 +252,34 @@ const Layout = () => {
     window.addEventListener('scroll', handleWindowScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleWindowScroll);
   }, []);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+    const rootElement = contentScrollRef.current;
+    const sentinel = headerSentinelRef.current;
+    if (!rootElement || !sentinel) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setMobileHeaderCondensed(!entry.isIntersecting);
+      },
+      {
+        root: rootElement,
+        threshold: 1,
+      },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
   const quickActionGridItems = [
-    {
-      key: 'dashboard',
-      label: 'Dashboards',
-      icon: '📊',
-      path: '/app/dashboard',
-    },
     {
       key: 'start',
       label: 'Hoje',
       icon: '⚡',
       path: '/app/start',
-    },
-    {
-      key: 'clientes',
-      label: 'Clientes',
-      icon: '👥',
-      path: '/app/clientes',
-    },
-    {
-      key: 'agenda',
-      label: 'Agenda',
-      icon: '🗓️',
-      path: '/app/agenda',
     },
     {
       key: 'financeiro',
@@ -294,22 +299,6 @@ const Layout = () => {
       icon: '🤝',
       path: '/app/team',
     },
-    {
-      key: 'perfil',
-      label: 'Perfil',
-      icon: '👤',
-      path: '/app/profile',
-    },
-    ...(isOwner
-      ? [
-          {
-            key: 'settings',
-            label: 'Settings',
-            icon: '⚙️',
-            path: '/app/settings',
-          },
-        ]
-      : []),
   ];
   const quickCreateActions = [
     {
@@ -552,7 +541,7 @@ const Layout = () => {
     },
     {
       key: 'agenda',
-      label: 'Agenda',
+      label: 'Schedule',
       path: '/app/agenda',
       icon: Calendar,
       type: 'route' as const,
@@ -566,7 +555,7 @@ const Layout = () => {
     },
     {
       key: 'launch',
-      label: 'Launch',
+      label: 'Explore',
       icon: Grid,
       type: 'launcher' as const,
     },
@@ -808,150 +797,205 @@ const Layout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header Mobile */}
-        <header className={mobileHeaderContainerClass}>
-          <div className={`px-4 pt-4 ${mobileWorkspaceExpanded ? 'pb-6' : 'pb-4'}`}>
-            <div className={mobileHeaderPanelClass}>
-              <div className="flex items-center justify-between gap-3">
-                {mobileHeaderCondensed ? (
-                  <p className={`text-[11px] font-semibold tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
-                ) : (
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
-                        aria-label="Abrir menu rápido"
-                      >
-                        <img src={brandLogo} alt="Client Up" className="w-8 h-8 object-contain" />
-                      </button>
-                      {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-56" />}
-                    </div>
+        <header className={mobileHeaderContainerClass} style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div
+            className={`px-4 transition-all duration-300 ${
+              mobileHeaderCondensed ? 'pt-2 pb-2' : mobileWorkspaceExpanded ? 'pt-4 pb-6' : 'pt-4 pb-4'
+            }`}
+          >
+            {mobileHeaderCondensed ? (
+              <div
+                className={`flex items-center justify-between gap-3 rounded-2xl border ${
+                  isDarkTheme ? 'bg-[#090d19] border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'
+                } shadow-sm px-3 py-2`}
+              >
+                <p className="text-sm font-semibold truncate">{currentSectionTitle}</p>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
                     <button
                       type="button"
-                      onClick={() => setSidebarOpen(true)}
-                      className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
+                      onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+                      className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
+                      aria-label="Abrir menu rápido"
                     >
-                      <div
-                        className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${
-                          isDarkTheme ? 'bg-white/20 border border-white/20' : 'bg-white border border-gray-200'
-                        }`}
-                      >
-                        {user?.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
-                            {initials}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-1">
+                        <div
+                          className={`w-7 h-7 rounded-full overflow-hidden border ${
+                            isDarkTheme ? 'border-white/20 bg-white/10' : 'border-white/70 bg-white'
+                          }`}
+                        >
+                          {user?.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-[11px] font-semibold flex items-center justify-center h-full text-gray-900 dark:text-white">
+                              {initials}
+                            </span>
+                          )}
+                        </div>
+                        <div className="w-5 h-5 rounded-full border border-gray-200 bg-white flex items-center justify-center">
+                          <img src={brandLogo} alt="Client Up" className="w-4 h-4 object-contain" />
+                        </div>
                       </div>
                     </button>
-                    <div className="min-w-0">
-                      <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
-                      <button
-                        type="button"
-                        onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
-                        aria-expanded={mobileWorkspaceExpanded}
-                        className={`flex items-center gap-1 text-base font-semibold ${
-                          isDarkTheme ? 'text-white' : 'text-gray-900'
-                        }`}
-                      >
-                        {user?.companyName || 'Client Up'}
-                        <ChevronDown
-                          size={16}
-                          className={`${mobileSecondaryTextClass} transition-transform ${
-                            mobileWorkspaceExpanded ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                    </div>
+                    {workspaceMenuOpen && <WorkspaceMenu className="absolute right-0 mt-3 w-56" />}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className="w-9 h-9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center dark:bg-white/10 dark:border-white/15 transition-all duration-200"
+                  >
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-white/40 dark:border-white/20 bg-white">
+                      <img src={brandLogo} alt="Client Up" className="w-full h-full object-contain" />
+                    </div>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className={mobileHeaderPanelClass}>
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+                      className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
+                      aria-label="Abrir menu rápido"
+                    >
+                      <div className="flex items-center gap-1">
+                        <div
+                          className={`w-8 h-8 rounded-full overflow-hidden border ${
+                            isDarkTheme ? 'bg-white/20 border border-white/30' : 'bg-white border border-gray-200'
+                          }`}
+                        >
+                          {user?.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className={`text-xs font-semibold flex items-center justify-center h-full ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+                              {initials}
+                            </span>
+                          )}
+                        </div>
+                        <div className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center">
+                          <img src={brandLogo} alt="Client Up" className="w-4 h-4 object-contain" />
+                        </div>
+                      </div>
+                    </button>
+                    {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-56" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
+                    <button
+                      type="button"
+                      onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
+                      aria-expanded={mobileWorkspaceExpanded}
+                      className={`flex items-center gap-1 text-base font-semibold ${
+                        isDarkTheme ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      {user?.companyName || 'Client Up'}
+                      <ChevronDown
+                        size={16}
+                        className={`${mobileSecondaryTextClass} transition-transform ${
+                          mobileWorkspaceExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
+                  >
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-white">
+                      <img src={brandLogo} alt="Client Up" className="w-7 h-7 object-contain" />
+                    </div>
+                  </button>
+                </div>
+                {mobileWorkspaceExpanded && (
+                  <>
+                    <div className="mt-4">
+                      <div className={mobileInputWrapperClass}>
+                        <Search size={16} className={mobileSecondaryTextClass} />
+                        <input
+                          type="text"
+                          placeholder="Buscar agenda, Clients ou contratos"
+                          value={workspaceQuery}
+                          onChange={(e) => setWorkspaceQuery(e.target.value)}
+                          className={mobileInputClass}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => navigate('/app/agenda')}
+                          className={`text-xs font-semibold ${isDarkTheme ? 'text-emerald-300' : 'text-emerald-600'}`}
+                        >
+                          Schedule
+                        </button>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {workspaceQuery ? (
+                          filteredWorkspaceLinks.length ? (
+                            filteredWorkspaceLinks.map((link) => {
+                              const Icon = link.icon;
+                              return (
+                                <button
+                                  key={link.key}
+                                  type="button"
+                                  onClick={() => handleWorkspaceNavigate(link.path)}
+                                  className={`w-full flex items-center justify-between rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+                                    isDarkTheme ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Icon size={16} />
+                                    {link.label}
+                                  </span>
+                                  <ChevronRight size={16} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <p className={`${mobileSecondaryTextClass} text-xs`}>Nenhum módulo encontrado.</p>
+                          )
+                        ) : (
+                          <div className={`${mobileSecondaryTextClass} text-sm`}>
+                            <p>Veja métricas detalhadas no Dashboard.</p>
+                          </div>
+                        )}
+                        {!workspaceQuery && (
+                          <div className="grid grid-cols-2 gap-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => navigate('/app/financeiro#plans')}
+                              className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
+                                isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
+                              }`}
+                            >
+                              Plans
+                              <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => alert('Apps adicionais do ecossistema Client Up chegam em breve.')}
+                              className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
+                                isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
+                              }`}
+                            >
+                              Apps
+                              <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
-              {!mobileHeaderCondensed && mobileWorkspaceExpanded && (
-                <>
-                  <div className="mt-4">
-                    <div className={mobileInputWrapperClass}>
-                      <Search size={16} className={mobileSecondaryTextClass} />
-                      <input
-                        type="text"
-                        placeholder="Buscar agenda, Clients ou contratos"
-                        value={workspaceQuery}
-                        onChange={(e) => setWorkspaceQuery(e.target.value)}
-                        className={mobileInputClass}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => navigate('/app/agenda')}
-                        className={`text-xs font-semibold ${isDarkTheme ? 'text-emerald-300' : 'text-emerald-600'}`}
-                      >
-                        Agenda
-                      </button>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {workspaceQuery ? (
-                        filteredWorkspaceLinks.length ? (
-                          filteredWorkspaceLinks.map((link) => {
-                            const Icon = link.icon;
-                            return (
-                              <button
-                                key={link.key}
-                                type="button"
-                                onClick={() => handleWorkspaceNavigate(link.path)}
-                                className={`w-full flex items-center justify-between rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-                                  isDarkTheme ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                                }`}
-                              >
-                                <span className="flex items-center gap-2">
-                                  <Icon size={16} />
-                                  {link.label}
-                                </span>
-                                <ChevronRight size={16} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
-                              </button>
-                            );
-                          })
-                        ) : (
-                          <p className={`${mobileSecondaryTextClass} text-xs`}>Nenhum módulo encontrado.</p>
-                        )
-                      ) : (
-                        <div className={`${mobileSecondaryTextClass} text-sm`}>
-                          <p>Veja métricas detalhadas no Dashboard.</p>
-                        </div>
-                      )}
-                      {!workspaceQuery && (
-                        <div className="grid grid-cols-2 gap-2 pt-2">
-                          <button
-                            type="button"
-                            onClick={() => navigate('/app/financeiro#plans')}
-                            className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
-                              isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
-                            }`}
-                          >
-                            Plans
-                            <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => alert('Apps adicionais do ecossistema Client Up chegam em breve.')}
-                            className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
-                              isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
-                            }`}
-                          >
-                            Apps
-                            <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            )}
           </div>
         </header>
 
         {/* Page Content */}
         <main ref={contentScrollRef} onScroll={handleContentScroll} className="flex-1 overflow-auto pb-28 sm:pb-0">
+          <div ref={headerSentinelRef} aria-hidden="true" className="h-px w-full opacity-0 pointer-events-none" />
           {canInstall && !dismissed && (
             <div className="px-4 pt-4">
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
@@ -1117,15 +1161,7 @@ const Layout = () => {
                     <X size={20} />
                   </button>
                 </div>
-                <div className="rounded-2xl bg-white/5 border border-white/10 flex items-center gap-2 px-4 py-2">
-                  <Search size={16} className="text-white/60" />
-                  <input
-                    type="text"
-                    placeholder="Buscar módulos rápidos"
-                    className="bg-transparent flex-1 text-sm text-white placeholder:text-white/60 focus:outline-none"
-                  />
-                </div>
-                <div className="grid grid-cols-4 gap-3 text-white">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-white">
                   {quickActionGridItems.map((item) => (
                     <button
                       key={item.key}

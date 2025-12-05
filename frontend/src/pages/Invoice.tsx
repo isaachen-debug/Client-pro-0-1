@@ -11,6 +11,7 @@ const statusClassMap: Record<string, string> = {
   PENDENTE: 'bg-amber-100 text-amber-700',
   CANCELADO: 'bg-red-100 text-red-700',
 };
+const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 const Invoice = () => {
   const { id } = useParams();
@@ -139,7 +140,7 @@ const Invoice = () => {
             <div className="bg-gray-50 px-6 py-3 text-sm font-semibold text-gray-500 uppercase">Resumo</div>
             <div className="px-6 py-4 flex items-center justify-between text-lg font-semibold text-gray-900">
               <span>Total</span>
-              <span>R$ {invoice.price.toFixed(2)}</span>
+              <span>{usdFormatter.format(invoice.price)}</span>
             </div>
           </section>
 

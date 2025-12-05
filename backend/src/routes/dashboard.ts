@@ -111,6 +111,42 @@ router.get('/overview', async (req, res) => {
       take: 5,
     });
 
+    const recentCompletedAppointmentsRaw = await prisma.appointment.findMany({
+      where: {
+        userId,
+        status: 'CONCLUIDO',
+        date: {
+          lte: new Date(),
+        },
+      },
+      include: {
+        customer: true,
+        transactions: {
+          where: {
+            type: 'RECEITA',
+          },
+        },
+      },
+      orderBy: [{ finishedAt: 'desc' }, { date: 'desc' }],
+      take: 5,
+    });
+
+    const recentCompletedAppointments = recentCompletedAppointmentsRaw.map((appointment) => {
+      const transaction = appointment.transactions[0];
+      return {
+        id: appointment.id,
+        date: appointment.date,
+        startTime: appointment.startTime,
+        price: appointment.price,
+        customer: {
+          id: appointment.customer.id,
+          name: appointment.customer.name,
+        },
+        transactionStatus: (transaction?.status ?? 'PENDENTE') as 'PENDENTE' | 'PAGO',
+        transactionId: transaction?.id ?? null,
+      };
+    });
+
     res.json({
       totalRevenueMonth,
       pendingPaymentsMonth,
@@ -118,6 +154,7 @@ router.get('/overview', async (req, res) => {
       scheduledServicesCount,
       revenueByWeek,
       upcomingAppointments,
+      recentCompletedAppointments,
     });
   } catch (error) {
     console.error(error);

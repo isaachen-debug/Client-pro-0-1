@@ -30,12 +30,22 @@ const formatMinutes = (minutes: number) => {
   return `${mins}min`;
 };
 
+const workingClockColors = {
+  base: '#0ea5e9',
+  background: '#e0f2fe',
+  text: '#0369a1',
+};
+
 const Start = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const usdFormatter = useMemo(
+    () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
+    [],
+  );
 
   useEffect(() => {
     fetchAppointments(selectedDate);
@@ -44,7 +54,7 @@ const Start = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(Date.now());
-    }, 60_000);
+    }, 1_000);
 
     return () => clearInterval(interval);
   }, []);
@@ -128,6 +138,18 @@ const Start = () => {
     };
   }, [appointments]);
 
+  const liveWorkedSeconds = useMemo(() => {
+    return appointments.reduce((total, appointment) => {
+      if (!appointment.startedAt) return total;
+      const endReference =
+        appointment.status === 'CONCLUIDO' && appointment.finishedAt
+          ? new Date(appointment.finishedAt).getTime()
+          : now;
+      const elapsed = Math.max(0, Math.floor((endReference - new Date(appointment.startedAt).getTime()) / 1000));
+      return total + elapsed;
+    }, 0);
+  }, [appointments, now]);
+
   const getElapsedMinutes = (appointment: Appointment) => {
     if (!appointment.startedAt) return 0;
     const endReference =
@@ -174,33 +196,6 @@ const Start = () => {
           </div>
           <div className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-inner">
             Dia selecionado: {selectedDateLabel}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-2 flex items-center gap-2">
-            <Search size={16} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar agenda, Clients ou contratos"
-              className="flex-1 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedDate(new Date())}
-              className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-            >
-              Hoje
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedDate(addDays(new Date(), 1))}
-              className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-            >
-              Amanhã
-            </button>
           </div>
         </div>
 
@@ -256,11 +251,7 @@ const Start = () => {
           value={formatMinutes(summary.estimatedTotalMinutes)}
           icon={<Clock4 className="text-gray-600" size={20} />}
         />
-        <SummaryCard
-          title="Tempo trabalhado"
-          value={formatMinutes(summary.workedMinutesToday)}
-          icon={<CheckCircle2 className="text-emerald-600" size={20} />}
-        />
+        <WorkingClockCard seconds={liveWorkedSeconds} />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
@@ -349,8 +340,8 @@ const Start = () => {
                     {appointment.startTime}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Valor:</span> R${' '}
-                    {appointment.price.toFixed(2)}
+                    <span className="font-medium text-gray-700">Valor:</span>{' '}
+                    {usdFormatter.format(appointment.price)}
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Duração estimada:</span>{' '}
@@ -464,6 +455,42 @@ const SummaryCard = ({ title, value, icon }: SummaryCardProps) => (
     </div>
   </div>
 );
+
+const WorkingClockCard = ({ seconds }: { seconds: number }) => {
+  const display = `${Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, '0')}m ${Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, '0')}s`;
+  const secondsProgress = seconds % 3600;
+  const dashArray = 2 * Math.PI * 45;
+  const dashOffset = dashArray - (secondsProgress / 3600) * dashArray;
+  return (
+    <div className="relative flex flex-col items-center justify-center bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Tempo trabalhado</p>
+      <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+          <circle cx="50" cy="50" r="45" fill="transparent" stroke={workingClockColors.background} strokeWidth="6" />
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="transparent"
+            stroke={workingClockColors.base}
+            strokeWidth="6"
+            strokeDasharray={dashArray}
+            strokeDashoffset={dashOffset}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center flex-col text-sm font-semibold text-gray-900">
+          <span className="text-base">{display}</span>
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 mt-2 text-center">Atualiza quando você conclui serviços</p>
+    </div>
+  );
+};
 
 export default Start;
 

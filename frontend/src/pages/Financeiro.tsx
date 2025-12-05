@@ -252,12 +252,11 @@ const Financeiro = () => {
     ? `${format(period.start, 'dd/MM/yyyy')} - ${format(period.end, 'dd/MM/yyyy')}`
     : 'Selecione um intervalo';
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const usdFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
     [],
   );
+  const formatCurrency = (value: number) => usdFormatter.format(value);
 
   const handleStatusToggle = async (transaction: Transaction) => {
     try {
@@ -452,7 +451,9 @@ const Financeiro = () => {
           <div className="w-full md:w-auto flex flex-col gap-3">
             <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
               <p className="text-sm text-white/70">Total monitorado</p>
-              <p className="text-3xl font-semibold">{formatCurrency(summary.total)}</p>
+              <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                {formatCurrency(summary.total)}
+              </p>
               <p className="text-xs text-white/60">
                 Recebido {formatCurrency(summary.revenuePaid)} • Pendente {formatCurrency(summary.revenuePending)}
               </p>
@@ -557,7 +558,9 @@ const Financeiro = () => {
                       <Icon size={18} className={card.iconColor} />
                     </span>
                   </div>
-                  <p className="relative text-3xl font-semibold text-gray-900">{card.value}</p>
+                  <p className="relative text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                    {card.value}
+                  </p>
                   <p className="relative text-sm text-gray-500 mt-1">{card.detail}</p>
                 </div>
               );
@@ -646,7 +649,9 @@ const Financeiro = () => {
 
             <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 flex items-center justify-between text-sm font-semibold text-gray-700">
               <span>Total do período</span>
-              <span className="text-xl text-primary-600">{formatCurrency(summary.total)}</span>
+              <span className="text-lg sm:text-xl text-primary-600 whitespace-nowrap overflow-hidden text-ellipsis">
+                {formatCurrency(summary.total)}
+              </span>
             </div>
           </div>
         </section>
@@ -665,7 +670,9 @@ const Financeiro = () => {
                 }`}
               >
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">{card.value}</p>
+                <p className="text-xl sm:text-2xl font-semibold text-gray-900 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {card.value}
+                </p>
               </div>
             ))}
           </div>
