@@ -548,7 +548,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#03050c] sm:bg-[#fffaf4] flex flex-col pb-10 sm:pb-0">
+    <div className="min-h-screen bg-white sm:bg-[#fffaf4] flex flex-col pb-10 sm:pb-0">
       <header className="hidden sm:block w-full border-b border-white/70 bg-white/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-6">
           <div className="flex items-center gap-3">
@@ -587,17 +587,17 @@ const Login = () => {
         </div>
       </header>
 
-      <section className="sm:hidden bg-[#03050c] text-white pt-8 pb-10">
+      <section className="sm:hidden bg-gradient-to-b from-white via-[#f7f8ff] to-[#eef7f3] text-gray-900 pt-8 pb-10">
         <div className="max-w-sm mx-auto flex flex-col gap-6 px-4">
           <div className="flex justify-center">
-            <div className="inline-flex items-center rounded-full border border-white/20 overflow-hidden text-[11px] font-semibold">
+            <div className="inline-flex items-center rounded-full border border-gray-200 overflow-hidden text-[11px] font-semibold bg-white">
               {languageOptions.map((option) => (
                 <button
                   key={`mobile-lang-${option.key}`}
                   type="button"
                   onClick={() => setLanguage(option.key)}
                   className={`px-3 py-1 transition ${
-                    language === option.key ? 'bg-white text-gray-900' : 'text-white/60'
+                    language === option.key ? 'bg-emerald-50 text-emerald-700' : 'text-gray-500'
                   }`}
                 >
                   {option.label}
@@ -606,7 +606,7 @@ const Login = () => {
             </div>
           </div>
           <div
-            className="relative overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-b from-[#06090f] via-[#05070c] to-[#020307]"
+            className="relative overflow-hidden rounded-[28px] border border-gray-200 bg-gradient-to-b from-white via-[#f4f6ff] to-[#e9f6ef] shadow-[0_20px_60px_rgba(15,23,42,0.06)]"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
@@ -621,18 +621,18 @@ const Login = () => {
                 >
                   <div className="space-y-2">
                     <img src={logoFull} alt="Client Up" className="h-10 mx-auto" />
-                    <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-300 font-semibold">
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-600 font-semibold">
                       {t.mobile.brandTag}
                     </p>
-                    <h1 className="text-2xl font-bold leading-tight">{slide.title}</h1>
-                    <p className="text-sm text-white/70">{slide.description}</p>
+                    <h1 className="text-2xl font-bold leading-tight text-gray-900">{slide.title}</h1>
+                    <p className="text-sm text-gray-600">{slide.description}</p>
                   </div>
-                  <div className="w-48 h-48 rounded-[32px] border border-white/10 bg-gradient-to-br from-white/8 via-white/0 to-transparent shadow-[0_20px_45px_rgba(0,0,0,0.45)] flex items-center justify-center overflow-hidden">
+                  <div className="w-48 h-48 rounded-[32px] border border-gray-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.12)] flex items-center justify-center overflow-hidden">
                     <img src={loginHero} alt="Client Up app preview" className="w-full h-full object-contain" />
                   </div>
                   <div className="space-y-2">
-                    <p className="text-base font-semibold">{slide.highlight}</p>
-                    <p className="text-sm text-white/70">{slide.subcopy}</p>
+                    <p className="text-base font-semibold text-gray-900">{slide.highlight}</p>
+                    <p className="text-sm text-gray-600">{slide.subcopy}</p>
                   </div>
                 </div>
               ))}
@@ -655,19 +655,19 @@ const Login = () => {
             <button
               type="button"
               onClick={() => openLoginModal('ownerPartner')}
-              className="w-full rounded-2xl bg-emerald-500 text-gray-900 font-semibold py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)]"
+              className="w-full rounded-2xl bg-emerald-500 text-gray-900 font-semibold py-3 shadow-[0_20px_40px_rgba(16,185,129,0.35)]"
             >
               {t.mobile.primaryCta}
             </button>
             <div className="flex gap-2 text-sm">
               <button
-                className="flex-1 rounded-2xl border border-white/20 py-2.5"
+                className="flex-1 rounded-2xl border border-gray-200 py-2.5 bg-white text-gray-900 font-semibold"
                 onClick={() => openLoginModal('ownerPartner')}
               >
                 {t.mobile.ownerBtn}
               </button>
               <button
-                className="flex-1 rounded-2xl border border-white/20 py-2.5"
+                className="flex-1 rounded-2xl border border-gray-200 py-2.5 bg-white text-gray-900 font-semibold"
                 onClick={() => openLoginModal('client')}
               >
                 {t.mobile.clientBtn}
@@ -951,19 +951,20 @@ const Login = () => {
 
       {showLoginModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 space-y-5 relative">
+          <div className="w-full max-w-md rounded-[28px] shadow-[0_34px_78px_rgba(38,28,92,0.36),0_14px_34px_rgba(16,185,129,0.28)] border border-indigo-100/80 bg-gradient-to-br from-[#e9e3ff] via-[#f3fff7] to-[#e3ecff] p-6 space-y-5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#3b2a7a]/28 via-emerald-100/80 to-[#23345c]/20 pointer-events-none" />
             <button
               type="button"
               onClick={() => {
                 setShowLoginModal(false);
                 setLoginSegment(null);
               }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
             >
               ✕
             </button>
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
+            <div className="space-y-2 relative z-10">
+              <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide border border-emerald-100">
                 {loginSegment === 'client' ? t.modal.clientBadge : t.modal.ownerBadge}
               </p>
               <p className="text-xl font-semibold text-gray-900">
@@ -974,11 +975,11 @@ const Login = () => {
               </p>
             </div>
 
-            <div>
-              <p className="text-sm font-semibold text-gray-900 mb-2">
+            <div className="space-y-3 relative z-10">
+              <p className="text-sm font-semibold text-gray-900">
                 {t.modal.question}
               </p>
-              <p className="text-xs text-gray-500 mb-3">{t.modal.personaPrompt}</p>
+              <p className="text-xs text-gray-500">{t.modal.personaPrompt}</p>
               <div className={`grid gap-2 ${personaOptions.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 {personaOptions.map((option) => {
                   const active = persona === option.key;
@@ -989,7 +990,7 @@ const Login = () => {
                       onClick={() => setPersona(option.key as LoginPersona)}
                       className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
                         active
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_10px_25px_rgba(16,185,129,0.25)]'
                           : 'border-gray-200 text-gray-500 hover:border-emerald-300'
                       }`}
                       disabled={loginSegment === 'client'}
@@ -999,20 +1000,24 @@ const Login = () => {
                   );
                 })}
               </div>
-              <div className="mt-3 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-emerald-600">{t.modal.infoBoxTitle}</p>
-              <p className="text-xs font-semibold text-emerald-700">{personaDescription.title}</p>
-                <p className="text-[11px] text-emerald-600 mt-1 leading-relaxed">{personaDescription.description}</p>
+              <div className="mt-2 rounded-xl border border-emerald-100 bg-gradient-to-r from-[#0f172a] via-[#1b2a45] to-[#0b3b2f] px-3 py-2 text-white shadow-[0_18px_36px_rgba(12,22,54,0.35)]">
+                <p className="text-[10px] uppercase tracking-wide font-semibold text-white/90">
+                  {t.modal.infoBoxTitle}
+                </p>
+                <p className="text-xs font-semibold text-white">{personaDescription.title}</p>
+                <p className="text-[11px] text-white/85 mt-1 leading-relaxed">
+                  {personaDescription.description}
+                </p>
               </div>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-4 relative z-10" onSubmit={handleSubmit}>
               <div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white/90"
                   placeholder={t.form.emailPlaceholder}
                   required
                 />
@@ -1022,7 +1027,7 @@ const Login = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white/90"
                   placeholder={t.form.passwordPlaceholder}
                   required
                 />
@@ -1037,20 +1042,20 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_20px_40px_rgba(16,185,129,0.35)]"
               >
                 {loading ? t.form.submitLoading : t.form.submitIdle}
               </button>
             </form>
 
-            <div className="text-center">
-              <button type="button" className="text-primary-600 text-sm font-semibold hover:underline">
+            <div className="text-center relative z-10">
+              <button type="button" className="text-emerald-600 text-sm font-semibold hover:underline">
                 {t.modal.forgotPassword}
               </button>
               <div className="h-px bg-gray-200 my-4" />
               <Link
                 to="/register"
-                className="inline-flex items-center justify-center w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+                className="inline-flex items-center justify-center w-full px-4 py-3 bg-gradient-to-r from-[#0f172a] via-[#1b2a45] to-[#0b3b2f] text-white font-semibold rounded-xl hover:from-[#12203a] hover:to-[#0e4638] transition-colors shadow-[0_18px_36px_rgba(12,22,54,0.35)]"
               >
                 {t.modal.createOwner}
               </Link>

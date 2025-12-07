@@ -15,6 +15,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import RoleRoute from './components/RoleRoute';
 import Team from './pages/Team';
+import Plans from './pages/Plans';
 import HelperLayout from './pages/helper/HelperLayout';
 import HelperToday from './pages/helper/Today';
 import HelperAppointmentDetail from './pages/helper/AppointmentDetail';
@@ -50,6 +51,7 @@ function App() {
               <Route path="agenda" element={<Agenda />} />
               <Route path="semana" element={<Agenda initialMode="week" />} />
               <Route path="financeiro" element={<Financeiro />} />
+              <Route path="plans" element={<Plans />} />
               <Route path="empresa" element={<Empresa />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<OwnerSettings />} />

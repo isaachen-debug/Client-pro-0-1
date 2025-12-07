@@ -124,7 +124,7 @@ const Layout = () => {
       </div>
       <button
         type="button"
-        onClick={() => handleWorkspaceMenuAction('/app/financeiro#plans')}
+        onClick={() => handleWorkspaceMenuAction('/app/plans')}
         className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
           isDarkTheme ? 'bg-emerald-500/10 border border-emerald-400/30 text-emerald-200 hover:bg-emerald-500/20' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'
         }`}
@@ -632,7 +632,7 @@ const Layout = () => {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/app/financeiro')}
+                onClick={() => navigate('/app/plans')}
                 className="mt-3 w-full text-sm font-semibold text-white bg-primary-600 rounded-xl py-2 hover:bg-primary-700 transition"
               >
                 Ver planos e upgrades
@@ -782,7 +782,7 @@ const Layout = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigate('/app/financeiro')}
+                  onClick={() => navigate('/app/plans')}
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl border border-primary-200 text-sm font-semibold text-primary-600 hover:bg-primary-50 transition"
                 >
                   Ver planos e upgrades
@@ -964,7 +964,7 @@ const Layout = () => {
                           <div className="grid grid-cols-2 gap-2 pt-2">
                             <button
                               type="button"
-                              onClick={() => navigate('/app/financeiro#plans')}
+                              onClick={() => navigate('/app/plans')}
                               className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
                                 isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
                               }`}
