@@ -451,7 +451,7 @@ const Financeiro = () => {
           <div className="w-full md:w-auto flex flex-col gap-3 min-w-0">
             <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1 min-w-0">
               <p className="text-sm text-white/70">Total monitorado</p>
-              <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight overflow-hidden text-ellipsis">
+              <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight overflow-hidden text-ellipsis break-words">
                 {formatCurrency(summary.total)}
               </p>
               <p className="text-xs text-white/60">
@@ -536,7 +536,7 @@ const Financeiro = () => {
 
       {activeTab === 'receitas' && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {receiptHighlightCards.map((card, index) => {
               const Icon = card.icon;
               const isAccentCard = index % 2 === 1;
@@ -558,7 +558,7 @@ const Financeiro = () => {
                       <Icon size={18} className={card.iconColor} />
                     </span>
                   </div>
-                  <p className="relative text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight leading-tight overflow-hidden text-ellipsis">
+                  <p className="relative text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight leading-tight overflow-hidden text-ellipsis break-words">
                     {card.value}
                   </p>
                   <p className="relative text-sm text-gray-500 mt-1">{card.detail}</p>
@@ -659,7 +659,7 @@ const Financeiro = () => {
 
       {activeTab === 'custos' && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {costOverviewCards.map((card, index) => (
               <div
                 key={card.label}
@@ -731,7 +731,7 @@ const Financeiro = () => {
               </div>
             ) : helperCostData ? (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
                   {[
                     { label: 'Receita bruta', value: usdFormatter.format(helperCostData.summary.revenueTotal) },
                     { label: 'Paga helper', value: usdFormatter.format(helperCostData.summary.payoutTotal) },
@@ -741,7 +741,7 @@ const Financeiro = () => {
                   ].map((card) => (
                     <div key={card.label} className="rounded-2xl border border-gray-100 bg-gray-50 px-3 py-2 min-w-0">
                       <p className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</p>
-                      <p className="text-lg font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                      <p className="text-lg font-semibold text-gray-900 overflow-hidden text-ellipsis break-words">
                         {card.value}
                       </p>
                     </div>
