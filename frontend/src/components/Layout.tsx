@@ -231,7 +231,7 @@ const Layout = () => {
     if (!quickCreateOpen) {
       setQuickCreateQuery('');
     }
-  }, [quickCreateOpen, setQuickCreateQuery]);
+  }, [quickCreateOpen]);
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const headerSentinelRef = useRef<HTMLDivElement | null>(null);
