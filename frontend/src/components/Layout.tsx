@@ -278,25 +278,25 @@ const Layout = () => {
     {
       key: 'clientes',
       label: 'Clientes',
-      icon: '👥',
+      iconComponent: Users,
       path: '/app/clientes',
     },
     {
       key: 'financeiro',
       label: 'Financeiro',
-      icon: '💰',
+      iconComponent: Wallet,
       path: '/app/financeiro',
     },
     {
       key: 'empresa',
       label: 'Empresa',
-      icon: '🏢',
+      iconComponent: Building2,
       path: '/app/empresa',
     },
     {
       key: 'equipe',
-      label: 'Equipe',
-      icon: '🤝',
+      label: 'Helpers & Clients',
+      iconComponent: UserPlus2,
       path: '/app/team',
     },
   ];
@@ -1162,20 +1162,25 @@ const Layout = () => {
                   </button>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-white">
-                  {quickActionGridItems.map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => {
-                        setMorePanelOpen(false);
-                        navigate(item.path);
-                      }}
-                      className="rounded-3xl bg-white/5 border border-white/10 py-4 flex flex-col items-center gap-2 hover:bg-emerald-500/10 hover:border-emerald-400/40 transition"
-                    >
-                      <div className="text-2xl">{item.icon}</div>
-                      <p className="text-xs font-semibold">{item.label}</p>
-                    </button>
-                  ))}
+                  {quickActionGridItems.map((item) => {
+                    const Icon = item.iconComponent;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          setMorePanelOpen(false);
+                          navigate(item.path);
+                        }}
+                        className="rounded-3xl bg-white/5 border border-white/10 py-4 flex flex-col items-center gap-2 hover:bg-emerald-500/10 hover:border-emerald-400/40 transition"
+                      >
+                        <span className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center">
+                          <Icon size={18} className="text-white" />
+                        </span>
+                        <p className="text-xs font-semibold text-white">{item.label}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
