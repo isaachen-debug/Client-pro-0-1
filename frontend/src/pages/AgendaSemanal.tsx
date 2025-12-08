@@ -387,16 +387,16 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   };
 
   const statusColors: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-blue-100 text-blue-700',
-    EM_ANDAMENTO: 'bg-amber-100 text-amber-700',
-    CONCLUIDO: 'bg-emerald-100 text-emerald-700',
-    CANCELADO: 'bg-rose-100 text-rose-700',
+    AGENDADO: 'bg-[#d1ecff] text-[#0a4b78]',
+    EM_ANDAMENTO: 'bg-[#ffecc7] text-[#7a4a00]',
+    CONCLUIDO: 'bg-[#c8f3dd] text-[#0f5b34]',
+    CANCELADO: 'bg-[#ffd9dd] text-[#7a1024]',
   };
   const statusSurfaces: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-blue-50 border-blue-100 text-blue-900',
-    EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-900',
-    CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-900',
-    CANCELADO: 'bg-rose-50 border-rose-100 text-rose-900',
+    AGENDADO: 'bg-[#e8f5ff] border-[#d1ecff] text-[#0a4b78]',
+    EM_ANDAMENTO: 'bg-[#fff3da] border-[#ffecc7] text-[#7a4a00]',
+    CONCLUIDO: 'bg-[#e2f8ed] border-[#c8f3dd] text-[#0f5b34]',
+    CANCELADO: 'bg-[#ffecee] border-[#ffd9dd] text-[#7a1024]',
   };
 
   const getStatusBadge = (status: AppointmentStatus) => (
@@ -518,7 +518,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         </div>
       </div>
 
-      {/* Week list em cards (estilo agenda vertical) */}
+      {/* Week list em cards minimalista (estilo agenda vertical Google) */}
       <div className="space-y-3">
         {weekDays.map((day) => {
           const dayAgendamentos = getAgendamentosForDay(day);
@@ -536,9 +536,9 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                   handleDayCardClick(day);
                 }
               }}
-              className={`bg-white rounded-3xl shadow-sm border transition-transform focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                isToday ? 'border-primary-500 ring-1 ring-primary-100' : 'border-gray-200'
-              } p-4 sm:p-5 cursor-pointer hover:-translate-y-0.5`}
+              className={`bg-white rounded-3xl border border-gray-200 transition-transform focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                isToday ? 'ring-1 ring-primary-100' : ''
+              } px-4 py-3 sm:px-5 sm:py-4 cursor-pointer hover:-translate-y-0.5`}
             >
               <div className="mb-3 flex items-center justify-between">
                 <div>
@@ -565,22 +565,22 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                           event.stopPropagation();
                           openEditModal(ag);
                         }}
-                        className={`w-full text-left rounded-2xl border p-3 shadow-sm transition hover:translate-y-[-1px] ${
+                        className={`w-full text-left rounded-xl border p-3 transition hover:translate-y-[-1px] ${
                           statusSurfaces[ag.status]
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
-                          <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-white/80 text-gray-800 border border-white/70">
+                          <div className="text-sm font-semibold truncate text-gray-900">{ag.customer.name}</div>
+                          <span className="text-[11px] font-semibold px-2 py-1 rounded bg-white/70 text-gray-800 border border-white/60">
                             {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
                           </span>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full ${statusColors[ag.status]}`}>
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded ${statusColors[ag.status]}`}>
                             {statusLabels[ag.status]}
                           </span>
                           {ag.isRecurring && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-amber-100 text-amber-700">
                               🔄 Recorrente
                             </span>
                           )}
