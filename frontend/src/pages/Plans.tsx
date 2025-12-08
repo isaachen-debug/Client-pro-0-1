@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Crown, Info, Sparkles, Users, Bell, Shield, ArrowRight } from 'lucide-react';
+import { Crown, Info, Sparkles, Users, Bell, Shield, ArrowRight } from 'lucide-react';
 import { plans, formatPrice, planFeatures, PlanId, localPlanStorageKey } from '../constants/plans';
 
 const badgeColors: Record<PlanId, string> = {
