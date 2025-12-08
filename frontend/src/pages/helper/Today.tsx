@@ -218,26 +218,12 @@ const Today = () => {
     return `${hrs}:${mins}:${secs}`;
   };
 
-const getDestinationString = (appointment: HelperAppointment) => {
-  if (appointment.customer.latitude && appointment.customer.longitude) {
-    return `${appointment.customer.latitude},${appointment.customer.longitude}`;
-  }
-  return appointment.customer.address ?? null;
-};
-
-const buildGoogleMapsLink = (appointment: HelperAppointment) => {
-  const destination = getDestinationString(appointment);
+const buildDirectionsLink = (appointment: HelperAppointment) => {
+  const destination = appointment.customer.latitude && appointment.customer.longitude
+    ? `${appointment.customer.latitude},${appointment.customer.longitude}`
+    : appointment.customer.address;
   if (!destination) return null;
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
-};
-
-const buildWazeLink = (appointment: HelperAppointment) => {
-  const destination = getDestinationString(appointment);
-  if (!destination) return null;
-  if (appointment.customer.latitude && appointment.customer.longitude) {
-    return `https://waze.com/ul?ll=${appointment.customer.latitude},${appointment.customer.longitude}&navigate=yes`;
-  }
-  return `https://waze.com/ul?q=${encodeURIComponent(destination)}&navigate=yes`;
 };
 
   const computeLiveDuration = (appointment: HelperAppointment) => {
@@ -415,22 +401,13 @@ const buildWazeLink = (appointment: HelperAppointment) => {
                       >
                         <Navigation2 size={14} /> Ver detalhes
                       </button>
-                      {buildGoogleMapsLink(selectedAppointment) && (
+                      {buildDirectionsLink(selectedAppointment) && (
                         <button
                           type="button"
-                          onClick={() => window.open(buildGoogleMapsLink(selectedAppointment)!, '_blank')}
+                          onClick={() => window.open(buildDirectionsLink(selectedAppointment)!, '_blank')}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700"
                         >
-                          <MapPin size={14} /> Google Maps
-                        </button>
-                      )}
-                      {buildWazeLink(selectedAppointment) && (
-                        <button
-                          type="button"
-                          onClick={() => window.open(buildWazeLink(selectedAppointment)!, '_blank')}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700"
-                        >
-                          <Navigation2 size={14} /> Waze
+                          <MapPin size={14} /> Abrir rota
                         </button>
                       )}
                     </div>
@@ -491,8 +468,7 @@ const buildWazeLink = (appointment: HelperAppointment) => {
                 {currentData.appointments.map((appointment, index) => {
                   const liveDuration = computeLiveDuration(appointment);
                   const finishedDuration = computeFinishedDuration(appointment);
-                  const googleLink = buildGoogleMapsLink(appointment);
-                  const wazeLink = buildWazeLink(appointment);
+                  const directionsLink = buildDirectionsLink(appointment);
                   return (
                     <div
                       key={appointment.id}
@@ -547,22 +523,13 @@ const buildWazeLink = (appointment: HelperAppointment) => {
                             >
                               Ver detalhes
                             </button>
-                            {googleLink && (
+                            {directionsLink && (
                               <button
                                 type="button"
-                                onClick={() => window.open(googleLink, '_blank')}
+                                onClick={() => window.open(directionsLink, '_blank')}
                                 className="inline-flex items-center gap-1 text-emerald-600 font-semibold hover:underline"
                               >
-                                <Navigation2 size={14} /> Maps
-                              </button>
-                            )}
-                            {wazeLink && (
-                              <button
-                                type="button"
-                                onClick={() => window.open(wazeLink, '_blank')}
-                                className="inline-flex items-center gap-1 text-emerald-600 font-semibold hover:underline"
-                              >
-                                <Navigation2 size={14} /> Waze
+                                <Navigation2 size={14} /> Traçar rota
                               </button>
                             )}
                             {normalizePhone(appointment.customer.phone) && (
