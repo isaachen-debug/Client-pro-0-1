@@ -3,7 +3,7 @@ import { appointmentsApi } from '../services/api';
 import { Appointment } from '../types';
 import { differenceInMinutes, format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone } from 'lucide-react';
+import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone, Navigation2 } from 'lucide-react';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 
 const statusStyles: Record<string, string> = {
@@ -356,6 +356,65 @@ const Start = () => {
                       : '—'}
                   </div>
                 </div>
+
+                {(appointment.customer.latitude ||
+                  appointment.customer.longitude ||
+                  appointment.customer.address) && (
+                  <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden border border-gray-100">
+                    {appointment.customer.latitude ||
+                    appointment.customer.longitude ||
+                    appointment.customer.address ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.open(
+                              appointment.customer.latitude && appointment.customer.longitude
+                                ? `https://www.google.com/maps/dir/?api=1&destination=${appointment.customer.latitude},${appointment.customer.longitude}`
+                                : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                    appointment.customer.address ?? '',
+                                  )}`,
+                              '_blank',
+                            )
+                          }
+                          className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm hover:bg-white"
+                        >
+                          <Navigation2 size={14} /> Abrir no Maps
+                        </button>
+                        <iframe
+                          title={`Mapa - ${appointment.customer.name}`}
+                          width="100%"
+                          height="100%"
+                          frameBorder="0"
+                          src={`https://www.google.com/maps?q=${
+                            appointment.customer.latitude && appointment.customer.longitude
+                              ? `${appointment.customer.latitude},${appointment.customer.longitude}`
+                              : encodeURIComponent(appointment.customer.address ?? '')
+                          }&z=15&output=embed`}
+                          allowFullScreen
+                          loading="lazy"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.open(
+                              appointment.customer.latitude && appointment.customer.longitude
+                                ? `https://www.google.com/maps/dir/?api=1&destination=${appointment.customer.latitude},${appointment.customer.longitude}`
+                                : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                    appointment.customer.address ?? '',
+                                  )}`,
+                              '_blank',
+                            )
+                          }
+                          className="absolute inset-0 z-0"
+                          aria-label="Abrir endereço no Maps"
+                        >
+                          <span className="sr-only">Abrir no Maps</span>
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+                )}
 
                 {appointment.status === 'EM_ANDAMENTO' && appointment.startedAt && (
                   <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
