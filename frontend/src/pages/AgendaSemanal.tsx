@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 import CreateModal, { CreateFormState } from '../components/appointments/CreateModal';
 import EditModal from '../components/appointments/EditModal';
@@ -379,13 +378,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     }
   };
 
-  const statusLabels: Record<AppointmentStatus, string> = {
-    AGENDADO: 'Agendado',
-    EM_ANDAMENTO: 'Em andamento',
-    CONCLUIDO: 'Concluído',
-    CANCELADO: 'Cancelado',
-  };
-
   const statusBg: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-[#d7ecff]',
     EM_ANDAMENTO: 'bg-[#ffe6bf]',
@@ -399,218 +391,248 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CANCELADO: 'text-[#7a0f24]',
   };
 
-  const getStatusBadge = (status: AppointmentStatus) => (
-    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${statusColors[status]}`}>
-      {statusLabels[status]}
-    </span>
+  const startHour = 6;
+  const endHour = 22;
+  const minuteHeight = 0.9; // px per minute
+  const defaultDuration = 60; // minutes
+  const dayColumnHeight = (endHour - startHour) * 60 * minuteHeight;
+
+  const parseMinutes = (time?: string | null) => {
+    if (!time) return null;
+    const [h, m] = time.split(':');
+    const hours = Number(h);
+    const minutes = Number(m);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+    return hours * 60 + minutes;
+  };
+
+  const getEventPosition = (appointment: Appointment) => {
+    const startMinutes = parseMinutes(appointment.startTime) ?? startHour * 60;
+    const endMinutes = parseMinutes(appointment.endTime) ?? startMinutes + defaultDuration;
+    const duration = Math.max(endMinutes - startMinutes, 30);
+    const top = (startMinutes - startHour * 60) * minuteHeight;
+    const height = duration * minuteHeight;
+    return { top, height };
+  };
+
+  const mobileList = (
+    <div className="md:hidden space-y-3">
+      {weekDays.map((day) => {
+        const dayAgendamentos = getAgendamentosForDay(day);
+        const isToday = isSameDay(day, new Date());
+        return (
+          <div key={day.toISOString()} className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-baseline gap-2">
+                <span className={`text-lg font-semibold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
+                  {format(day, 'd')}
+                </span>
+                <span className="text-sm text-gray-500">{format(day, 'EEE', { locale: ptBR })}</span>
+              </div>
+              <button
+                type="button"
+                className="text-xs font-semibold text-primary-600 px-2 py-1 rounded-lg hover:bg-primary-50 transition"
+                onClick={() => handleDayCardClick(day)}
+              >
+                + add
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {dayAgendamentos.length === 0 && <p className="text-xs text-gray-400">Nenhum evento · Toque em +</p>}
+              {dayAgendamentos
+                .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                .map((ag) => (
+                  <button
+                    key={ag.id}
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openEditModal(ag);
+                    }}
+                    className="w-full text-left flex items-start gap-2"
+                  >
+                    <span
+                      className="mt-1 h-2 w-2 rounded-full"
+                      style={{ backgroundColor: getStatusColor(ag.status) }}
+                      aria-hidden
+                    />
+                    <div className="flex-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                      <div className="text-[13px] font-semibold text-gray-900 truncate">{ag.customer.name}</div>
+                      <div className="text-[11px] text-gray-600">
+                        {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
+                      </div>
+                      {ag.notes && <div className="text-[11px] text-gray-500 line-clamp-1 mt-1">{ag.notes}</div>}
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const desktopGrid = (
+    <div className="hidden md:block rounded-3xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <div className="min-w-[960px] grid grid-cols-[64px_repeat(7,minmax(0,1fr))]">
+          <div className="border-r border-gray-100 relative" style={{ height: `${dayColumnHeight}px` }}>
+            {Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index).map((hour) => (
+              <div
+                key={hour}
+                className="absolute left-0 right-0 flex items-start justify-end pr-3 text-[11px] text-gray-400"
+                style={{ top: `${(hour - startHour) * 60 * minuteHeight}px` }}
+              >
+                {hour.toString().padStart(2, '0')}:00
+              </div>
+            ))}
+          </div>
+
+          {weekDays.map((day) => {
+            const dayAgendamentos = getAgendamentosForDay(day);
+            const isToday = isSameDay(day, new Date());
+            return (
+              <div
+                key={day.toISOString()}
+                className={`relative border-l border-gray-100 bg-white ${isToday ? 'bg-primary-50/50' : ''}`}
+                style={{ height: `${dayColumnHeight}px` }}
+              >
+                <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-100 px-3 py-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase text-gray-500">{format(day, 'EEE', { locale: ptBR })}</span>
+                    <span className={`text-base font-semibold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
+                      {format(day, 'd')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="absolute inset-0 pointer-events-none">
+                  {Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index).map((hour) => (
+                    <div
+                      key={`line-${hour}`}
+                      className="absolute left-0 right-0 border-t border-gray-100"
+                      style={{ top: `${(hour - startHour) * 60 * minuteHeight}px` }}
+                    />
+                  ))}
+                </div>
+
+                <div className="relative h-full w-full">
+                  {dayAgendamentos.length === 0 && (
+                    <button
+                      type="button"
+                      className="absolute inset-0 w-full text-left text-xs text-gray-400 px-3 py-2"
+                      onClick={() => handleDayCardClick(day)}
+                    >
+                      Toque para criar
+                    </button>
+                  )}
+
+                  {dayAgendamentos
+                    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                    .map((ag) => {
+                      const { top, height } = getEventPosition(ag);
+                      return (
+                        <button
+                          key={ag.id}
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEditModal(ag);
+                          }}
+                          className={`absolute left-1 right-1 rounded-xl px-3 py-2 text-left shadow-sm border ${statusBg[ag.status]} ${statusText[ag.status]}`}
+                          style={{ top, height }}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
+                            <span className="text-[11px] font-semibold">
+                              {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
+                            </span>
+                          </div>
+                          {ag.notes && <p className="text-[11px] mt-1 leading-snug opacity-80 line-clamp-2">{ag.notes}</p>}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 
   const pageSections = (
     <>
-      {/* Header */}
       <div className="space-y-4">
-        <div>
-          <p className="text-sm uppercase tracking-wide text-primary-600 font-semibold">Today</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Agenda semanal</h1>
-          <p className="text-sm text-gray-600 mt-1">Acompanhe e organize os serviços da semana em um toque.</p>
-        </div>
-
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary-600 font-semibold">Today</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Agenda semanal</h1>
+            <p className="text-sm text-gray-600">Visual estilo Google Calendar; deslize para ver horários.</p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="flex-1 min-w-[120px] px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
             >
-              Semana Atual
+              Hoje
             </button>
-            <button
-              onClick={() => setCurrentDate(addWeeks(new Date(), 1))}
-              className="flex-1 min-w-[140px] px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Próxima Semana
-            </button>
-          </div>
-          <div className="flex items-center justify-between sm:justify-end space-x-2">
-            <button
-              onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <span className="text-sm font-medium text-gray-700 min-w-[200px] text-center">
-              {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM yyyy', { locale: ptBR })}
-            </span>
-            <button
-              onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronRight size={20} />
-            </button>
-            <button
-              onClick={() => handleDayCardClick(currentDate)}
-              className="hidden md:inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Novo agendamento
-            </button>
-          </div>
-        </div>
-        <button
-          onClick={() => handleDayCardClick(currentDate)}
-          className="md:hidden inline-flex items-center justify-center w-full px-4 py-3 bg-gray-900 text-white text-sm font-semibold rounded-2xl shadow-lg hover:bg-black transition-colors"
-        >
-          Novo agendamento
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setFilter('todos')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'todos'
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Todos
-          </button>
-          <button
-            onClick={() => setFilter('AGENDADO')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'AGENDADO'
-                ? 'bg-blue-500 text-white'
-                : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-            }`}
-          >
-            Agendado
-          </button>
-          <button
-            onClick={() => setFilter('EM_ANDAMENTO')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'EM_ANDAMENTO'
-                ? 'bg-indigo-500 text-white'
-                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-            }`}
-          >
-            Em andamento
-          </button>
-          <button
-            onClick={() => setFilter('CONCLUIDO')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'CONCLUIDO'
-                ? 'bg-green-500 text-white'
-                : 'bg-green-50 text-green-700 hover:bg-green-100'
-            }`}
-          >
-            Concluído
-          </button>
-          <button
-            onClick={() => setFilter('CANCELADO')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'CANCELADO'
-                ? 'bg-red-500 text-white'
-                : 'bg-red-50 text-red-700 hover:bg-red-100'
-            }`}
-          >
-            Cancelado
-          </button>
-        </div>
-      </div>
-
-      {/* Week list em cards minimalista (estilo agenda vertical Google) */}
-      <div className="space-y-3">
-        {weekDays.map((day) => {
-          const dayAgendamentos = getAgendamentosForDay(day);
-          const isToday = isSameDay(day, new Date());
-
-          return (
-            <div
-              key={day.toISOString()}
-              role="button"
-              tabIndex={0}
-              onClick={() => handleDayCardClick(day)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  handleDayCardClick(day);
-                }
-              }}
-              className={`bg-white rounded-3xl border border-gray-200 transition-transform focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                isToday ? 'ring-1 ring-primary-100' : ''
-              } px-4 py-3 sm:px-5 sm:py-4 cursor-pointer hover:-translate-y-0.5`}
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <div className="text-xs uppercase text-gray-500">{format(day, 'EEEE', { locale: ptBR })}</div>
-                  <div className={`text-2xl font-bold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
-                    {format(day, 'd')}
-                  </div>
-                  <div className="text-xs text-gray-500">{format(day, 'MMM', { locale: ptBR })}</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {dayAgendamentos.length > 0 ? (
-                  [...dayAgendamentos]
-                    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                    .map((ag) => (
-                      <button
-                        key={ag.id}
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openEditModal(ag);
-                        }}
-                        className={`w-full text-left rounded-xl p-3 transition hover:translate-y-[-1px] ${statusBg[ag.status]} ${statusText[ag.status]}`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
-                          <span className="text-[11px] font-semibold">
-                            {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
-                          </span>
-                        </div>
-                        {ag.notes && <p className="text-[11px] mt-1 leading-snug opacity-80">{ag.notes}</p>}
-                      </button>
-                    ))
-                ) : (
-                  <p className="text-sm text-gray-400 text-center py-8 leading-relaxed">
-                    Sem agendamentos
-                    <br />
-                    <span className="text-xs text-gray-500">Toque para criar.</span>
-                  </p>
-                )}
-              </div>
+            <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2 py-1 shadow-sm">
+              <button
+                onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span className="text-sm font-medium text-gray-800 min-w-[140px] text-center">
+                {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM', { locale: ptBR })}
+              </span>
+              <button
+                onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <span className="font-medium text-gray-700">Legenda:</span>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            <span className="text-gray-600">Agendado</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-indigo-500 rounded"></div>
-            <span className="text-gray-600">Em andamento</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span className="text-gray-600">Concluído</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span className="text-gray-600">Cancelado</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-gray-600">🔄 Recorrente</span>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs md:text-sm font-semibold text-gray-700 shadow-sm">
+            <CalendarIcon size={16} className="text-primary-500" />
+            Semana atual · {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM yyyy', { locale: ptBR })}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: 'todos', label: 'Todos', color: 'bg-gray-900 text-white', alt: 'bg-gray-100 text-gray-700 hover:bg-gray-200' },
+              { key: 'AGENDADO', label: 'Agendado', color: 'bg-blue-600 text-white', alt: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
+              { key: 'EM_ANDAMENTO', label: 'Em andamento', color: 'bg-indigo-600 text-white', alt: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
+              { key: 'CONCLUIDO', label: 'Concluído', color: 'bg-green-600 text-white', alt: 'bg-green-50 text-green-700 hover:bg-green-100' },
+              { key: 'CANCELADO', label: 'Cancelado', color: 'bg-red-600 text-white', alt: 'bg-red-50 text-red-700 hover:bg-red-100' },
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setFilter(item.key as any)}
+                className={`px-3 py-2 rounded-xl text-sm font-semibold transition ${
+                  filter === item.key ? item.color : item.alt
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => handleDayCardClick(currentDate)}
+            className="ml-auto inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-primary-700 transition"
+          >
+            Novo agendamento
+          </button>
+        </div>
       </div>
+
+      {mobileList}
+      {desktopGrid}
 
       {showCreateModal && (
         <CreateModal

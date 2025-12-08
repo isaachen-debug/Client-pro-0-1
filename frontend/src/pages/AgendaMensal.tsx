@@ -6,9 +6,12 @@ import {
   addMonths,
   eachDayOfInterval,
   endOfMonth,
+  endOfWeek,
   format,
   isSameDay,
+  isSameMonth,
   startOfMonth,
+  startOfWeek,
   subMonths,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -313,9 +316,15 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const monthDays = useMemo(
     () => eachDayOfInterval({ start: monthStart, end: monthEnd }),
     [monthStart, monthEnd],
+  );
+  const calendarDays = useMemo(
+    () => eachDayOfInterval({ start: calendarStart, end: calendarEnd }),
+    [calendarStart, calendarEnd],
   );
 
   const getAgendamentosForDay = (day: Date) =>
@@ -363,7 +372,70 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      {/* Mobile grid estilo Google Calendar */}
+      <div className="md:hidden rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="grid grid-cols-7 text-[11px] font-semibold text-gray-500 border-b border-gray-100">
+          {['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'].map((d) => (
+            <div key={d} className="px-2 py-2 text-center">
+              {d}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 border-l border-gray-100">
+          {calendarDays.map((day) => {
+            const isToday = isSameDay(day, new Date());
+            const inMonth = isSameMonth(day, currentDate);
+            const dayAppointments = getAgendamentosForDay(day);
+            const visible = dayAppointments.slice(0, 2);
+            const extra = dayAppointments.length - visible.length;
+            return (
+              <div
+                key={day.getTime()}
+                className={`relative border-r border-b border-gray-100 px-1.5 py-1.5 min-h-[78px] ${
+                  inMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'
+                }`}
+                onClick={() => handleAddAppointmentForDay(day)}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-xs font-semibold ${
+                      isToday
+                        ? 'text-white bg-primary-500 rounded-full w-6 h-6 flex items-center justify-center'
+                        : 'text-gray-800'
+                    }`}
+                  >
+                    {format(day, 'd')}
+                  </span>
+                </div>
+                <div className="mt-1 space-y-1">
+                  {visible.map((appointment) => (
+                    <button
+                      key={appointment.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(appointment);
+                      }}
+                      className={`w-full text-left text-[11px] px-2 py-1 rounded-md ${statusSurfaces[appointment.status]}`}
+                    >
+                      <div className="font-semibold truncate">{appointment.customer.name}</div>
+                      <div className="text-[10px]">
+                        {appointment.startTime} {appointment.endTime ? `· ${appointment.endTime}` : ''}
+                      </div>
+                    </button>
+                  ))}
+                  {extra > 0 && (
+                    <div className="text-[10px] text-gray-500 font-semibold">+{extra} eventos</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop grid anterior */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {monthDays.map((day) => {
             const dayAppointments = getAgendamentosForDay(day);

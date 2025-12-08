@@ -260,15 +260,15 @@ const Today = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-      <section className="rounded-[32px] border border-emerald-100/70 bg-white shadow-[0_30px_90px_rgba(16,185,129,0.18)] p-6 space-y-5">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+    <div className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+      <section className="rounded-2xl md:rounded-[32px] border border-emerald-100/70 bg-white shadow-[0_18px_50px_rgba(16,185,129,0.12)] p-3 md:p-6 space-y-3 md:space-y-5">
+        <div className="flex flex-col gap-2 md:gap-5 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.35em] text-emerald-500 font-semibold">Partner dashboard</p>
-            <h1 className="text-3xl font-semibold text-gray-900">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-500 font-semibold">Partner dashboard</p>
+            <h1 className="text-xl md:text-3xl font-semibold text-gray-900">
               {selectedDay === 'today' ? 'Sua rota de hoje' : 'Planeje o dia de amanhã'}
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 hidden md:block">
               {currentData?.date
                 ? new Date(currentData.date).toLocaleDateString('pt-BR', {
                     weekday: 'long',
@@ -278,14 +278,14 @@ const Today = () => {
                 : 'Sincronize para carregar os próximos serviços.'}
             </p>
           </div>
-          <div className="flex flex-col items-start sm:items-end gap-3">
-            <div className="inline-flex bg-gray-100 rounded-full p-1 shadow-inner w-fit">
+          <div className="flex flex-col items-start sm:items-end gap-2 md:gap-3 w-full md:w-auto">
+            <div className="inline-flex bg-gray-100 rounded-full p-1 shadow-inner w-full md:w-fit justify-between md:justify-start">
               {(['today', 'tomorrow'] as DayKey[]).map((day) => (
                 <button
                   key={day}
                   type="button"
                   onClick={() => setSelectedDay(day)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  className={`flex-1 px-3 md:px-4 py-2 rounded-full text-sm font-semibold transition ${
                     selectedDay === day ? 'bg-emerald-600 text-white shadow' : 'text-gray-600'
                   }`}
                 >
@@ -296,20 +296,20 @@ const Today = () => {
             <button
               type="button"
               onClick={handleRefresh}
-              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 md:px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition w-full md:w-auto justify-center"
             >
               Atualizar rota
             </button>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:gap-3 md:grid-cols-2 lg:grid-cols-5">
           {summaryCards.map((card, index) => (
             <div
               key={`${card.label}-${index}`}
-              className="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3 shadow-sm"
+              className="min-w-[140px] rounded-2xl border border-emerald-100 bg-white/80 px-3 py-2 md:px-4 md:py-3 shadow-sm"
             >
-              <p className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">{card.label}</p>
-              <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold whitespace-nowrap">{card.label}</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900">{card.value}</p>
             </div>
           ))}
         </div>
@@ -324,7 +324,7 @@ const Today = () => {
       ) : (
         <>
           {currentData?.manager && (
-            <section className="rounded-[32px] bg-gradient-to-br from-[#032210] via-[#0a3b1b] to-[#0d6a34] text-white p-6 space-y-4 shadow-[0_30px_90px_rgba(3,34,16,0.6)] border border-white/10">
+            <section className="hidden md:block rounded-[32px] bg-gradient-to-br from-[#032210] via-[#0a3b1b] to-[#0d6a34] text-white p-6 space-y-4 shadow-[0_30px_90px_rgba(3,34,16,0.6)] border border-white/10">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-white/70 font-semibold">Administradora de plantão</p>
@@ -364,7 +364,7 @@ const Today = () => {
           )}
 
           <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
-            <section className="rounded-[28px] border border-emerald-100 bg-white shadow-sm p-5 space-y-4">
+            <section className="hidden md:block rounded-[24px] md:rounded-[28px] border border-emerald-100 bg-white shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-emerald-600 font-semibold">Mapa do dia</p>
@@ -375,7 +375,7 @@ const Today = () => {
                 </span>
               </div>
               {mapsLoaded && googleKey && hasPins ? (
-                <div className="h-64 rounded-2xl overflow-hidden border border-emerald-100">
+                <div className="h-60 md:h-64 rounded-2xl overflow-hidden border border-emerald-100">
                   <GoogleMap mapContainerStyle={{ width: '100%', height: '100%' }} center={mapCenter} zoom={12}>
                     {currentData?.appointments.map((appointment) => {
                       const position = pins[appointment.id];
@@ -403,7 +403,7 @@ const Today = () => {
               )}
             </section>
 
-            <section className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-5 space-y-4">
+            <section className="rounded-[20px] md:rounded-[28px] border border-gray-100 bg-white shadow-sm p-4 md:p-5 space-y-3 md:space-y-4 order-first md:order-none">
               {selectedAppointment ? (
                 <>
                   <div className="flex items-start justify-between gap-4">
@@ -518,7 +518,7 @@ const Today = () => {
             </section>
           </div>
 
-          <section className="rounded-[32px] border border-gray-100 bg-white shadow-sm p-5 space-y-4">
+          <section className="rounded-[20px] md:rounded-[32px] border border-gray-100 bg-white shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Serviços do dia</h3>
               <span className="text-xs text-gray-400">
@@ -535,7 +535,7 @@ const Today = () => {
                   return (
                     <div
                       key={appointment.id}
-                      className={`rounded-[28px] border bg-white px-4 py-4 shadow-sm transition cursor-pointer ${
+                      className={`rounded-2xl border bg-white px-3 py-3 shadow-sm transition cursor-pointer ${
                         selectedAppointment?.id === appointment.id ? 'border-emerald-300 shadow-[0_10px_30px_rgba(16,185,129,0.12)]' : 'border-gray-100'
                       }`}
                       onClick={() =>
@@ -547,11 +547,9 @@ const Today = () => {
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <div className="flex items-baseline gap-2">
-                              <p className="text-3xl font-bold text-gray-900">{appointment.startTime}</p>
-                              <span className="text-xs text-gray-400 font-semibold">#{index + 1}</span>
-                            </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-2xl font-bold text-gray-900">{appointment.startTime}</p>
+                            <span className="text-xs text-gray-400 font-semibold">#{index + 1}</span>
                             <span
                               className={`text-xs font-semibold px-3 py-1 rounded-full ${
                                 statusBadgeClasses[appointment.status] || 'bg-gray-100 text-gray-600'
