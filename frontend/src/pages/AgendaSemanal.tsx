@@ -387,16 +387,16 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   };
 
   const statusBg: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-[#d1ecff]',
-    EM_ANDAMENTO: 'bg-[#ffecc7]',
-    CONCLUIDO: 'bg-[#c8f3dd]',
-    CANCELADO: 'bg-[#ffd9dd]',
+    AGENDADO: 'bg-[#d7ecff]',
+    EM_ANDAMENTO: 'bg-[#ffe6bf]',
+    CONCLUIDO: 'bg-[#c9f1dc]',
+    CANCELADO: 'bg-[#ffd9df]',
   };
   const statusText: Record<AppointmentStatus, string> = {
-    AGENDADO: 'text-[#0a4b78]',
-    EM_ANDAMENTO: 'text-[#7a4a00]',
-    CONCLUIDO: 'text-[#0f5b34]',
-    CANCELADO: 'text-[#7a1024]',
+    AGENDADO: 'text-[#0a3f70]',
+    EM_ANDAMENTO: 'text-[#704400]',
+    CONCLUIDO: 'text-[#0c5a34]',
+    CANCELADO: 'text-[#7a0f24]',
   };
 
   const getStatusBadge = (status: AppointmentStatus) => (
@@ -548,9 +548,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                   </div>
                   <div className="text-xs text-gray-500">{format(day, 'MMM', { locale: ptBR })}</div>
                 </div>
-                {dayAgendamentos.length > 0 && (
-                  <span className="text-xs font-semibold text-gray-500">{dayAgendamentos.length} serviços</span>
-                )}
               </div>
 
               <div className="space-y-2">
