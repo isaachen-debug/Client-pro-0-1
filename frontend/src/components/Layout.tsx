@@ -13,6 +13,7 @@ import {
   Plus,
   Search,
   UserPlus,
+  UserPlus2,
   ChevronDown,
   Bot,
   CalendarDays,
@@ -25,6 +26,7 @@ import {
   ChevronRight,
   CreditCard,
   AppWindow,
+  Wallet,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TouchEvent, UIEvent } from 'react';
