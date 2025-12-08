@@ -107,6 +107,11 @@ const Today = () => {
     );
   }, [currentData?.appointments, selectedAppointments, selectedDay]);
 
+  const selectedDirectionsLink = useMemo(
+    () => (selectedAppointment ? buildDirectionsLink(selectedAppointment) : null),
+    [selectedAppointment],
+  );
+
   const coordinatePins = useMemo(() => {
     const map: Record<string, google.maps.LatLngLiteral> = {};
     currentData?.appointments.forEach((appointment) => {
@@ -401,10 +406,10 @@ const Today = () => {
                       >
                         <Navigation2 size={14} /> Ver detalhes
                       </button>
-                      {buildDirectionsLink(selectedAppointment) && (
+                      {selectedDirectionsLink && (
                         <button
                           type="button"
-                          onClick={() => window.open(buildDirectionsLink(selectedAppointment)!, '_blank')}
+                          onClick={() => window.open(selectedDirectionsLink, '_blank')}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700"
                         >
                           <MapPin size={14} /> Abrir rota
@@ -433,7 +438,16 @@ const Today = () => {
                     </div>
                   </div>
                   {(selectedAppointment.customer.latitude || selectedAppointment.customer.address) && (
-                    <div className="h-48 rounded-2xl overflow-hidden border border-gray-100">
+                    <div className="relative h-48 rounded-2xl overflow-hidden border border-gray-100">
+                      {selectedDirectionsLink && (
+                        <button
+                          type="button"
+                          onClick={() => window.open(selectedDirectionsLink, '_blank')}
+                          className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm hover:bg-white"
+                        >
+                          <Navigation2 size={14} /> Abrir no Maps
+                        </button>
+                      )}
                       <iframe
                         title="Prévia do endereço"
                         width="100%"
@@ -447,6 +461,16 @@ const Today = () => {
                         allowFullScreen
                         loading="lazy"
                       />
+                      {selectedDirectionsLink && (
+                        <button
+                          type="button"
+                          onClick={() => window.open(selectedDirectionsLink, '_blank')}
+                          className="absolute inset-0 z-0"
+                          aria-label="Abrir endereço no Maps"
+                        >
+                          <span className="sr-only">Abrir no Maps</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </>
