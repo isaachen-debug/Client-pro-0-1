@@ -64,6 +64,7 @@ const Layout = () => {
   const [morePanelOpen, setMorePanelOpen] = useState(false);
   const [mobileWorkspaceExpanded, setMobileWorkspaceExpanded] = useState(false);
   const [workspaceQuery, setWorkspaceQuery] = useState('');
+  const [quickCreateQuery, setQuickCreateQuery] = useState('');
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [mobileHeaderCondensed, setMobileHeaderCondensed] = useState(false);
   const [createTouchStart, setCreateTouchStart] = useState<number | null>(null);
@@ -357,7 +358,6 @@ const Layout = () => {
       action: () => navigate('/app/financeiro'),
     },
   ];
-  const [quickCreateQuery, setQuickCreateQuery] = useState('');
   const filteredQuickCreateActions = useMemo(
     () =>
       quickCreateActions.filter((action) => {
