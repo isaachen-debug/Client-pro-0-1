@@ -518,8 +518,8 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         </div>
       </div>
 
-      {/* Week Grid em cards (estilo Google Calendar mobile) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4">
+      {/* Week list em cards (estilo agenda vertical) */}
+      <div className="space-y-3">
         {weekDays.map((day) => {
           const dayAgendamentos = getAgendamentosForDay(day);
           const isToday = isSameDay(day, new Date());
@@ -536,11 +536,11 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                   handleDayCardClick(day);
                 }
               }}
-              className={`bg-white rounded-2xl shadow-sm border transition-transform focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+              className={`bg-white rounded-3xl shadow-sm border transition-transform focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                 isToday ? 'border-primary-500 ring-1 ring-primary-100' : 'border-gray-200'
               } p-4 sm:p-5 cursor-pointer hover:-translate-y-0.5`}
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-3 flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase text-gray-500">{format(day, 'EEEE', { locale: ptBR })}</div>
                   <div className={`text-2xl font-bold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
