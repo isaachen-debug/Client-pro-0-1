@@ -934,21 +934,21 @@ const Layout = () => {
                 </div>
                 {mobileWorkspaceExpanded && (
                   <>
-                    <div className="mt-4">
-                      <div className="flex items-center justify-end mb-3">
-                        <button
-                          type="button"
-                          onClick={() => alert('Agent em breve')}
-                          className={`w-full max-w-[220px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl border ${
-                            isDarkTheme
-                              ? 'bg-white/10 border-white/15 text-white hover:bg-white/15'
-                              : 'bg-white border-gray-200 text-gray-900 hover:shadow-md'
-                          } transition-all duration-200 hover:-translate-y-0.5`}
-                        >
-                          <Bot size={16} />
-                          <span className="text-sm font-semibold">Abrir Agent</span>
-                        </button>
-                      </div>
+                    <div className="mt-3 flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => alert('Agent em breve')}
+                        className={`w-full max-w-[220px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl border ${
+                          isDarkTheme
+                            ? 'bg-white/10 border-white/15 text-white hover:bg-white/15'
+                            : 'bg-white border-gray-200 text-gray-900 hover:shadow-md'
+                        } transition-all duration-200 hover:-translate-y-0.5`}
+                      >
+                        <Bot size={16} />
+                        <span className="text-sm font-semibold">Abrir Agent</span>
+                      </button>
+                    </div>
+                    <div className="mt-3">
                       <div className={mobileInputWrapperClass}>
                         <Search size={16} className={mobileSecondaryTextClass} />
                         <input
