@@ -226,6 +226,11 @@ const Layout = () => {
       setWorkspaceQuery('');
     }
   }, [mobileWorkspaceExpanded]);
+  useEffect(() => {
+    if (!quickCreateOpen) {
+      setQuickCreateQuery('');
+    }
+  }, [quickCreateOpen, setQuickCreateQuery]);
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const headerSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -352,6 +357,15 @@ const Layout = () => {
       action: () => navigate('/app/financeiro'),
     },
   ];
+  const [quickCreateQuery, setQuickCreateQuery] = useState('');
+  const filteredQuickCreateActions = useMemo(
+    () =>
+      quickCreateActions.filter((action) => {
+        const haystack = `${action.label} ${action.description}`.toLowerCase();
+        return haystack.includes(quickCreateQuery.trim().toLowerCase());
+      }),
+    [quickCreateActions, quickCreateQuery],
+  );
   const isDarkTheme = theme === 'dark';
   const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2 py-1.5 space-y-1' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
   const mobileHeaderPanelSurface = isDarkTheme
@@ -1119,31 +1133,39 @@ const Layout = () => {
                   <input
                     type="text"
                     placeholder="Buscar ações"
+                    value={quickCreateQuery}
+                    onChange={(e) => setQuickCreateQuery(e.target.value)}
                     className="bg-transparent flex-1 text-sm text-gray-700 placeholder:text-gray-500 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-3">
-                  {quickCreateActions.map((action) => (
-                    <button
-                      key={action.key}
-                      type="button"
-                      onClick={() => {
-                        setQuickCreateOpen(false);
-                        action.action();
-                      }}
-                      className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                      <div
-                        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${action.accent} border border-white/50 flex items-center justify-center`}
+                  {filteredQuickCreateActions.length ? (
+                    filteredQuickCreateActions.map((action) => (
+                      <button
+                        key={action.key}
+                        type="button"
+                        onClick={() => {
+                          setQuickCreateOpen(false);
+                          action.action();
+                        }}
+                        className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
                       >
-                        <action.iconComponent size={22} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900">{action.label}</p>
-                        <p className="text-xs text-gray-500">{action.description}</p>
-                      </div>
-                    </button>
-                  ))}
+                        <div
+                          className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${action.accent} border border-white/50 flex items-center justify-center`}
+                        >
+                          <action.iconComponent size={22} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-gray-900">{action.label}</p>
+                          <p className="text-xs text-gray-500">{action.description}</p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500 px-3 py-4 rounded-2xl border border-dashed border-gray-200">
+                      Nenhuma ação encontrada.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
