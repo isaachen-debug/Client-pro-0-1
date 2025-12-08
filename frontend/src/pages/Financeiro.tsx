@@ -449,9 +449,9 @@ const Financeiro = () => {
             </div>
           </div>
           <div className="w-full md:w-auto flex flex-col gap-3 min-w-0">
-            <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
+            <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1 min-w-0">
               <p className="text-sm text-white/70">Total monitorado</p>
-              <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+              <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight overflow-hidden text-ellipsis">
                 {formatCurrency(summary.total)}
               </p>
               <p className="text-xs text-white/60">
@@ -543,7 +543,7 @@ const Financeiro = () => {
               return (
                 <div
                   key={card.label}
-                  className={`relative overflow-hidden p-5 ${
+                  className={`relative overflow-hidden p-5 min-w-0 ${
                     isAccentCard
                       ? 'rounded-[30px] border border-gray-100 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.06)]'
                       : 'rounded-2xl border-l-4 border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white shadow-sm'
@@ -558,7 +558,7 @@ const Financeiro = () => {
                       <Icon size={18} className={card.iconColor} />
                     </span>
                   </div>
-                  <p className="relative text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                  <p className="relative text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight leading-tight overflow-hidden text-ellipsis">
                     {card.value}
                   </p>
                   <p className="relative text-sm text-gray-500 mt-1">{card.detail}</p>
