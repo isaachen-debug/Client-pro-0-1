@@ -247,7 +247,7 @@ const Dashboard = () => {
             <div className="text-left">
               <p className={`text-[11px] uppercase tracking-wide ${heroLabelClass}`}>Serviços agendados</p>
               <p className={`text-2xl font-bold ${heroValueClass}`}>{data.scheduledServicesCount}</p>
-              <p className={`text-[11px] ${heroLabelClass}`}>Próximas 24 horas</p>
+              <p className={`text-[11px] ${heroLabelClass}`}>Semana</p>
             </div>
             <div className={smallCardIcon}>
               <Calendar size={18} className={heroValueClass} />
