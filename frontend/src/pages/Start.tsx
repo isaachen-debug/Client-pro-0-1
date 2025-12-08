@@ -36,6 +36,27 @@ const workingClockColors = {
   text: '#0369a1',
 };
 
+const buildMapsLink = (appointment: Appointment) => {
+  const destination =
+    appointment.customer.latitude && appointment.customer.longitude
+      ? `${appointment.customer.latitude},${appointment.customer.longitude}`
+      : appointment.customer.address;
+  if (!destination) return null;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+};
+
+const buildWazeLink = (appointment: Appointment) => {
+  const destination =
+    appointment.customer.latitude && appointment.customer.longitude
+      ? `${appointment.customer.latitude},${appointment.customer.longitude}`
+      : appointment.customer.address;
+  if (!destination) return null;
+  if (appointment.customer.latitude && appointment.customer.longitude) {
+    return `https://waze.com/ul?ll=${appointment.customer.latitude},${appointment.customer.longitude}&navigate=yes`;
+  }
+  return `https://waze.com/ul?q=${encodeURIComponent(destination)}&navigate=yes`;
+};
+
 const Start = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -361,58 +382,57 @@ const Start = () => {
                   appointment.customer.longitude ||
                   appointment.customer.address) && (
                   <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden border border-gray-100">
-                    {appointment.customer.latitude ||
-                    appointment.customer.longitude ||
-                    appointment.customer.address ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            window.open(
+                    {(() => {
+                      const mapsLink = buildMapsLink(appointment);
+                      const wazeLink = buildWazeLink(appointment);
+                      return (
+                        <>
+                          <div className="absolute right-3 top-3 z-10 flex gap-2">
+                            {mapsLink && (
+                              <button
+                                type="button"
+                                onClick={() => window.open(mapsLink, '_blank')}
+                                className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm hover:bg-white"
+                              >
+                                <Navigation2 size={14} /> Maps
+                              </button>
+                            )}
+                            {wazeLink && (
+                              <button
+                                type="button"
+                                onClick={() => window.open(wazeLink, '_blank')}
+                                className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-white"
+                              >
+                                <Navigation2 size={14} /> Waze
+                              </button>
+                            )}
+                          </div>
+                          <iframe
+                            title={`Mapa - ${appointment.customer.name}`}
+                            width="100%"
+                            height="100%"
+                            frameBorder="0"
+                            src={`https://www.google.com/maps?q=${
                               appointment.customer.latitude && appointment.customer.longitude
-                                ? `https://www.google.com/maps/dir/?api=1&destination=${appointment.customer.latitude},${appointment.customer.longitude}`
-                                : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                                    appointment.customer.address ?? '',
-                                  )}`,
-                              '_blank',
-                            )
-                          }
-                          className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm hover:bg-white"
-                        >
-                          <Navigation2 size={14} /> Abrir no Maps
-                        </button>
-                        <iframe
-                          title={`Mapa - ${appointment.customer.name}`}
-                          width="100%"
-                          height="100%"
-                          frameBorder="0"
-                          src={`https://www.google.com/maps?q=${
-                            appointment.customer.latitude && appointment.customer.longitude
-                              ? `${appointment.customer.latitude},${appointment.customer.longitude}`
-                              : encodeURIComponent(appointment.customer.address ?? '')
-                          }&z=15&output=embed`}
-                          allowFullScreen
-                          loading="lazy"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            window.open(
-                              appointment.customer.latitude && appointment.customer.longitude
-                                ? `https://www.google.com/maps/dir/?api=1&destination=${appointment.customer.latitude},${appointment.customer.longitude}`
-                                : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                                    appointment.customer.address ?? '',
-                                  )}`,
-                              '_blank',
-                            )
-                          }
-                          className="absolute inset-0 z-0"
-                          aria-label="Abrir endereço no Maps"
-                        >
-                          <span className="sr-only">Abrir no Maps</span>
-                        </button>
-                      </>
-                    ) : null}
+                                ? `${appointment.customer.latitude},${appointment.customer.longitude}`
+                                : encodeURIComponent(appointment.customer.address ?? '')
+                            }&z=15&output=embed`}
+                            allowFullScreen
+                            loading="lazy"
+                          />
+                          {mapsLink && (
+                            <button
+                              type="button"
+                              onClick={() => window.open(mapsLink, '_blank')}
+                              className="absolute inset-0 z-0"
+                              aria-label="Abrir endereço no Maps"
+                            >
+                              <span className="sr-only">Abrir no Maps</span>
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
 
