@@ -77,10 +77,10 @@ const translations: Record<Language, Translation> = {
     ],
     loginButton: 'Sign in',
     hero: {
-      badge: 'Client Up · Operating system for cleaning businesses',
+      badge: 'Clean Up · Operating system for cleaning businesses',
       title: 'Maximize human productivity with a panel that unites Owners, Partners, and Clients.',
       description:
-        'Replace spreadsheets, chat groups, and scattered apps. Client Up brings schedules, smart SMS, contracts, finance, and the Client portal into one experience.',
+        'Replace spreadsheets, chat groups, and scattered apps. Clean Up brings schedules, smart SMS, contracts, finance, and the Client portal into one experience.',
       chips: {
         sms: 'Automated SMS',
         contracts: 'Dynamic contracts',
@@ -91,7 +91,7 @@ const translations: Record<Language, Translation> = {
       note: 'Free forever to test your operation. No credit card required.',
     },
     mobile: {
-      brandTag: 'Client Up',
+      brandTag: 'Clean Up',
       slides: [
         {
           title: 'Your cleaning business in one place.',
@@ -120,7 +120,7 @@ const translations: Record<Language, Translation> = {
       badge: 'End work sprawl',
       title: 'Fewer apps. More focus on who delivers.',
       description:
-        'Without Client Up, your operation gets lost in apps, AI, and scattered context. With it, SMS, contracts, and dashboards live in one continuous flow.',
+        'Without Clean Up, your operation gets lost in apps, AI, and scattered context. With it, SMS, contracts, and dashboards live in one continuous flow.',
       cards: [
         {
           title: 'App Sprawl',
@@ -156,7 +156,7 @@ const translations: Record<Language, Translation> = {
       badge: '@Brain',
       title: 'The only AI that works where you work.',
       description:
-        'Use AI to answer questions, generate SMS, summarize visits, and trigger alerts without leaving Client Up.',
+        'Use AI to answer questions, generate SMS, summarize visits, and trigger alerts without leaving Clean Up.',
       cards: [
         { badge: 'Ambient answers', title: '@Brain Agent', description: '24/7 assistant that searches data, drafts messages, and answers the team.' },
         {
@@ -219,7 +219,7 @@ const translations: Record<Language, Translation> = {
       clientBadge: 'Client portal',
       clientSubtitle: 'Sign in to follow your visits',
       clientDescription: 'Use the email where you get confirmations to see timeline, photos, and contracts.',
-      question: 'How do you use Client Up?',
+      question: 'How do you use Clean Up?',
       personaPrompt: 'Select the profile that matches your access.',
       infoBoxTitle: 'Need a hint?',
       forgotPassword: 'Forgot your password?',
@@ -244,10 +244,10 @@ const translations: Record<Language, Translation> = {
     ],
     loginButton: 'Fazer login',
     hero: {
-      badge: 'Client Up · Operating system para cleaning businesses',
+      badge: 'Clean Up · Operating system para cleaning businesses',
       title: 'Maximize a produtividade humana, com um painel que une Owners, Partners e Clients.',
       description:
-        'Substitua planilhas, grupos e apps soltos. O Client Up reúne agenda, SMS inteligentes, contratos, financeiro e portal do Client em uma única experiência.',
+        'Substitua planilhas, grupos e apps soltos. O Clean Up reúne agenda, SMS inteligentes, contratos, financeiro e portal do Client em uma única experiência.',
       chips: {
         sms: 'SMS automáticos',
         contracts: 'Contratos dinâmicos',
@@ -258,7 +258,7 @@ const translations: Record<Language, Translation> = {
       note: 'Free forever para testar com a sua operação. Sem cartão de crédito.',
     },
     mobile: {
-      brandTag: 'Client Up',
+      brandTag: 'Clean Up',
       slides: [
         {
           title: 'Sua limpeza em um só lugar.',
@@ -287,7 +287,7 @@ const translations: Record<Language, Translation> = {
       badge: 'Acabe com o Work Sprawl',
       title: 'Menos apps. Mais foco em quem entrega.',
       description:
-        'Sem Client Up, sua operação se perde em apps, IA e contexto espalhados. Com ele, SMS, contratos e dashboards vivem em um fluxo contínuo.',
+        'Sem Clean Up, sua operação se perde em apps, IA e contexto espalhados. Com ele, SMS, contratos e dashboards vivem em um fluxo contínuo.',
       cards: [
         {
           title: 'App Sprawl',
@@ -323,7 +323,7 @@ const translations: Record<Language, Translation> = {
       badge: '@Brain',
       title: 'A única IA que trabalha onde você trabalha.',
       description:
-        'Use IA para responder perguntas, gerar SMS, resumir visitas e disparar alertas sem sair do Client Up.',
+        'Use IA para responder perguntas, gerar SMS, resumir visitas e disparar alertas sem sair do Clean Up.',
       cards: [
         { badge: 'Ambient answers', title: '@Brain Agent', description: 'Assistente 24/7 que busca dados, cria mensagens e responde ao time.' },
         {
@@ -388,7 +388,7 @@ const translations: Record<Language, Translation> = {
       clientBadge: 'Portal do Client',
       clientSubtitle: 'Entre para acompanhar suas visitas',
       clientDescription: 'Use o e-mail onde recebe confirmações. Você verá timeline, fotos e contratos.',
-      question: 'Como você usa o Client Up?',
+      question: 'Como você usa o Clean Up?',
       personaPrompt: 'Selecione o perfil que corresponde ao seu acesso.',
       infoBoxTitle: 'Precisa de ajuda?',
       forgotPassword: 'Esqueceu a senha?',
@@ -552,7 +552,7 @@ const Login = () => {
       <header className="hidden sm:block w-full border-b border-white/70 bg-white/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <img src={logoFull} alt="Client Up logo" className="h-16 w-auto" />
+            <img src={logoFull} alt="Clean Up logo" className="h-16 w-auto" />
           </div>
           <nav className="flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-600">
             {navigationLinks.map((link) => (
@@ -620,7 +620,7 @@ const Login = () => {
                   className="w-full flex-shrink-0 flex flex-col items-center gap-6 py-8 text-center px-4"
                 >
                   <div className="space-y-2">
-                    <img src={logoFull} alt="Client Up" className="h-10 mx-auto" />
+                    <img src={logoFull} alt="Clean Up" className="h-10 mx-auto" />
                     <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-600 font-semibold">
                       {t.mobile.brandTag}
                     </p>
@@ -628,7 +628,7 @@ const Login = () => {
                     <p className="text-sm text-gray-600">{slide.description}</p>
                   </div>
                   <div className="w-48 h-48 rounded-[32px] border border-gray-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.12)] flex items-center justify-center overflow-hidden">
-                    <img src={loginHero} alt="Client Up app preview" className="w-full h-full object-contain" />
+                    <img src={loginHero} alt="Clean Up app preview" className="w-full h-full object-contain" />
                   </div>
                   <div className="space-y-2">
                     <p className="text-base font-semibold text-gray-900">{slide.highlight}</p>
@@ -744,7 +744,7 @@ const Login = () => {
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-white text-gray-900 flex items-center justify-center font-semibold">
-                      <img src={loginHero} alt="Client Up app" className="w-10 h-10 object-contain" />
+                      <img src={loginHero} alt="Clean Up app" className="w-10 h-10 object-contain" />
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wide text-white/60">Portal Client</p>

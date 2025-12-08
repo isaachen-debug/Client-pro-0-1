@@ -218,7 +218,7 @@ const Empresa = () => {
         <div className="space-y-4">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Empresa</p>
-            <h1 className="text-3xl font-bold text-gray-900">Identidade da sua marca no Client Up</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Identidade da sua marca no Clean Up</h1>
             <p className="text-sm text-gray-600">
               Esta visão é o espelho do que os Clients enxergam no portal. Edição oficial em
               <strong> Clientes → Acesso ao app</strong>.

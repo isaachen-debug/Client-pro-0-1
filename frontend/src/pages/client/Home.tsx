@@ -239,7 +239,7 @@ const ClientHome = () => {
     ],
     [data?.history.length, data?.upcoming.length, pendingContract],
   );
-  const companyName = data?.customer?.companyName ?? 'Equipe Client Up';
+  const companyName = data?.customer?.companyName ?? 'Equipe Clean Up';
   const companyLogo = data?.customer?.avatarUrl ?? undefined;
   const companyInitials = useMemo(() => {
     if (!companyName) return 'CP';

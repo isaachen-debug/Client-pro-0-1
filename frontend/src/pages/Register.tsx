@@ -56,7 +56,7 @@ const Register = () => {
             Comece em menos de 3 minutos
           </div>
           <div className="space-y-2">
-            <p className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">Crie sua conta Client Up</p>
+            <p className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">Crie sua conta Clean Up</p>
             <p className="text-gray-600 text-base lg:text-lg max-w-lg mx-auto lg:mx-0">
               Gestão de clientes, agenda e financeiro acessível em qualquer dispositivo. Perfeito para quem opera em campo.
             </p>

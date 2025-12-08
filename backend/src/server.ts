@@ -27,7 +27,7 @@ app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Client Up API rodando!' });
+  res.json({ status: 'ok', message: 'Clean Up API rodando!' });
 });
 
 // Rotas

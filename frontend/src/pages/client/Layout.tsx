@@ -18,7 +18,7 @@ const ClientLayout = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-[#4c1d95] via-[#312e81] to-[#0f172a] opacity-90" />
         <div className="relative max-w-5xl mx-auto px-4 py-6 flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Client Up Portal</p>
+            <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Clean Up Portal</p>
             <h1 className="text-2xl font-semibold">Olá, {user?.name}</h1>
             <p className="text-sm text-white/70">
               Veja suas próximas visitas, recados e preferências em um só lugar.

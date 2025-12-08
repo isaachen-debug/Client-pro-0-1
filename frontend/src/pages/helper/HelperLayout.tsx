@@ -39,7 +39,7 @@ const HelperLayout = () => {
                 Olá, {user?.name?.split(' ')[0] ?? 'helper'}
               </h1>
               <p className="text-sm text-white/70 flex items-center gap-2">
-                <MapPin size={14} /> {user?.companyName || 'Client Up'} • {today}
+                <MapPin size={14} /> {user?.companyName || 'Clean Up'} • {today}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -72,7 +72,7 @@ const HelperLayout = () => {
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
               <p className="text-xs uppercase tracking-wide text-white/60">Operação</p>
-              <p className="text-lg font-semibold">{user?.companyName || 'Equipe Client Up'}</p>
+              <p className="text-lg font-semibold">{user?.companyName || 'Equipe Clean Up'}</p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/10 p-4 flex items-center gap-2">
               <CalendarDays size={18} className="text-white/70" />
@@ -112,7 +112,7 @@ const HelperLayout = () => {
           <div className="absolute inset-x-0 bottom-0 bg-[#050914] rounded-t-[32px] p-6 space-y-4 border-t border-white/15">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold">{user?.companyName || 'Client Up'}</p>
+                <p className="text-sm font-semibold">{user?.companyName || 'Clean Up'}</p>
                 <p className="text-xs text-white/60">{today}</p>
               </div>
               <button

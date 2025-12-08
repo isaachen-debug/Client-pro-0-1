@@ -12,8 +12,8 @@ export default defineConfig({
       filename: 'service-worker.ts',
       strategies: 'injectManifest',
       manifest: {
-        name: 'Client Up',
-        short_name: 'Client Up',
+        name: 'Clean Up',
+        short_name: 'Clean Up',
         description: 'App para organizar clientes, agenda e financeiro de empresas de limpeza.',
         start_url: '/',
         display: 'standalone',

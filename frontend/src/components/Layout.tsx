@@ -36,7 +36,7 @@ import { QuickActionProvider, QuickActionKey } from '../contexts/QuickActionCont
 
 const LogoMark = () => (
   <div className="w-12 h-12 rounded-3xl bg-white border border-gray-100 shadow-lg shadow-emerald-300/30 flex items-center justify-center overflow-hidden">
-    <img src={brandLogo} alt="Client Up logo" className="w-10 h-10 object-contain" />
+    <img src={brandLogo} alt="Clean Up logo" className="w-10 h-10 object-contain" />
   </div>
 );
 
@@ -44,7 +44,7 @@ const BrandBlock = ({ subtitle, className = '' }: { subtitle: string; className?
   <div className={`flex items-center space-x-2 ${className}`}>
     <LogoMark />
     <div>
-      <h1 className="text-lg font-bold text-gray-900 tracking-tight">Client Up</h1>
+      <h1 className="text-lg font-bold text-gray-900 tracking-tight">Clean Up</h1>
       <p className="text-xs text-gray-500">{subtitle}</p>
     </div>
   </div>
@@ -137,7 +137,7 @@ const Layout = () => {
         onClick={() =>
           handleWorkspaceMenuAction(
             undefined,
-            () => alert('Client Up Apps: em breve um hub completo para novos produtos.')
+            () => alert('Clean Up Apps: em breve um hub completo para novos produtos.')
           )
         }
         className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
@@ -833,7 +833,7 @@ const Layout = () => {
                           )}
                         </div>
                         <div className="w-5 h-5 rounded-full border border-gray-200 bg-white flex items-center justify-center">
-                          <img src={brandLogo} alt="Client Up" className="w-4 h-4 object-contain" />
+                          <img src={brandLogo} alt="Clean Up" className="w-4 h-4 object-contain" />
                         </div>
                       </div>
                     </button>
@@ -845,7 +845,7 @@ const Layout = () => {
                     className="w-9 h-9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center dark:bg-white/10 dark:border-white/15 transition-all duration-200"
                   >
                     <div className="w-8 h-8 rounded-full overflow-hidden border border-white/40 dark:border-white/20 bg-white">
-                      <img src={brandLogo} alt="Client Up" className="w-full h-full object-contain" />
+                      <img src={brandLogo} alt="Clean Up" className="w-full h-full object-contain" />
                     </div>
                   </button>
                 </div>
@@ -875,7 +875,7 @@ const Layout = () => {
                           )}
                         </div>
                         <div className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center">
-                          <img src={brandLogo} alt="Client Up" className="w-4 h-4 object-contain" />
+                          <img src={brandLogo} alt="Clean Up" className="w-4 h-4 object-contain" />
                         </div>
                       </div>
                     </button>
@@ -891,7 +891,7 @@ const Layout = () => {
                         isDarkTheme ? 'text-white' : 'text-gray-900'
                       }`}
                     >
-                      {user?.companyName || 'Client Up'}
+                      {user?.companyName || 'Clean Up'}
                       <ChevronDown
                         size={16}
                         className={`${mobileSecondaryTextClass} transition-transform ${
@@ -906,7 +906,7 @@ const Layout = () => {
                     className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
                   >
                     <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-white">
-                      <img src={brandLogo} alt="Client Up" className="w-7 h-7 object-contain" />
+                      <img src={brandLogo} alt="Clean Up" className="w-7 h-7 object-contain" />
                     </div>
                   </button>
                 </div>
@@ -974,7 +974,7 @@ const Layout = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => alert('Apps adicionais do ecossistema Client Up chegam em breve.')}
+                              onClick={() => alert('Apps adicionais do ecossistema Clean Up chegam em breve.')}
                               className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
                                 isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
                               }`}
@@ -1001,7 +1001,7 @@ const Layout = () => {
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Instale o Client Up</p>
+                    <p className="text-sm font-semibold text-gray-900">Instale o Clean Up</p>
                     <p className="text-xs text-gray-500">
                       Adicione o app na tela inicial para acessar mais rápido.
                     </p>
@@ -1018,7 +1018,7 @@ const Layout = () => {
                     onClick={install}
                     className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors"
                   >
-                    Instalar Client Up
+                    Instalar Clean Up
                   </button>
                 </div>
               </div>
@@ -1151,7 +1151,7 @@ const Layout = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.3em] text-emerald-300/70">Launchpad</p>
-                    <p className="text-2xl font-semibold">Explore Client Up</p>
+                    <p className="text-2xl font-semibold">Explore Clean Up</p>
                   </div>
                   <button
                     type="button"

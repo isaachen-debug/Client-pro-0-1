@@ -53,7 +53,7 @@ const HelperSettings = () => {
             </div>
             <div className="text-right space-y-2">
               <p className="text-xs text-white/60 uppercase">Plano</p>
-              <p className="text-sm font-semibold">Client Up • Starter</p>
+              <p className="text-sm font-semibold">Clean Up • Starter</p>
               <button
                 type="button"
                 className="inline-flex items-center gap-2 rounded-2xl border border-white/20 px-3 py-1.5 text-xs font-semibold"
@@ -69,7 +69,7 @@ const HelperSettings = () => {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-wide text-white/60">Empresa</p>
-              <p className="text-lg font-semibold">{user?.companyName || 'Client Up'}</p>
+              <p className="text-lg font-semibold">{user?.companyName || 'Clean Up'}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center gap-2">
               <Sparkles size={16} className="text-white/70" />
@@ -112,7 +112,7 @@ const HelperSettings = () => {
             <div className="rounded-2xl border border-gray-100 p-4 space-y-1">
               <p className="text-xs uppercase tracking-wide text-gray-400">Contato rápido</p>
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin size={16} /> {user?.companyName || 'Client Up'}
+                <MapPin size={16} /> {user?.companyName || 'Clean Up'}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone size={16} /> Central: (00) 0000-0000

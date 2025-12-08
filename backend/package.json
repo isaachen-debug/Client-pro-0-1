@@ -1,7 +1,7 @@
 {
   "name": "clientepro-backend",
   "version": "1.0.0",
-  "description": "Backend API for Client Up",
+  "description": "Backend API for Clean Up",
   "main": "dist/server.js",
   "scripts": {
     "dev": "prisma generate && tsx watch src/server.ts",
