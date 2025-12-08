@@ -386,17 +386,17 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CANCELADO: 'Cancelado',
   };
 
-  const statusColors: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-[#d1ecff] text-[#0a4b78]',
-    EM_ANDAMENTO: 'bg-[#ffecc7] text-[#7a4a00]',
-    CONCLUIDO: 'bg-[#c8f3dd] text-[#0f5b34]',
-    CANCELADO: 'bg-[#ffd9dd] text-[#7a1024]',
+  const statusBg: Record<AppointmentStatus, string> = {
+    AGENDADO: 'bg-[#d1ecff]',
+    EM_ANDAMENTO: 'bg-[#ffecc7]',
+    CONCLUIDO: 'bg-[#c8f3dd]',
+    CANCELADO: 'bg-[#ffd9dd]',
   };
-  const statusSurfaces: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-[#e8f5ff] border-[#d1ecff] text-[#0a4b78]',
-    EM_ANDAMENTO: 'bg-[#fff3da] border-[#ffecc7] text-[#7a4a00]',
-    CONCLUIDO: 'bg-[#e2f8ed] border-[#c8f3dd] text-[#0f5b34]',
-    CANCELADO: 'bg-[#ffecee] border-[#ffd9dd] text-[#7a1024]',
+  const statusText: Record<AppointmentStatus, string> = {
+    AGENDADO: 'text-[#0a4b78]',
+    EM_ANDAMENTO: 'text-[#7a4a00]',
+    CONCLUIDO: 'text-[#0f5b34]',
+    CANCELADO: 'text-[#7a1024]',
   };
 
   const getStatusBadge = (status: AppointmentStatus) => (
@@ -565,32 +565,15 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                           event.stopPropagation();
                           openEditModal(ag);
                         }}
-                        className={`w-full text-left rounded-xl border p-3 transition hover:translate-y-[-1px] ${
-                          statusSurfaces[ag.status]
-                        }`}
+                        className={`w-full text-left rounded-xl p-3 transition hover:translate-y-[-1px] ${statusBg[ag.status]} ${statusText[ag.status]}`}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-semibold truncate text-gray-900">{ag.customer.name}</div>
-                          <span className="text-[11px] font-semibold px-2 py-1 rounded bg-white/70 text-gray-800 border border-white/60">
+                          <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
+                          <span className="text-[11px] font-semibold">
                             {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
                           </span>
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded ${statusColors[ag.status]}`}>
-                            {statusLabels[ag.status]}
-                          </span>
-                          {ag.isRecurring && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-amber-100 text-amber-700">
-                              🔄 Recorrente
-                            </span>
-                          )}
-                        </div>
-                        {ag.assignedHelper?.name && (
-                          <p className="text-[11px] text-gray-700 mt-1">
-                            Helper: <span className="font-semibold">{ag.assignedHelper.name}</span>
-                          </p>
-                        )}
-                        {ag.notes && <p className="text-[11px] text-gray-700 mt-1 leading-snug">{ag.notes}</p>}
+                        {ag.notes && <p className="text-[11px] mt-1 leading-snug opacity-80">{ag.notes}</p>}
                       </button>
                     ))
                 ) : (

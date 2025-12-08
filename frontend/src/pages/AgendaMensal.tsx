@@ -321,12 +321,12 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
   const getAgendamentosForDay = (day: Date) =>
     appointments.filter((ag) => isSameDay(parseDateFromInput(ag.date), day));
 
-const statusSurfaces: Record<AppointmentStatus, string> = {
-  AGENDADO: 'bg-blue-50 border-blue-100 text-blue-900',
-  EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-900',
-  CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-900',
-  CANCELADO: 'bg-rose-50 border-rose-100 text-rose-900',
-};
+  const statusSurfaces: Record<AppointmentStatus, string> = {
+    AGENDADO: 'bg-[#d1ecff] text-[#0a4b78]',
+    EM_ANDAMENTO: 'bg-[#ffecc7] text-[#7a4a00]',
+    CONCLUIDO: 'bg-[#c8f3dd] text-[#0f5b34]',
+    CANCELADO: 'bg-[#ffd9dd] text-[#7a1024]',
+  };
 
   const headerAndGrid = (
     <>
@@ -371,8 +371,8 @@ const statusSurfaces: Record<AppointmentStatus, string> = {
             return (
               <div
                 key={day.getTime()}
-                className={`border rounded-lg p-4 min-h-[150px] ${
-                  isToday ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
+                className={`rounded-lg p-4 min-h-[150px] border ${
+                  isToday ? 'border-primary-200 bg-primary-50' : 'border-gray-200 bg-white'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -392,24 +392,12 @@ const statusSurfaces: Record<AppointmentStatus, string> = {
                           type="button"
                           key={appointment.id}
                           onClick={() => openEditModal(appointment)}
-                          className={`w-full text-left text-xs p-2 rounded-2xl border shadow-sm transition hover:-translate-y-0.5 ${statusSurfaces[appointment.status]}`}
+                          className={`w-full text-left text-xs p-2 rounded-xl transition hover:-translate-y-0.5 ${statusSurfaces[appointment.status]}`}
                         >
                           <div className="font-semibold text-sm truncate">{appointment.customer.name}</div>
-                          <div className="text-[11px] mt-1 flex flex-wrap gap-2 items-center">
-                            <span className="font-semibold">
-                              {appointment.startTime} {appointment.endTime ? `· ${appointment.endTime}` : ''}
-                            </span>
+                          <div className="text-[11px] mt-1">
+                            {appointment.startTime} {appointment.endTime ? `· ${appointment.endTime}` : ''}
                           </div>
-                          {appointment.assignedHelper?.name && (
-                            <div className="text-[11px] mt-1">
-                              Helper: <span className="font-semibold">{appointment.assignedHelper.name}</span>
-                            </div>
-                          )}
-                          {appointment.isRecurring && (
-                            <div className="text-[11px] mt-1 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-800">
-                              🔄 Recorrente
-                            </div>
-                          )}
                         </button>
                       ))}
                   <button
