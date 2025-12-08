@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Bell, BellOff, BookOpenCheck, ChevronRight, Languages, LogOut, Settings as SettingsIcon, ShieldCheck, Star, Trash2, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePreferences } from '../../contexts/PreferencesContext';
@@ -26,6 +26,7 @@ const QUICK_LINKS = [
 ];
 
 const ClientSettings = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { setLanguagePreference } = usePreferences();
   const [status, setStatus] = useState(STATUS_OPTIONS[0].value);
