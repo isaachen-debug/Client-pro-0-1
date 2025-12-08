@@ -64,6 +64,9 @@ router.get('/overview', async (req, res) => {
       .filter((item) => item.status === 'PENDENTE')
       .reduce((sum, item) => sum + item.amount, 0);
 
+    const now = new Date();
+    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
     const activeClientsCount = await prisma.customer.count({
       where: { userId, status: 'ACTIVE' },
     });
@@ -72,8 +75,8 @@ router.get('/overview', async (req, res) => {
       where: {
         userId,
         date: {
-          gte: monthStart,
-          lte: monthEnd,
+          gte: now,
+          lte: next24h,
         },
         status: {
           not: 'CANCELADO',
