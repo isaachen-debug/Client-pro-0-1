@@ -10,15 +10,6 @@ import CreateModal, { CreateFormState } from '../components/appointments/CreateM
 import EditModal from '../components/appointments/EditModal';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
-const MINUTES_PER_HOUR_HEIGHT = 48; // px per hour for the grid
-const DAY_START_HOUR = 6;
-const DAY_END_HOUR = 22;
-const timeToMinutes = (time?: string | null) => {
-  if (!time) return null;
-  const [h, m] = time.split(':').map((n) => Number(n));
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
-  return h * 60 + m;
-};
 
 const isSameSeries = (a: Appointment, b: Appointment) => {
   if (a.customerId !== b.customerId) return false;
@@ -397,14 +388,16 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
 
   const statusColors: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-blue-100 text-blue-700',
-    EM_ANDAMENTO: 'bg-indigo-100 text-indigo-700',
-    CONCLUIDO: 'bg-green-100 text-green-700',
-    CANCELADO: 'bg-red-100 text-red-700',
+    EM_ANDAMENTO: 'bg-amber-100 text-amber-700',
+    CONCLUIDO: 'bg-emerald-100 text-emerald-700',
+    CANCELADO: 'bg-rose-100 text-rose-700',
   };
-  const hours = useMemo(
-    () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i),
-    [],
-  );
+  const statusSurfaces: Record<AppointmentStatus, string> = {
+    AGENDADO: 'bg-blue-50 border-blue-100 text-blue-900',
+    EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-900',
+    CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-900',
+    CANCELADO: 'bg-rose-50 border-rose-100 text-rose-900',
+  };
 
   const getStatusBadge = (status: AppointmentStatus) => (
     <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${statusColors[status]}`}>
@@ -525,121 +518,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         </div>
       </div>
 
-      {/* Vista semanal estilo Google Calendar */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
-        <div className="min-w-[980px]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <button
-                onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Semana anterior"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span>
-                {format(weekStart, "d 'de' MMM", { locale: ptBR })} - {format(weekEnd, "d 'de' MMM yyyy", { locale: ptBR })}
-              </span>
-              <button
-                onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Próxima semana"
-              >
-                <ChevronRight size={16} />
-              </button>
-              <button
-                onClick={() => setCurrentDate(new Date())}
-                className="ml-2 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                Hoje
-              </button>
-            </div>
-            <span className="text-xs text-gray-500">Visual semanal</span>
-          </div>
-
-          <div className="grid grid-cols-[60px_repeat(7,1fr)]">
-            {/* Coluna de horas */}
-            <div className="relative border-r border-gray-100 bg-gray-50">
-              {hours.map((hour, idx) => (
-                <div key={hour} className="absolute left-0 right-0 flex items-start" style={{ top: idx * MINUTES_PER_HOUR_HEIGHT }}>
-                  <span className="text-[10px] text-gray-400 pl-2">{`${pad(hour)}:00`}</span>
-                  <div className="flex-1 border-t border-dashed border-gray-200 ml-2" />
-                </div>
-              ))}
-              <div
-                style={{ height: (DAY_END_HOUR - DAY_START_HOUR + 1) * MINUTES_PER_HOUR_HEIGHT }}
-                className="pointer-events-none"
-              />
-            </div>
-
-            {/* Colunas por dia */}
-            {weekDays.map((day) => {
-              const dayAppointments = getAgendamentosForDay(day);
-              return (
-                <div key={day.toISOString()} className="relative border-r border-gray-100 bg-white">
-                  <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-2 py-2 flex items-center gap-2">
-                    <div className="text-left">
-                      <p className="text-[11px] uppercase tracking-wide text-gray-400">
-                        {format(day, 'EEE', { locale: ptBR })}
-                      </p>
-                      <p
-                        className={`text-sm font-semibold ${
-                          isSameDay(day, new Date()) ? 'text-primary-600' : 'text-gray-800'
-                        }`}
-                      >
-                        {format(day, 'd')}
-                      </p>
-                    </div>
-                  </div>
-
-                  {hours.map((hour, idx) => (
-                    <div
-                      key={`${day.toISOString()}-${hour}`}
-                      className="absolute left-0 right-0 border-t border-dashed border-gray-200"
-                      style={{ top: idx * MINUTES_PER_HOUR_HEIGHT + MINUTES_PER_HOUR_HEIGHT }}
-                    />
-                  ))}
-
-                  <div
-                    className="relative"
-                    style={{ height: (DAY_END_HOUR - DAY_START_HOUR + 1) * MINUTES_PER_HOUR_HEIGHT }}
-                  >
-                    {dayAppointments.map((ag) => {
-                      const startMinutes = timeToMinutes(ag.startTime) ?? DAY_START_HOUR * 60;
-                      const endMinutes = timeToMinutes(ag.endTime) ?? startMinutes + 60;
-                      const top =
-                        ((startMinutes - DAY_START_HOUR * 60) / 60) * MINUTES_PER_HOUR_HEIGHT;
-                      const height =
-                        Math.max(40, ((endMinutes - startMinutes) / 60) * MINUTES_PER_HOUR_HEIGHT);
-                      const statusClass = getStatusColor(ag.status);
-                      return (
-                        <div
-                          key={ag.id}
-                          onClick={() => openEditModal(ag)}
-                          className={`absolute left-2 right-2 rounded-xl border border-white shadow-sm text-xs text-white cursor-pointer ${statusClass}`}
-                          style={{ top, height, backgroundColor: 'rgba(79, 70, 229, 0.9)' }}
-                        >
-                          <div className="px-2 py-1 space-y-1">
-                            <p className="text-[11px] font-semibold">
-                              {ag.customer?.name || ag.customerName || 'Cliente'}
-                            </p>
-                            <p className="text-[10px] opacity-90">
-                              {ag.startTime} - {ag.endTime || '—'}
-                            </p>
-                            <p className="text-[10px] opacity-90">{statusLabels[ag.status]}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Week Grid (cards) */}
+      {/* Week Grid em cards (estilo Google Calendar mobile) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4">
         {weekDays.map((day) => {
           const dayAgendamentos = getAgendamentosForDay(day);
@@ -674,100 +553,46 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                 )}
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {dayAgendamentos.length > 0 ? (
-                  dayAgendamentos.map((ag) => (
-                    <div
-                      key={ag.id}
-                      className="border-l-4 pl-3 py-2 space-y-2 rounded"
-                      style={{ borderColor: getStatusColor(ag.status) }}
-                    >
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 truncate">
-                          {ag.customer.name}
+                  [...dayAgendamentos]
+                    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                    .map((ag) => (
+                      <button
+                        key={ag.id}
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openEditModal(ag);
+                        }}
+                        className={`w-full text-left rounded-2xl border p-3 shadow-sm transition hover:translate-y-[-1px] ${
+                          statusSurfaces[ag.status]
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
+                          <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-white/80 text-gray-800 border border-white/70">
+                            {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
+                          </span>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {ag.startTime} • {currencyFormatter.format(ag.price)}
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full ${statusColors[ag.status]}`}>
+                            {statusLabels[ag.status]}
+                          </span>
+                          {ag.isRecurring && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                              🔄 Recorrente
+                            </span>
+                          )}
                         </div>
                         {ag.assignedHelper?.name && (
-                          <div className="text-[11px] text-gray-500">
-                            Helper: <span className="font-semibold text-gray-700">{ag.assignedHelper.name}</span>
-                          </div>
+                          <p className="text-[11px] text-gray-700 mt-1">
+                            Helper: <span className="font-semibold">{ag.assignedHelper.name}</span>
+                          </p>
                         )}
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        {getStatusBadge(ag.status)}
-                        {ag.isRecurring && (
-                          <span className="text-xs text-gray-500">🔄</span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <Link
-                          to={`/invoice/${ag.id}`}
-                          onClick={(event) => event.stopPropagation()}
-                          className="text-primary-600 font-semibold hover:underline inline-flex items-center space-x-1"
-                        >
-                          <FileText size={12} />
-                          <span>Ver fatura</span>
-                        </Link>
-                      </div>
-
-                      {ag.status === 'AGENDADO' && (
-                        <div className="flex space-x-1">
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                                handleStatusChange(ag, 'EM_ANDAMENTO');
-                            }}
-                            className="flex-1 text-xs px-2 py-1 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 transition-colors"
-                          >
-                            Iniciar
-                          </button>
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                                handleStatusChange(ag, 'CONCLUIDO');
-                            }}
-                            className="flex-1 text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
-                          >
-                            Concluir
-                          </button>
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                                handleStatusChange(ag, 'CANCELADO');
-                            }}
-                            className="flex-1 text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      )}
-                      {ag.status === 'EM_ANDAMENTO' && (
-                        <div className="flex space-x-1">
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                                handleStatusChange(ag, 'CONCLUIDO');
-                            }}
-                            className="flex-1 text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
-                          >
-                            Concluir
-                          </button>
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                                handleStatusChange(ag, 'CANCELADO');
-                            }}
-                            className="flex-1 text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))
+                        {ag.notes && <p className="text-[11px] text-gray-700 mt-1 leading-snug">{ag.notes}</p>}
+                      </button>
+                    ))
                 ) : (
                   <p className="text-sm text-gray-400 text-center py-8 leading-relaxed">
                     Sem agendamentos
