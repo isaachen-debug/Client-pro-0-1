@@ -10,6 +10,15 @@ import CreateModal, { CreateFormState } from '../components/appointments/CreateM
 import EditModal from '../components/appointments/EditModal';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
+const MINUTES_PER_HOUR_HEIGHT = 48; // px per hour for the grid
+const DAY_START_HOUR = 6;
+const DAY_END_HOUR = 22;
+const timeToMinutes = (time?: string | null) => {
+  if (!time) return null;
+  const [h, m] = time.split(':').map((n) => Number(n));
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+};
 
 const isSameSeries = (a: Appointment, b: Appointment) => {
   if (a.customerId !== b.customerId) return false;
@@ -392,6 +401,10 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CONCLUIDO: 'bg-green-100 text-green-700',
     CANCELADO: 'bg-red-100 text-red-700',
   };
+  const hours = useMemo(
+    () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i),
+    [],
+  );
 
   const getStatusBadge = (status: AppointmentStatus) => (
     <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${statusColors[status]}`}>
@@ -512,7 +525,121 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         </div>
       </div>
 
-      {/* Week Grid */}
+      {/* Vista semanal estilo Google Calendar */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
+        <div className="min-w-[980px]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <button
+                onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Semana anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span>
+                {format(weekStart, "d 'de' MMM", { locale: ptBR })} - {format(weekEnd, "d 'de' MMM yyyy", { locale: ptBR })}
+              </span>
+              <button
+                onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Próxima semana"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentDate(new Date())}
+                className="ml-2 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                Hoje
+              </button>
+            </div>
+            <span className="text-xs text-gray-500">Visual semanal</span>
+          </div>
+
+          <div className="grid grid-cols-[60px_repeat(7,1fr)]">
+            {/* Coluna de horas */}
+            <div className="relative border-r border-gray-100 bg-gray-50">
+              {hours.map((hour, idx) => (
+                <div key={hour} className="absolute left-0 right-0 flex items-start" style={{ top: idx * MINUTES_PER_HOUR_HEIGHT }}>
+                  <span className="text-[10px] text-gray-400 pl-2">{`${pad(hour)}:00`}</span>
+                  <div className="flex-1 border-t border-dashed border-gray-200 ml-2" />
+                </div>
+              ))}
+              <div
+                style={{ height: (DAY_END_HOUR - DAY_START_HOUR + 1) * MINUTES_PER_HOUR_HEIGHT }}
+                className="pointer-events-none"
+              />
+            </div>
+
+            {/* Colunas por dia */}
+            {weekDays.map((day) => {
+              const dayAppointments = getAgendamentosForDay(day);
+              return (
+                <div key={day.toISOString()} className="relative border-r border-gray-100 bg-white">
+                  <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-2 py-2 flex items-center gap-2">
+                    <div className="text-left">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-400">
+                        {format(day, 'EEE', { locale: ptBR })}
+                      </p>
+                      <p
+                        className={`text-sm font-semibold ${
+                          isSameDay(day, new Date()) ? 'text-primary-600' : 'text-gray-800'
+                        }`}
+                      >
+                        {format(day, 'd')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {hours.map((hour, idx) => (
+                    <div
+                      key={`${day.toISOString()}-${hour}`}
+                      className="absolute left-0 right-0 border-t border-dashed border-gray-200"
+                      style={{ top: idx * MINUTES_PER_HOUR_HEIGHT + MINUTES_PER_HOUR_HEIGHT }}
+                    />
+                  ))}
+
+                  <div
+                    className="relative"
+                    style={{ height: (DAY_END_HOUR - DAY_START_HOUR + 1) * MINUTES_PER_HOUR_HEIGHT }}
+                  >
+                    {dayAppointments.map((ag) => {
+                      const startMinutes = timeToMinutes(ag.startTime) ?? DAY_START_HOUR * 60;
+                      const endMinutes = timeToMinutes(ag.endTime) ?? startMinutes + 60;
+                      const top =
+                        ((startMinutes - DAY_START_HOUR * 60) / 60) * MINUTES_PER_HOUR_HEIGHT;
+                      const height =
+                        Math.max(40, ((endMinutes - startMinutes) / 60) * MINUTES_PER_HOUR_HEIGHT);
+                      const statusClass = getStatusColor(ag.status);
+                      return (
+                        <div
+                          key={ag.id}
+                          onClick={() => openEditModal(ag)}
+                          className={`absolute left-2 right-2 rounded-xl border border-white shadow-sm text-xs text-white cursor-pointer ${statusClass}`}
+                          style={{ top, height, backgroundColor: 'rgba(79, 70, 229, 0.9)' }}
+                        >
+                          <div className="px-2 py-1 space-y-1">
+                            <p className="text-[11px] font-semibold">
+                              {ag.customer?.name || ag.customerName || 'Cliente'}
+                            </p>
+                            <p className="text-[10px] opacity-90">
+                              {ag.startTime} - {ag.endTime || '—'}
+                            </p>
+                            <p className="text-[10px] opacity-90">{statusLabels[ag.status]}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Week Grid (cards) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4">
         {weekDays.map((day) => {
           const dayAgendamentos = getAgendamentosForDay(day);
