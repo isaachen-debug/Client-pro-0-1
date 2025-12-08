@@ -536,7 +536,7 @@ const Financeiro = () => {
 
       {activeTab === 'receitas' && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
             {receiptHighlightCards.map((card, index) => {
               const Icon = card.icon;
               const isAccentCard = index % 2 === 1;
@@ -659,7 +659,7 @@ const Financeiro = () => {
 
       {activeTab === 'custos' && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
             {costOverviewCards.map((card, index) => (
               <div
                 key={card.label}
@@ -731,7 +731,7 @@ const Financeiro = () => {
               </div>
             ) : helperCostData ? (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                   {[
                     { label: 'Receita bruta', value: usdFormatter.format(helperCostData.summary.revenueTotal) },
                     { label: 'Paga helper', value: usdFormatter.format(helperCostData.summary.payoutTotal) },
@@ -748,7 +748,7 @@ const Financeiro = () => {
                   ))}
                 </div>
 
-                <div className="grid lg:grid-cols-[0.9fr,1.1fr] gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[0.9fr,1.1fr] gap-6">
                   <div className="space-y-4">
                     <div className="border border-gray-100 rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
