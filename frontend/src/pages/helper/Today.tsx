@@ -496,8 +496,8 @@ const buildWazeLink = (appointment: HelperAppointment) => {
                   return (
                     <div
                       key={appointment.id}
-                      className={`rounded-[28px] border bg-white px-4 py-4 shadow-sm transition cursor-pointer ${
-                        selectedAppointment?.id === appointment.id ? 'border-emerald-300 shadow-[0_10px_30px_rgba(16,185,129,0.12)]' : 'border-gray-100'
+                      className={`border rounded-2xl p-3 sm:p-4 flex flex-col gap-3 shadow-sm transition cursor-pointer ${
+                        selectedAppointment?.id === appointment.id ? 'border-emerald-300 shadow-[0_10px_30px_rgba(16,185,129,0.12)]' : 'border-gray-100 bg-white'
                       }`}
                       onClick={() =>
                         setSelectedAppointments((prev) => ({
