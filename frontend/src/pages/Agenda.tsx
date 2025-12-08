@@ -70,7 +70,40 @@ const Agenda = ({ initialMode }: AgendaPageProps) => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="flex flex-col gap-3">
+          <div className="rounded-2xl border border-gray-200 bg-white px-3 py-3 shadow-sm flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+                onClick={() => handleChangeView('week')}
+              >
+                Hoje
+              </button>
+              <div className="text-sm font-semibold text-gray-800">{headerSubtitle}</div>
+            </div>
+            <div className="inline-flex bg-gray-100 rounded-2xl p-1 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => handleChangeView('week')}
+                className={`flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+                  viewMode === 'week' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Semana
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChangeView('month')}
+                className={`flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+                  viewMode === 'month' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Mês
+              </button>
+            </div>
+          </div>
+
           <div className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-2 flex items-center gap-2">
             <Search size={16} className="text-gray-400" />
             <input
@@ -78,26 +111,6 @@ const Agenda = ({ initialMode }: AgendaPageProps) => {
               placeholder="Buscar agenda, Clients ou contratos"
               className="flex-1 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
             />
-          </div>
-          <div className="inline-flex bg-gray-100 rounded-2xl p-1 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => handleChangeView('week')}
-              className={`flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
-                viewMode === 'week' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Semana
-            </button>
-            <button
-              type="button"
-              onClick={() => handleChangeView('month')}
-              className={`flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
-                viewMode === 'month' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Mês
-            </button>
           </div>
         </div>
 
