@@ -863,6 +863,14 @@ const Layout = () => {
                   </div>
                   <button
                     type="button"
+                    onClick={() => alert('Agent em breve')}
+                    className="w-9 h-9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center dark:bg-white/10 dark:border-white/15 transition-all duration-200"
+                    aria-label="Abrir Agent"
+                  >
+                    <Bot size={16} className={isDarkTheme ? 'text-white/80' : 'text-gray-700'} />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setSidebarOpen(true)}
                     className="w-9 h-9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center dark:bg-white/10 dark:border-white/15 transition-all duration-200"
                   >
@@ -922,6 +930,16 @@ const Layout = () => {
                       />
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => alert('Agent em breve')}
+                    className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
+                    aria-label="Abrir Agent"
+                  >
+                    <div className="w-9 h-9 rounded-2xl flex items-center justify-center overflow-hidden bg-white/80 border border-white/40">
+                      <Bot size={18} className={isDarkTheme ? 'text-white' : 'text-gray-900'} />
+                    </div>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
