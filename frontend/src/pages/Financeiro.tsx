@@ -421,10 +421,10 @@ const Financeiro = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-6xl mx-auto">
       <section className="relative overflow-hidden rounded-[32px] md:rounded-[40px] bg-gradient-to-br from-[#190530] via-[#0e152c] to-[#02201a] text-white shadow-[0_30px_90px_rgba(3,5,12,0.45)]">
-        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-4">
+        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between min-w-0">
+          <div className="space-y-4 min-w-0">
             <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Finance Hub</p>
             {showFinanceTip && (
               <div className="inline-flex items-center gap-3 text-sm font-medium text-white/80 bg-white/10 border border-white/15 rounded-2xl px-4 py-2 shadow-[0_15px_35px_rgba(5,8,20,0.35)] transition">
@@ -448,7 +448,7 @@ const Financeiro = () => {
               </span>
             </div>
           </div>
-          <div className="w-full md:w-auto flex flex-col gap-3">
+          <div className="w-full md:w-auto flex flex-col gap-3 min-w-0">
             <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
               <p className="text-sm text-white/70">Total monitorado</p>
               <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
@@ -470,7 +470,7 @@ const Financeiro = () => {
       </section>
 
       <section className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-5 md:p-6 space-y-5">
-        <div className="space-y-1">
+        <div className="space-y-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900">Período e visão</p>
           <p className="text-sm text-gray-500">Escolha o intervalo para atualizar indicadores e alternar as visões.</p>
         </div>
@@ -513,8 +513,8 @@ const Financeiro = () => {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-gray-100 pt-4">
-          <p className="text-sm font-medium text-gray-500">{periodFullLabel}</p>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-gray-100 pt-4 min-w-0">
+          <p className="text-sm font-medium text-gray-500 min-w-0">{periodFullLabel}</p>
           <div className="flex flex-wrap gap-2">
             {FINANCE_TABS.map((tab) => (
               <button
@@ -536,7 +536,7 @@ const Financeiro = () => {
 
       {activeTab === 'receitas' && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {receiptHighlightCards.map((card, index) => {
               const Icon = card.icon;
               const isAccentCard = index % 2 === 1;
@@ -568,8 +568,8 @@ const Financeiro = () => {
           </div>
 
           <div className="rounded-[24px] border border-gray-100 md:border-l-4 md:border-primary-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] p-5 md:p-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 min-w-0">
+              <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-500">Transações</p>
                 <h3 className="text-lg font-semibold text-gray-900">Entradas do período</h3>
                 <p className="text-sm text-gray-500">{periodFullLabel}</p>
@@ -739,9 +739,11 @@ const Financeiro = () => {
                     { label: 'Gastos extras', value: usdFormatter.format(helperCostData.summary.expensesTotal) },
                     { label: 'Líquido', value: usdFormatter.format(helperCostData.summary.netAfterExpenses) },
                   ].map((card) => (
-                    <div key={card.label} className="rounded-2xl border border-gray-100 bg-gray-50 px-3 py-2">
+                    <div key={card.label} className="rounded-2xl border border-gray-100 bg-gray-50 px-3 py-2 min-w-0">
                       <p className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</p>
-                      <p className="text-lg font-semibold text-gray-900">{card.value}</p>
+                      <p className="text-lg font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {card.value}
+                      </p>
                     </div>
                   ))}
                 </div>

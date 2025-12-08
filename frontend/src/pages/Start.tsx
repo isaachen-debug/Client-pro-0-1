@@ -178,49 +178,49 @@ const Start = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-5 md:space-y-8">
-      <div className="rounded-[32px] border border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm p-5 space-y-5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-primary-500 font-semibold">Daily agenda</p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">
-              {isSameDay(selectedDate, new Date())
-                ? 'Today'
-                : isSameDay(selectedDate, addDays(new Date(), 1))
-                  ? 'Amanhã'
-                  : format(selectedDate, "EEEE',' dd 'de' MMMM", { locale: ptBR })}
-            </h1>
-            <p className="text-sm text-gray-500">
-              Deslize pelas datas para conferir os serviços do dia e acompanhe o progresso em tempo real.
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-inner">
-            Dia selecionado: {selectedDateLabel}
-          </div>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-          {Array.from({ length: 5 }).map((_, index) => {
-            const dateChip = addDays(new Date(), index);
-            const isActive = isSameDay(dateChip, selectedDate);
-            const label = isSameDay(dateChip, new Date())
-              ? 'Hoje'
-              : isSameDay(dateChip, addDays(new Date(), 1))
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-3xl border border-gray-100 bg-white shadow-sm px-4 py-4 sm:px-5 min-w-0">
+        <div className="space-y-1 min-w-0">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-primary-500 font-semibold">Daily agenda</p>
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">
+            {isSameDay(selectedDate, new Date())
+              ? 'Today'
+              : isSameDay(selectedDate, addDays(new Date(), 1))
                 ? 'Amanhã'
-                : format(dateChip, 'dd/MM');
-            return (
-              <button
-                key={dateChip.toISOString()}
-                onClick={() => setSelectedDate(dateChip)}
-                className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-colors ${
-                  isActive ? 'bg-primary-600 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-200 hover:text-primary-600'
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
+                : format(selectedDate, "EEEE',' dd 'de' MMMM", { locale: ptBR })}
+          </h1>
+          <p className="text-sm text-gray-500">
+            Deslize pelas datas para conferir os serviços do dia e acompanhe o progresso em tempo real.
+          </p>
         </div>
+        <div className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-inner">
+          Dia selecionado: {selectedDateLabel}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 pb-1">
+        {Array.from({ length: 5 }).map((_, index) => {
+          const dateChip = addDays(new Date(), index);
+          const isActive = isSameDay(dateChip, selectedDate);
+          const label = isSameDay(dateChip, new Date())
+            ? 'Hoje'
+            : isSameDay(dateChip, addDays(new Date(), 1))
+              ? 'Amanhã'
+              : format(dateChip, 'dd/MM');
+          return (
+            <button
+              key={dateChip.toISOString()}
+              onClick={() => setSelectedDate(dateChip)}
+              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-colors ${
+                isActive
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-200 hover:text-primary-600'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {error && (
@@ -229,8 +229,7 @@ const Start = () => {
         </div>
       )}
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
         <SummaryCard
           title="Serviços hoje"
           value={summary.totalAppointmentsToday}
@@ -254,9 +253,9 @@ const Start = () => {
         <WorkingClockCard seconds={liveWorkedSeconds} />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
+          <div className="space-y-1 min-w-0">
             <h2 className="text-lg font-semibold text-gray-900">
               Serviços de {selectedDateLabel.toLowerCase()}
             </h2>
@@ -275,7 +274,7 @@ const Start = () => {
         </div>
 
         {appointments.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
+          <div className="text-center py-12 text-gray-500">
             Nenhum serviço agendado para {selectedDateLabel.toLowerCase()}.
           </div>
         ) : (
@@ -286,7 +285,7 @@ const Start = () => {
                 className="border border-gray-100 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 shadow-sm"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                       {appointment.customer.name}
                     </h3>
