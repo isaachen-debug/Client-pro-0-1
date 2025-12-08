@@ -307,42 +307,48 @@ const Layout = () => {
       key: 'helper',
       label: 'Adicionar helper',
       description: 'Convide Partners e configure acessos.',
-      icon: '🤝',
+      iconComponent: UserPlus2,
+      accent: 'from-emerald-500/20 to-emerald-400/30 text-emerald-700',
       action: () => navigate('/app/team'),
     },
     {
       key: 'client',
       label: 'Adicionar cliente',
       description: 'Cadastre Clients e preferências fixas.',
-      icon: '👤',
+      iconComponent: UserPlus,
+      accent: 'from-blue-500/20 to-blue-400/30 text-blue-700',
       action: () => navigate('/app/clientes'),
     },
     {
       key: 'profile',
       label: 'Perfil do cliente',
       description: 'Personalize o portal do Client.',
-      icon: '✨',
+      iconComponent: Star,
+      accent: 'from-amber-400/30 to-orange-400/30 text-amber-700',
       action: () => navigate('/app/clientes?tab=list'),
     },
     {
       key: 'schedule',
       label: 'Novo agendamento',
       description: 'Crie um serviço único ou recorrente.',
-      icon: '📆',
+      iconComponent: CalendarDays,
+      accent: 'from-purple-500/20 to-indigo-400/30 text-purple-700',
       action: () => navigate('/app/agenda?quick=create'),
     },
     {
       key: 'contract',
       label: 'Enviar contrato',
       description: 'Use o wizard multi-etapas.',
-      icon: '📄',
+      iconComponent: AppWindow,
+      accent: 'from-slate-500/20 to-slate-400/30 text-slate-700',
       action: () => navigate('/app/clientes?tab=contracts'),
     },
     {
       key: 'invoice',
       label: 'Registrar cobrança',
       description: 'Controle financeiro em um toque.',
-      icon: '💳',
+      iconComponent: CreditCard,
+      accent: 'from-emerald-500/20 to-teal-400/30 text-emerald-700',
       action: () => navigate('/app/financeiro'),
     },
   ];
@@ -1125,10 +1131,12 @@ const Layout = () => {
                         setQuickCreateOpen(false);
                         action.action();
                       }}
-                      className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 transition"
+                      className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-gray-100 text-xl flex items-center justify-center">
-                        {action.icon}
+                      <div
+                        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${action.accent} border border-white/50 flex items-center justify-center`}
+                      >
+                        <action.iconComponent size={22} />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-900">{action.label}</p>
