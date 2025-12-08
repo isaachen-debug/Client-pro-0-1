@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../db';
+import { endOfWeek, isWeekend, startOfDay } from 'date-fns';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -65,24 +66,27 @@ router.get('/overview', async (req, res) => {
       .reduce((sum, item) => sum + item.amount, 0);
 
     const now = new Date();
-    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const weekStart = startOfDay(now);
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // até domingo, contando semana começando segunda
 
     const activeClientsCount = await prisma.customer.count({
       where: { userId, status: 'ACTIVE' },
     });
 
-    const scheduledServicesCount = await prisma.appointment.count({
+    const weekAppointments = await prisma.appointment.findMany({
       where: {
         userId,
         date: {
-          gte: now,
-          lte: next24h,
+          gte: weekStart,
+          lte: weekEnd,
         },
         status: {
           not: 'CANCELADO',
         },
       },
+      select: { id: true, date: true },
     });
+    const scheduledServicesCount = weekAppointments.filter((a) => !isWeekend(a.date)).length;
 
     const weekRanges = buildWeekRanges(monthStart, monthEnd);
     const revenueByWeek = weekRanges.map((range) => {
