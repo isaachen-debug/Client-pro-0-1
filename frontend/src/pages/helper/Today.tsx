@@ -218,13 +218,13 @@ const Today = () => {
     return `${hrs}:${mins}:${secs}`;
   };
 
-const buildDirectionsLink = (appointment: HelperAppointment) => {
-  const destination = appointment.customer.latitude && appointment.customer.longitude
-    ? `${appointment.customer.latitude},${appointment.customer.longitude}`
-    : appointment.customer.address;
-  if (!destination) return null;
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
-};
+  const buildDirectionsLink = (appointment: HelperAppointment) => {
+    const destination = appointment.customer.latitude && appointment.customer.longitude
+      ? `${appointment.customer.latitude},${appointment.customer.longitude}`
+      : appointment.customer.address;
+    if (!destination) return null;
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+  };
 
   const computeLiveDuration = (appointment: HelperAppointment) => {
     if (appointment.status !== 'EM_ANDAMENTO' || !appointment.startedAt) return null;
@@ -472,8 +472,8 @@ const buildDirectionsLink = (appointment: HelperAppointment) => {
                   return (
                     <div
                       key={appointment.id}
-                      className={`border rounded-2xl p-3 sm:p-4 flex flex-col gap-3 shadow-sm transition cursor-pointer ${
-                        selectedAppointment?.id === appointment.id ? 'border-emerald-300 shadow-[0_10px_30px_rgba(16,185,129,0.12)]' : 'border-gray-100 bg-white'
+                      className={`rounded-[28px] border bg-white px-4 py-4 shadow-sm transition cursor-pointer ${
+                        selectedAppointment?.id === appointment.id ? 'border-emerald-300 shadow-[0_10px_30px_rgba(16,185,129,0.12)]' : 'border-gray-100'
                       }`}
                       onClick={() =>
                         setSelectedAppointments((prev) => ({
