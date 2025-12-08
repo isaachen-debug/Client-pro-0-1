@@ -589,62 +589,104 @@ const Financeiro = () => {
                 Nenhuma transação encontrada para o período selecionado.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Data</th>
-                      <th className="px-4 py-3 text-left">Descrição</th>
-                      <th className="px-4 py-3 text-left">Valor</th>
-                      <th className="px-4 py-3 text-left">Status</th>
-                      <th className="px-4 py-3 text-left">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {transactions.map((transaction) => (
-                      <tr key={transaction.id} className="bg-white">
-                        <td className="px-4 py-3 text-gray-700">
-                          {format(new Date(transaction.dueDate), 'dd/MM/yyyy')}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm font-semibold text-gray-900">
-                            {transaction.appointment?.customer?.name ?? 'Serviço'}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {transaction.appointment?.customer?.serviceType ?? 'Serviço pontual'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-gray-900">
-                          {formatCurrency(transaction.amount)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                              transaction.status === 'PAGO'
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : 'bg-amber-50 text-amber-700'
-                            }`}
-                          >
-                            {transaction.status === 'PAGO' ? 'Pago' : 'Pendente'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => handleStatusToggle(transaction)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-                              transaction.status === 'PAGO'
-                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            }`}
-                          >
-                            {transaction.status === 'PAGO' ? 'Marcar como pendente' : 'Marcar como pago'}
-                          </button>
-                        </td>
+              <>
+                {/* Mobile stacked cards */}
+                <div className="space-y-3 md:hidden">
+                  {transactions.map((transaction) => (
+                    <div key={transaction.id} className="rounded-2xl border border-gray-100 bg-white p-4 space-y-2 shadow-sm">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{format(new Date(transaction.dueDate), 'dd/MM/yyyy')}</span>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                            transaction.status === 'PAGO'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {transaction.status === 'PAGO' ? 'Pago' : 'Pendente'}
+                        </span>
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900 break-words">
+                        {transaction.appointment?.customer?.name ?? 'Serviço'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {transaction.appointment?.customer?.serviceType ?? 'Serviço pontual'}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-semibold text-gray-900">{formatCurrency(transaction.amount)}</span>
+                        <button
+                          onClick={() => handleStatusToggle(transaction)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                            transaction.status === 'PAGO'
+                              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {transaction.status === 'PAGO' ? 'Marcar como pendente' : 'Marcar como pago'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Data</th>
+                        <th className="px-4 py-3 text-left">Descrição</th>
+                        <th className="px-4 py-3 text-left">Valor</th>
+                        <th className="px-4 py-3 text-left">Status</th>
+                        <th className="px-4 py-3 text-left">Ações</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {transactions.map((transaction) => (
+                        <tr key={transaction.id} className="bg-white">
+                          <td className="px-4 py-3 text-gray-700">
+                            {format(new Date(transaction.dueDate), 'dd/MM/yyyy')}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm font-semibold text-gray-900 break-words">
+                              {transaction.appointment?.customer?.name ?? 'Serviço'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {transaction.appointment?.customer?.serviceType ?? 'Serviço pontual'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-gray-900">
+                            {formatCurrency(transaction.amount)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                                transaction.status === 'PAGO'
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : 'bg-amber-50 text-amber-700'
+                              }`}
+                            >
+                              {transaction.status === 'PAGO' ? 'Pago' : 'Pendente'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleStatusToggle(transaction)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                                transaction.status === 'PAGO'
+                                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              }`}
+                            >
+                              {transaction.status === 'PAGO' ? 'Marcar como pendente' : 'Marcar como pago'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
 
             <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 flex items-center justify-between text-sm font-semibold text-gray-700">
