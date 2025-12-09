@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
@@ -415,6 +416,46 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     return { top, height };
   };
 
+  const openCreateAt = (day: Date, startTotalMinutes: number) => {
+    const minStart = startHour * 60;
+    const maxStart = endHour * 60 - 15;
+    const clampedStart = Math.max(minStart, Math.min(startTotalMinutes, maxStart));
+    const endTotalMinutes = Math.min(clampedStart + 60, endHour * 60);
+
+    const startHourStr = pad(Math.floor(clampedStart / 60));
+    const startMinStr = pad(clampedStart % 60);
+    const endHourStr = pad(Math.floor(endTotalMinutes / 60));
+    const endMinStr = pad(endTotalMinutes % 60);
+
+    prepareCreateForm(day);
+    setCreateYear(day.getFullYear());
+    setCreateForm((prev) => ({
+      ...prev,
+      startTime: `${startHourStr}:${startMinStr}`,
+      endTime: `${endHourStr}:${endMinStr}`,
+    }));
+    setSelectedDay(day);
+    setSelectedDayAppointments(getAgendamentosForDay(day, false));
+    setShowDayActions(false);
+    setShowEditModal(false);
+    setDateError('');
+    setShowCreateModal(true);
+  };
+
+  const handleDesktopSlotClick = (day: Date, event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest('[data-event-button="true"]')) return;
+
+    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
+    const y = event.clientY - rect.top;
+    const totalMinutesAvailable = (endHour - startHour) * 60;
+    const minuteHeightDynamic = totalMinutesAvailable > 0 ? rect.height / totalMinutesAvailable : minuteHeight;
+    const minutesFromTop = y / minuteHeightDynamic;
+    const snapped = Math.round(minutesFromTop / 15) * 15;
+    const totalMinutes = startHour * 60 + snapped;
+    openCreateAt(day, totalMinutes);
+  };
+
   const mobileList = (
     <div className="md:hidden space-y-3">
       {weekDays.map((day) => {
@@ -450,20 +491,30 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                       event.stopPropagation();
                       openEditModal(ag);
                     }}
-                    className="w-full text-left flex items-start gap-2"
+                    className="w-full text-left rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
                   >
-                    <span
-                      className="mt-1 h-2 w-2 rounded-full"
-                      style={{ backgroundColor: getStatusColor(ag.status) }}
-                      aria-hidden
-                    />
-                    <div className="flex-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                      <div className="text-[13px] font-semibold text-gray-900 truncate">{ag.customer.name}</div>
-                      <div className="text-[11px] text-gray-600">
-                        {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: getStatusColor(ag.status) }}
+                          aria-hidden
+                        />
+                        <span className="text-[12px] font-semibold text-gray-900">
+                          {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
+                        </span>
                       </div>
-                      {ag.notes && <div className="text-[11px] text-gray-500 line-clamp-1 mt-1">{ag.notes}</div>}
+                      <span className="text-[11px] font-semibold text-gray-600">
+                        {ag.status === 'AGENDADO'
+                          ? 'Pendente'
+                          : ag.status === 'EM_ANDAMENTO'
+                          ? 'Em andamento'
+                          : ag.status === 'CONCLUIDO'
+                          ? 'Concluído'
+                          : 'Cancelado'}
+                      </span>
                     </div>
+                    <div className="mt-1 text-[13px] font-semibold text-gray-900 truncate">{ag.customer.name}</div>
                   </button>
                 ))}
             </div>
@@ -517,7 +568,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                   ))}
                 </div>
 
-                <div className="relative h-full w-full">
+                <div className="relative h-full w-full" onClick={(event) => handleDesktopSlotClick(day, event)}>
                   {dayAgendamentos.length === 0 && (
                     <button
                       type="button"
@@ -528,31 +579,32 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                     </button>
                   )}
 
-                  {dayAgendamentos
-                    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                    .map((ag) => {
-                      const { top, height } = getEventPosition(ag);
-                      return (
-                        <button
-                          key={ag.id}
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openEditModal(ag);
-                          }}
-                          className={`absolute left-1 right-1 rounded-xl px-3 py-2 text-left shadow-sm border ${statusBg[ag.status]} ${statusText[ag.status]}`}
-                          style={{ top, height }}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
-                            <span className="text-[11px] font-semibold">
-                              {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
-                            </span>
-                          </div>
-                          {ag.notes && <p className="text-[11px] mt-1 leading-snug opacity-80 line-clamp-2">{ag.notes}</p>}
-                        </button>
-                      );
-                    })}
+                    {dayAgendamentos
+                      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                      .map((ag) => {
+                        const { top, height } = getEventPosition(ag);
+                        return (
+                          <button
+                            key={ag.id}
+                            type="button"
+                            data-event-button="true"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openEditModal(ag);
+                            }}
+                            className={`absolute left-1 right-1 rounded-xl px-3 py-2 text-left shadow-sm border ${statusBg[ag.status]} ${statusText[ag.status]}`}
+                            style={{ top, height }}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
+                              <span className="text-[11px] font-semibold">
+                                {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
+                              </span>
+                            </div>
+                            {ag.notes && <p className="text-[11px] mt-1 leading-snug opacity-80 line-clamp-2">{ag.notes}</p>}
+                          </button>
+                        );
+                      })}
                 </div>
               </div>
             );
@@ -567,9 +619,8 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
       <div className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary-600 font-semibold">Today</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Agenda semanal</h1>
-            <p className="text-sm text-gray-600">Visual estilo Google Calendar; deslize para ver horários.</p>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900">Agenda semanal</h1>
+            <p className="hidden md:block text-sm text-gray-600">Visual estilo Google Calendar; deslize para ver horários.</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -599,7 +650,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs md:text-sm font-semibold text-gray-700 shadow-sm">
+          <div className="hidden md:inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs md:text-sm font-semibold text-gray-700 shadow-sm">
             <CalendarIcon size={16} className="text-primary-500" />
             Semana atual · {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM yyyy', { locale: ptBR })}
           </div>
