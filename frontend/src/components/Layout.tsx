@@ -502,9 +502,6 @@ const Layout = () => {
   }, [location.pathname, workspaceLinks, t]);
 
   const handleFabClick = () => {
-    if (currentQuickAction && triggerQuickAction(currentQuickAction)) {
-      return;
-    }
     setQuickCreateOpen(true);
   };
 

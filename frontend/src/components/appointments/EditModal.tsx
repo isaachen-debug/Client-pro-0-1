@@ -12,6 +12,8 @@ type EditModalProps = {
     notes: string;
     status: AppointmentStatus;
     assignedHelperId: string;
+    isRecurring: boolean;
+    recurrenceRule: string;
   };
   setFormData: React.Dispatch<
     React.SetStateAction<{
@@ -23,6 +25,8 @@ type EditModalProps = {
       notes: string;
       status: AppointmentStatus;
       assignedHelperId: string;
+      isRecurring: boolean;
+      recurrenceRule: string;
     }>
   >;
   helpers?: { id: string; name: string }[];
@@ -201,6 +205,45 @@ const EditModal = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
+
+          <div>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={formData.isRecurring}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    isRecurring: e.target.checked,
+                    recurrenceRule: e.target.checked ? prev.recurrenceRule : '',
+                  }))
+                }
+                className="rounded text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Agendamento recorrente</span>
+            </label>
+          </div>
+          {formData.isRecurring && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Periodicidade</label>
+              <select
+                value={formData.recurrenceRule}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    recurrenceRule: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Selecione</option>
+                <option value="FREQ=WEEKLY">Semanal</option>
+                <option value="FREQ=WEEKLY;INTERVAL=2">Quinzenal</option>
+                <option value="FREQ=WEEKLY;INTERVAL=3">A cada 3 semanas</option>
+                <option value="FREQ=MONTHLY">Mensal</option>
+              </select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <p className="text-xs text-gray-500">Ações rápidas</p>

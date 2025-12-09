@@ -162,6 +162,7 @@ const Start = () => {
   const liveWorkedSeconds = useMemo(() => {
     return appointments.reduce((total, appointment) => {
       if (!appointment.startedAt) return total;
+      if (appointment.status !== 'EM_ANDAMENTO' && appointment.status !== 'CONCLUIDO') return total;
       const endReference =
         appointment.status === 'CONCLUIDO' && appointment.finishedAt
           ? new Date(appointment.finishedAt).getTime()
@@ -173,6 +174,7 @@ const Start = () => {
 
   const getElapsedMinutes = (appointment: Appointment) => {
     if (!appointment.startedAt) return 0;
+    if (appointment.status !== 'EM_ANDAMENTO' && appointment.status !== 'CONCLUIDO') return 0;
     const endReference =
       appointment.status === 'CONCLUIDO' && appointment.finishedAt
         ? new Date(appointment.finishedAt).getTime()

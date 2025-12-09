@@ -164,7 +164,10 @@ const Today = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleStatusChange = async (appointment: HelperAppointment, next: 'EM_ANDAMENTO' | 'CONCLUIDO') => {
+  const handleStatusChange = async (
+    appointment: HelperAppointment,
+    next: 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO',
+  ) => {
     setActionLoading(appointment.id);
     try {
       await helperApi.updateStatus(appointment.id, next);
@@ -630,20 +633,35 @@ const Today = () => {
                               Iniciar
                             </button>
                           )}
-                          {appointment.status !== 'CONCLUIDO' && (
-                            <button
-                              type="button"
-                              disabled={actionLoading === appointment.id}
-                              onClick={() => handleStatusChange(appointment, 'CONCLUIDO')}
-                              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-white font-semibold py-3 hover:bg-emerald-700 transition disabled:opacity-60"
-                            >
-                              {actionLoading === appointment.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <CheckCircle size={18} />
-                              )}
-                              Concluir
-                            </button>
+                          {appointment.status === 'EM_ANDAMENTO' && (
+                            <>
+                              <button
+                                type="button"
+                                disabled={actionLoading === appointment.id}
+                                onClick={() => handleStatusChange(appointment, 'CONCLUIDO')}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gray-800 text-white font-semibold py-3 hover:bg-gray-900 transition disabled:opacity-60"
+                              >
+                                {actionLoading === appointment.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle size={18} />
+                                )}
+                                Parar
+                              </button>
+                              <button
+                                type="button"
+                                disabled={actionLoading === appointment.id}
+                                onClick={() => handleStatusChange(appointment, 'CANCELADO')}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 text-white font-semibold py-3 hover:bg-red-700 transition disabled:opacity-60"
+                              >
+                                {actionLoading === appointment.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle size={18} />
+                                )}
+                                Cancelar
+                              </button>
+                            </>
                           )}
                           {appointment.status === 'CONCLUIDO' && (
                             <div className="text-center text-sm font-semibold text-emerald-600">Serviço finalizado</div>

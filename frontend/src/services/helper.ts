@@ -12,7 +12,7 @@ export const helperApi = {
     const { data } = await api.get<HelperAppointment>(`/helper/appointments/${id}`);
     return data;
   },
-  async updateStatus(id: string, status: 'EM_ANDAMENTO' | 'CONCLUIDO') {
+  async updateStatus(id: string, status: 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO') {
     const { data } = await api.post<HelperAppointment>(`/helper/appointments/${id}/status`, { status });
     return data;
   },

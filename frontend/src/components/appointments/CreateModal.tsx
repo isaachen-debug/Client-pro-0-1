@@ -259,6 +259,7 @@ const CreateModal = ({
                   <option value="">Selecione</option>
                   <option value="FREQ=WEEKLY">Semanal</option>
                   <option value="FREQ=WEEKLY;INTERVAL=2">Quinzenal</option>
+                  <option value="FREQ=WEEKLY;INTERVAL=3">A cada 3 semanas</option>
                   <option value="FREQ=MONTHLY">Mensal</option>
                 </select>
               </div>

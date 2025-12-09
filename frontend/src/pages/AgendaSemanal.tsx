@@ -54,6 +54,8 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     notes: '',
     status: 'AGENDADO' as AppointmentStatus,
     assignedHelperId: '',
+    isRecurring: false,
+    recurrenceRule: '',
   });
   const currencyFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
@@ -262,6 +264,8 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         notes: editForm.notes,
         status: editForm.status,
         assignedHelperId: editForm.assignedHelperId === '' ? null : editForm.assignedHelperId,
+        isRecurring: editForm.isRecurring && !!editForm.recurrenceRule,
+        recurrenceRule: editForm.isRecurring && editForm.recurrenceRule ? editForm.recurrenceRule : undefined,
       });
       if (shouldPromptInvoice) {
         await handleStatusChange(editingAppointment, 'CONCLUIDO');
@@ -333,6 +337,8 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
       notes: appointment.notes || '',
       status: appointment.status,
       assignedHelperId: appointment.assignedHelperId ?? '',
+      isRecurring: Boolean(appointment.isRecurring || appointment.recurrenceRule),
+      recurrenceRule: appointment.recurrenceRule || '',
     });
     setShowEditModal(true);
   };
@@ -458,15 +464,27 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
 
   const mobileList = (
     <div className="md:hidden space-y-3">
-      {weekDays.map((day) => {
-        const dayAgendamentos = getAgendamentosForDay(day);
-        const isToday = isSameDay(day, new Date());
-        return (
-          <div key={day.toISOString()} className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+        {weekDays.map((day) => {
+          const dayAgendamentos = getAgendamentosForDay(day);
+          const isToday = isSameDay(day, new Date());
+          return (
+            <div
+              key={day.toISOString()}
+            className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm"
+            onClick={() => handleDayCardClick(day)}
+              role="button"
+              tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                  handleDayCardClick(day);
+                }
+              }}
+          >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-baseline gap-2">
                 <span className={`text-lg font-semibold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
-                  {format(day, 'd')}
+                    {format(day, 'd')}
                 </span>
                 <span className="text-sm text-gray-500">{format(day, 'EEE', { locale: ptBR })}</span>
               </div>
@@ -477,20 +495,20 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               >
                 + add
               </button>
-            </div>
+              </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               {dayAgendamentos.length === 0 && <p className="text-xs text-gray-400">Nenhum evento · Toque em +</p>}
               {dayAgendamentos
-                .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                .map((ag) => (
-                  <button
-                    key={ag.id}
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openEditModal(ag);
-                    }}
+                    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                    .map((ag) => (
+                      <button
+                        key={ag.id}
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openEditModal(ag);
+                        }}
                     className="w-full text-left rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -594,21 +612,21 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                             }}
                             className={`absolute left-1 right-1 rounded-xl px-3 py-2 text-left shadow-sm border ${statusBg[ag.status]} ${statusText[ag.status]}`}
                             style={{ top, height }}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
-                              <span className="text-[11px] font-semibold">
-                                {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
-                              </span>
-                            </div>
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
+                          <span className="text-[11px] font-semibold">
+                            {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
+                          </span>
+                        </div>
                             {ag.notes && <p className="text-[11px] mt-1 leading-snug opacity-80 line-clamp-2">{ag.notes}</p>}
-                          </button>
+                      </button>
                         );
                       })}
                 </div>
-              </div>
-            );
-          })}
+            </div>
+          );
+        })}
         </div>
       </div>
     </div>
@@ -647,7 +665,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </button>
             </div>
           </div>
-        </div>
+          </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="hidden md:inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs md:text-sm font-semibold text-gray-700 shadow-sm">
