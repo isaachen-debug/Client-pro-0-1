@@ -660,7 +660,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               { key: 'AGENDADO', label: 'Agendado', color: 'bg-blue-600 text-white', alt: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
               { key: 'EM_ANDAMENTO', label: 'Em andamento', color: 'bg-indigo-600 text-white', alt: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
               { key: 'CONCLUIDO', label: 'Concluído', color: 'bg-green-600 text-white', alt: 'bg-green-50 text-green-700 hover:bg-green-100' },
-              { key: 'CANCELADO', label: 'Cancelado', color: 'bg-red-600 text-white', alt: 'bg-red-50 text-red-700 hover:bg-red-100' },
             ].map((item) => (
               <button
                 key={item.key}
