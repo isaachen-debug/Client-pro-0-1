@@ -62,6 +62,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
     notes: '',
     assignedHelperId: '',
   });
+  const [createYear, setCreateYear] = useState(new Date().getFullYear());
   const [dateError, setDateError] = useState('');
   const [editForm, setEditForm] = useState({
     date: '',
@@ -123,13 +124,14 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
       assignedHelperId: '',
     });
     setDateError('');
+    setCreateYear(baseDate.getFullYear());
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSaving(true);
-      const year = currentDate.getFullYear();
+      const year = createYear;
       const monthNumber = Number(formData.month);
       const dayNumber = Number(formData.day);
       const daysInMonth = new Date(year, monthNumber, 0).getDate();
@@ -362,7 +364,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
         </div>
         <button
           onClick={() => {
-            resetForm();
+            resetForm(currentDate);
             setShowCreateModal(true);
           }}
           className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"

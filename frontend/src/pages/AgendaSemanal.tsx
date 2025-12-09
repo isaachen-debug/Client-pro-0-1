@@ -398,8 +398,8 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CANCELADO: 'text-[#7a0f24]',
   };
 
-  const startHour = 6;
-  const endHour = 22;
+  const startHour = 0;
+  const endHour = 23;
   const minuteHeight = 0.9; // px per minute
   const defaultDuration = 60; // minutes
   const dayColumnHeight = (endHour - startHour) * 60 * minuteHeight;
