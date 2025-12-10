@@ -20,6 +20,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader, SurfaceCard } from '../components/OwnerUI';
+import AudioQuickAdd from '../components/AudioQuickAdd';
 import { pageGutters } from '../styles/uiTokens';
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
@@ -524,25 +525,25 @@ const Clientes = () => {
         subtitle="Base de clientes e contratos em um só lugar."
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {[
-              { key: 'list', label: 'Clientes' },
-              { key: 'contracts', label: 'Contracts' },
-            ].map((tab) => {
-              const isActive = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
+          {[
+            { key: 'list', label: 'Clientes' },
+            { key: 'contracts', label: 'Contracts' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
                     isActive ? 'bg-primary-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:text-primary-600'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
         }
       />
 
@@ -1151,6 +1152,8 @@ const Clientes = () => {
           onClose={closeHistoryModal}
         />
       )}
+
+      <AudioQuickAdd />
     </div>
   );
 };

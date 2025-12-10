@@ -462,7 +462,7 @@ const Financeiro = () => {
           <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.ticket)}</p>
           <p className="text-xs text-slate-500">Por serviço concluído</p>
         </SurfaceCard>
-      </div>
+        </div>
 
       <SurfaceCard className="space-y-5">
         <div className="space-y-1 min-w-0">

@@ -560,13 +560,13 @@ const Team = () => {
         title="Team"
         subtitle="Organize helpers e permissões em um só painel."
         actions={
-          <a
-            href="#create-helper"
+            <a
+              href="#create-helper"
             className="inline-flex items-center gap-2 rounded-full bg-primary-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-primary-700"
-          >
-            <UserPlus size={18} />
+            >
+              <UserPlus size={18} />
             Adicionar helper
-          </a>
+            </a>
         }
       />
 

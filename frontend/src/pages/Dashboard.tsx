@@ -152,42 +152,42 @@ const Dashboard = () => {
       {shouldShowPushPrompt && (
         <SurfaceCard className="border-dashed border-slate-200 bg-white/90">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
+          <div>
               <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <BellRing size={16} className="text-primary-600" />
-                Receba lembretes no seu celular
-                <button
-                  type="button"
-                  onClick={handleDismissPushPrompt}
+              <BellRing size={16} className="text-primary-600" />
+              Receba lembretes no seu celular
+              <button
+                type="button"
+                onClick={handleDismissPushPrompt}
                   className="text-slate-400 hover:text-slate-600"
-                  aria-label="Fechar lembrete de notificações"
-                >
-                  <CloseIcon size={16} />
-                </button>
-              </p>
+                aria-label="Fechar lembrete de notificações"
+              >
+                <CloseIcon size={16} />
+              </button>
+            </p>
               <p className="text-xs text-slate-500">
-                Avisaremos um dia antes das limpezas para confirmar Clients e orientar Partners.
+              Avisaremos um dia antes das limpezas para confirmar Clients e orientar Partners.
+            </p>
+            {pushNotifications.status === 'unsupported' && (
+              <p className="text-xs text-red-500 mt-1">
+                O navegador atual não suporta notificações push. Tente usar o Chrome/Edge.
               </p>
-              {pushNotifications.status === 'unsupported' && (
-                <p className="text-xs text-red-500 mt-1">
-                  O navegador atual não suporta notificações push. Tente usar o Chrome/Edge.
-                </p>
-              )}
-              {pushNotifications.status === 'denied' && (
-                <p className="text-xs text-amber-600 mt-1">
-                  Você bloqueou notificações. Reative nas configurações do navegador e tente novamente.
-                </p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={pushNotifications.enable}
-              disabled={pushNotifications.status === 'loading'}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors disabled:opacity-60"
-            >
-              {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar notificações'}
-            </button>
+            )}
+            {pushNotifications.status === 'denied' && (
+              <p className="text-xs text-amber-600 mt-1">
+                Você bloqueou notificações. Reative nas configurações do navegador e tente novamente.
+              </p>
+            )}
           </div>
+          <button
+            type="button"
+            onClick={pushNotifications.enable}
+            disabled={pushNotifications.status === 'loading'}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors disabled:opacity-60"
+          >
+            {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar notificações'}
+          </button>
+        </div>
         </SurfaceCard>
       )}
 
@@ -239,7 +239,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">Hoje</p>
                 <p className="text-base font-semibold text-slate-900">{data.scheduledServicesCount} serviços</p>
-              </div>
+            </div>
             </SurfaceCard>
           </div>
         </SurfaceCard>
@@ -250,9 +250,9 @@ const Dashboard = () => {
               <div>
                 <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Financeiro</p>
                 <p className="text-lg font-semibold text-slate-900">Status rápido</p>
-              </div>
-              <button
-                type="button"
+        </div>
+          <button
+            type="button"
                 onClick={() => navigate('/app/financeiro')}
                 className="text-sm font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
               >
@@ -285,8 +285,8 @@ const Dashboard = () => {
                 <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Operação de hoje</p>
                 <p className="text-lg font-semibold text-slate-900">Serviços e andamento</p>
               </div>
-              <button
-                type="button"
+          <button
+            type="button"
                 onClick={() => navigate('/app/start')}
                 className="text-sm font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
               >
@@ -346,7 +346,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               ))}
-            </div>
+        </div>
           </SurfaceCard>
         </div>
 
@@ -354,33 +354,33 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
-                <div>
+          <div>
                   <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Receita</p>
                   <p className="text-lg font-semibold text-slate-900">Semanas do mês</p>
-                </div>
-              </div>
+          </div>
+          </div>
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={data.revenueByWeek}>
+            <BarChart data={data.revenueByWeek}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#eef2f8" />
                   <XAxis dataKey="label" stroke="#94a3b8" />
-                  <YAxis
+              <YAxis
                     stroke="#94a3b8"
-                    domain={[0, chartCeiling]}
-                    tickFormatter={(value) => formatCurrency(value)}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
+                domain={[0, chartCeiling]}
+                tickFormatter={(value) => formatCurrency(value)}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
                       borderRadius: '12px',
                       boxShadow: '0 12px 30px rgba(15,23,42,0.08)',
-                    }}
+                }}
                     formatter={(value: number) => [formatCurrency(value), 'Receita']}
-                  />
+              />
                   <Bar dataKey="value" fill="#22c55e" radius={[10, 10, 6, 6]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -389,37 +389,37 @@ const Dashboard = () => {
                   <p className="text-sm text-slate-600">Últimos serviços</p>
                 </div>
                 <StatusBadge tone="neutral">{completedList.length}</StatusBadge>
-              </div>
+            </div>
               <div className="space-y-3">
-                {visibleCompleted.map((appointment) => {
-                  const paid = appointment.transactionStatus === 'PAGO';
-                  return (
+              {visibleCompleted.map((appointment) => {
+                const paid = appointment.transactionStatus === 'PAGO';
+                return (
                     <div
                       key={appointment.id}
                       className="rounded-2xl border border-slate-100 bg-white px-3 py-2 flex items-start gap-3 shadow-sm"
                     >
                       <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700">
-                        {appointment.customer.name.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
+                      {appointment.customer.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</p>
                         <p className="text-xs text-slate-500">
-                          {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
-                          {appointment.startTime}
-                        </p>
-                      </div>
+                        {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
+                        {appointment.startTime}
+                      </p>
+                    </div>
                       <div className="flex flex-col items-end gap-1">
                         <p className="text-sm font-semibold text-slate-900">{formatCurrency(appointment.price)}</p>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleToggleCompletedPayment(
-                              appointment.id,
-                              appointment.transactionId,
-                              appointment.transactionStatus,
-                            )
-                          }
-                          disabled={!appointment.transactionId || updatingPaymentId === appointment.id}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleCompletedPayment(
+                            appointment.id,
+                            appointment.transactionId,
+                            appointment.transactionStatus,
+                          )
+                        }
+                        disabled={!appointment.transactionId || updatingPaymentId === appointment.id}
                           className={`text-[11px] font-semibold px-3 py-1 rounded-full border ${
                             paid
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
@@ -427,32 +427,32 @@ const Dashboard = () => {
                           } ${!appointment.transactionId ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md'} ${
                             updatingPaymentId === appointment.id ? 'opacity-70' : ''
                           }`}
-                        >
-                          {updatingPaymentId === appointment.id ? 'Atualizando...' : paid ? 'Pago' : 'Pendente'}
-                        </button>
-                      </div>
+                      >
+                        {updatingPaymentId === appointment.id ? 'Atualizando...' : paid ? 'Pago' : 'Pendente'}
+                      </button>
                     </div>
-                  );
-                })}
-                {completedList.length === 0 && (
+                  </div>
+                );
+              })}
+              {completedList.length === 0 && (
                   <div className="text-sm text-slate-500 text-center py-6">Nenhum serviço concluído recentemente</div>
-                )}
-              </div>
-              {completedList.length > 3 && (
-                <button
-                  type="button"
-                  onClick={() => setCompletedExpanded((prev) => !prev)}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
-                >
-                  {completedExpanded ? 'Mostrar menos' : 'Ver todos'}
-                  <ChevronDown
-                    size={16}
-                    className={`transition-transform ${completedExpanded ? 'rotate-180' : ''}`}
-                  />
-                </button>
               )}
             </div>
+            {completedList.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setCompletedExpanded((prev) => !prev)}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
+              >
+                {completedExpanded ? 'Mostrar menos' : 'Ver todos'}
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform ${completedExpanded ? 'rotate-180' : ''}`}
+                />
+              </button>
+            )}
           </div>
+        </div>
         </SurfaceCard>
       </div>
     </div>

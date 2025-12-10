@@ -29,6 +29,10 @@ import {
   CreditCard,
   AppWindow,
   Wallet,
+  Sun,
+  Moon,
+  Mic,
+  Square,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TouchEvent, UIEvent } from 'react';
@@ -37,8 +41,12 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
 import brandLogo from '../assets/brand-logo.png';
 import { QuickActionProvider, QuickActionKey } from '../contexts/QuickActionContext';
-import { agentIntentApi } from '../services/agentIntent';
+import { agentIntentApi, type AgentMessage } from '../services/agentIntent';
+import { dashboardApi } from '../services/api';
+import { faqsApi } from '../services/faqs';
+import { templatesApi } from '../services/templates';
 import { StatusBadge } from './OwnerUI';
+import { agentAudioApi } from '../services/agentAudio';
 
 const LogoMark = () => (
   <div className="w-12 h-12 rounded-3xl bg-white border border-gray-100 shadow-lg shadow-emerald-300/30 flex items-center justify-center overflow-hidden">
@@ -62,7 +70,7 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const { canInstall, install, dismissed, dismiss } = useInstallPrompt();
-  const { t, theme } = usePreferences();
+  const { t, theme, setThemePreference } = usePreferences();
   const isOwner = user?.role === 'OWNER';
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [morePanelOpen, setMorePanelOpen] = useState(false);
@@ -80,6 +88,17 @@ const Layout = () => {
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
   const [agentError, setAgentError] = useState<string | null>(null);
+  const [agentContextData, setAgentContextData] = useState<{
+    metrics?: any;
+    faqs?: any[];
+    templates?: any[];
+    fetchedAt?: number;
+  }>();
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [recordingAudio, setRecordingAudio] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [pendingIntent, setPendingIntent] = useState<{
     intent: 'create_client' | 'create_appointment' | 'count_today' | 'count_tomorrow' | 'unknown';
     summary?: string;
@@ -382,22 +401,33 @@ const Layout = () => {
     [quickCreateActions, quickCreateQuery],
   );
   const isDarkTheme = theme === 'dark';
+  const handleThemeToggle = useCallback(() => {
+    setThemePreference(isDarkTheme ? 'light' : 'dark');
+  }, [isDarkTheme, setThemePreference]);
   const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2 py-1 space-y-1' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
   const mobileHeaderPanelSurface = isDarkTheme
-    ? 'border border-white/12 bg-gradient-to-b from-[#090d19] to-[#04060d] shadow-[0_20px_60px_rgba(0,0,0,0.45)] text-white'
+    ? 'border border-white/12 bg-gradient-to-r from-[#0b1020] via-[#0f172a] to-[#0b1020] text-white shadow-[0_20px_60px_rgba(0,0,0,0.48)] backdrop-blur-2xl'
     : 'border border-gray-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,0.08)] text-gray-900';
   const mobileHeaderContainerClass = `md:hidden border-b sticky top-0 z-40 backdrop-blur-xl ${
-    isDarkTheme ? 'bg-[#03050c]/95 text-white border-white/10' : 'bg-white/95 text-gray-900 border-gray-200 shadow-sm'
+    isDarkTheme ? 'bg-[#050914]/92 text-white border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.45)]' : 'bg-white/95 text-gray-900 border-gray-200 shadow-sm'
   }`;
   const mobileHeaderPanelClass = `${mobileHeaderSpacingClass} ${mobileHeaderPanelSurface} transition-all duration-300 ${
     mobileHeaderCondensed ? 'scale-[0.95]' : ''
   }`;
-  const mobileIconButtonClass = `${isDarkTheme ? 'bg-white/10 border border-white/15 text-white' : 'bg-gray-100 border border-gray-200 text-gray-900'} rounded-2xl flex items-center justify-center`;
-  const mobileInputWrapperClass = `rounded-2xl flex items-center gap-2 px-4 py-2.5 ${isDarkTheme ? 'bg-white/10 border border-white/10' : 'bg-gray-50 border border-gray-200'}`;
+  const mobileIconButtonClass = `${isDarkTheme ? 'bg-white/8 border border-white/15 text-white hover:bg-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-gray-100 border border-gray-200 text-gray-900'} rounded-2xl flex items-center justify-center transition-all duration-200`;
+  const mobileInputWrapperClass = `rounded-2xl flex items-center gap-2 px-4 py-2.5 ${isDarkTheme ? 'bg-white/6 border border-white/12' : 'bg-gray-50 border border-gray-200'}`;
   const mobileInputClass = `bg-transparent flex-1 text-sm placeholder:text-current/40 focus:outline-none ${isDarkTheme ? 'text-white' : 'text-gray-900'}`;
   const mobileMutedTextClass = isDarkTheme ? 'text-white/50' : 'text-gray-500';
   const mobileSecondaryTextClass = isDarkTheme ? 'text-white/70' : 'text-gray-600';
   const sidebarSurfaceClass = isDarkTheme ? 'bg-[#05070c] text-white' : 'bg-white text-gray-900';
+  const mobileNavSurfaceClass = isDarkTheme
+    ? 'bg-[#0c1326]/92 backdrop-blur-xl border border-white/12 shadow-[0_18px_40px_rgba(0,0,0,0.55)] text-white'
+    : 'bg-white/95 backdrop-blur-lg border border-gray-200 shadow-[0_18px_40px_rgba(15,23,42,0.12)] text-gray-900';
+  const mobileNavActiveClass = isDarkTheme ? 'text-emerald-300' : 'text-primary-600';
+  const mobileNavInactiveClass = isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-primary-500';
+  const fabButtonClass = isDarkTheme
+    ? 'absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-gradient-to-br from-primary-500 via-emerald-500 to-[#0c1d33] text-white border border-white/15 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1 hover:brightness-110'
+    : 'absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-primary-600 border border-primary-200 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1 hover:bg-primary-50';
 
   const menuItems = [
     { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
@@ -511,10 +541,146 @@ const Layout = () => {
     setQuickCreateOpen(true);
   };
 
+  useEffect(() => {
+    if (!agentOpen) {
+      stopMedia();
+      setRecordingAudio(false);
+    }
+  }, [agentOpen]);
+
+  useEffect(() => {
+    const openAgent = () => handleAgentOpen();
+    window.addEventListener('open-agent', openAgent);
+    return () => {
+      window.removeEventListener('open-agent', openAgent);
+    };
+  }, []);
+
+  useEffect(() => {
+    const logHandler = (event: Event) => {
+      const detail = (event as CustomEvent)?.detail;
+      if (!detail?.messages) return;
+      setAgentMessages((prev) => [...prev, ...detail.messages]);
+    };
+    window.addEventListener('agent-log', logHandler as EventListener);
+    return () => {
+      window.removeEventListener('agent-log', logHandler as EventListener);
+    };
+  }, []);
+
+  const ensureAgentContext = useCallback(async () => {
+    if (agentContextData && Date.now() - (agentContextData.fetchedAt ?? 0) < 60_000) {
+      return agentContextData;
+    }
+    try {
+      const [metrics, faqs, templates] = await Promise.all([
+        dashboardApi.getMetrics().catch(() => null),
+        faqsApi.list().catch(() => []),
+        templatesApi.list().catch(() => []),
+      ]);
+      const nextContext = { metrics, faqs, templates, fetchedAt: Date.now() };
+      setAgentContextData(nextContext);
+      return nextContext;
+    } catch (error) {
+      console.error('Erro ao carregar contexto do agent', error);
+      return agentContextData;
+    }
+  }, [agentContextData]);
+
   const handleAgentOpen = () => {
     setAgentOpen(true);
     setAgentError(null);
-    setAgentMessages([]);
+    setPendingIntent(null);
+  };
+
+  const stopMedia = () => {
+    mediaRecorderRef.current?.stop();
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaRecorderRef.current = null;
+    mediaStreamRef.current = null;
+  };
+
+  useEffect(() => {
+    if (!agentOpen) {
+      stopMedia();
+      setRecordingAudio(false);
+    }
+  }, [agentOpen]);
+
+  const handleSendAudio = useCallback(
+    async (blob: Blob) => {
+      setAgentError(null);
+      setAgentLoading(true);
+      setUploadingAudio(true);
+      const file = new File([blob], 'audio.webm', { type: blob.type || 'audio/webm' });
+      setAgentMessages((prev) => [...prev, { role: 'user', text: '[Áudio enviado] Transcrevendo...' }]);
+      try {
+        const resp = await agentAudioApi.transcribe(file);
+        const transcript = resp.transcript || '';
+        const userMsg = transcript ? `[Áudio] ${transcript}` : '[Áudio] (sem transcrição disponível)';
+        setAgentMessages((prev) => [...prev, { role: 'assistant', text: userMsg }]);
+
+        if (resp.requiresConfirmation) {
+          setPendingIntent({
+            intent: resp.intent as any,
+            summary: resp.summary,
+            payload: resp.payload,
+          });
+          const confirmationText = resp.summary || 'Entendi o pedido por áudio. Posso criar esse agendamento?';
+          setAgentMessages((prev) => [...prev, { role: 'assistant', text: confirmationText }]);
+        } else if (resp.summary) {
+          setAgentMessages((prev) => [...prev, { role: 'assistant', text: resp.summary! }]);
+        } else if (resp.intent === 'unknown' && resp.reason) {
+          setAgentMessages((prev) => [...prev, { role: 'assistant', text: `Não entendi o pedido: ${resp.reason}` }]);
+        }
+      } catch (error: any) {
+        console.error('Erro ao enviar áudio', error);
+        const msg = error?.response?.data?.error || 'Falha ao transcrever/processar áudio.';
+        setAgentError(msg);
+      } finally {
+        setAgentLoading(false);
+        setUploadingAudio(false);
+      }
+    },
+    [],
+  );
+
+  const handleToggleRecording = async () => {
+    if (recordingAudio) {
+      setRecordingAudio(false);
+      stopMedia();
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data?.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        chunksRef.current = [];
+        if (blob.size > 0) {
+          await handleSendAudio(blob);
+        }
+      };
+
+      recorder.start();
+      setRecordingAudio(true);
+    } catch (error) {
+      console.error('Erro ao gravar áudio', error);
+      setAgentError('Não foi possível acessar o microfone.');
+      setRecordingAudio(false);
+      stopMedia();
+    }
   };
 
   const handleAgentSubmit = async (queryText?: string) => {
@@ -526,10 +692,12 @@ const Layout = () => {
     setAgentError(null);
     setAgentLoading(true);
     setPendingIntent(null);
+    const history: AgentMessage[] = agentMessages.slice(-6);
     setAgentMessages((prev) => [...prev, { role: 'user', text: q }]);
     setAgentQuery('');
     try {
-      const parsed = await agentIntentApi.parse(q);
+      const context = await ensureAgentContext();
+      const parsed = await agentIntentApi.parse(q, history, context);
 
       if (parsed.error) {
         setAgentError(parsed.error);
@@ -668,7 +836,11 @@ const Layout = () => {
 
   return (
     <QuickActionProvider value={quickActionContextValue}>
-      <div className="min-h-screen bg-[#f6f7fb] flex transition-colors duration-200">
+      <div
+        className={`min-h-screen flex transition-colors duration-200 ${
+          isDarkTheme ? 'bg-[var(--app-bg)] text-[var(--text-primary)]' : 'bg-[#f6f7fb] text-gray-900'
+        }`}
+      >
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-72 bg-[#f8f6fb] border-r border-[#eadff8] h-screen sticky top-0">
@@ -919,9 +1091,11 @@ const Layout = () => {
           >
             {mobileHeaderCondensed ? (
               <div
-                className={`flex items-center justify-between gap-3 rounded-2xl border ${
-                  isDarkTheme ? 'bg-[#090d19] border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'
-                } shadow-sm px-3 py-2`}
+                className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 ${
+                  isDarkTheme
+                    ? 'bg-gradient-to-r from-[#0c1326] via-[#0c152d] to-[#091020] border-white/12 text-white shadow-[0_18px_45px_rgba(0,0,0,0.5)] backdrop-blur-2xl'
+                    : 'bg-white border-gray-200 text-gray-900 shadow-sm'
+                }`}
               >
                 <p className="text-sm font-semibold truncate">{currentSectionTitle}</p>
                 <div className="flex items-center gap-2">
@@ -956,7 +1130,11 @@ const Layout = () => {
                   <button
                     type="button"
                     onClick={handleAgentOpen}
-                    className="w-12 h-12 bg-gray-100 border border-gray-200 text-gray-900 rounded-2xl flex items-center justify-center transition-all duration-200"
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                      isDarkTheme
+                        ? 'bg-white/8 border border-white/12 text-white hover:bg-white/12'
+                        : 'bg-gray-100 border border-gray-200 text-gray-900'
+                    }`}
                     aria-label="Abrir Agent"
                   >
                   <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
@@ -965,23 +1143,23 @@ const Layout = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className="w-9 h-9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center dark:bg-white/10 dark:border-white/15 transition-all duration-200"
+                    onClick={handleThemeToggle}
+                    className={`${mobileIconButtonClass} w-11 h-11 hover:-translate-y-0.5`}
+                    aria-label={isDarkTheme ? 'Ativar tema claro' : 'Ativar tema escuro'}
                   >
-                    <div className="w-8 h-8 rounded-full overflow-hidden border border-white/40 dark:border-white/20 bg-white">
-                      <img src={brandLogo} alt="Clean Up" className="w-full h-full object-contain" />
-                    </div>
+                    {isDarkTheme ? <Sun size={18} /> : <Moon size={18} />}
                   </button>
                 </div>
               </div>
             ) : (
               <div className={mobileHeaderPanelClass}>
+                <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 flex-1">
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                      className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
+                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/8 dark:border-white/15"
                       aria-label="Abrir menu rápido"
                     >
                       <div className="flex items-center gap-1">
@@ -998,7 +1176,7 @@ const Layout = () => {
                             </span>
                           )}
                         </div>
-                        <div className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center dark:border-white/20 dark:bg-white/10">
                           <img src={brandLogo} alt="Clean Up" className="w-4 h-4 object-contain" />
                         </div>
                       </div>
@@ -1027,22 +1205,26 @@ const Layout = () => {
                   <button
                     type="button"
                     onClick={handleAgentOpen}
-                    className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-2xl border bg-white border-gray-200 text-gray-900 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                    className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${
+                      isDarkTheme
+                        ? 'bg-white/8 border-white/12 text-white hover:bg-white/12'
+                        : 'bg-white border-gray-200 text-gray-900 hover:shadow-md'
+                    }`}
                     aria-label="Abrir Agent"
                   >
                     <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
                       <Bot size={16} />
                     </div>
                     <span className="text-sm font-semibold">Abrir Agent</span>
-                  </button>
+                    </button>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
+                    onClick={handleThemeToggle}
+                    className={`${mobileIconButtonClass} w-11 h-11 hover:-translate-y-0.5`}
+                    aria-label={isDarkTheme ? 'Ativar tema claro' : 'Ativar tema escuro'}
                   >
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-white">
-                      <img src={brandLogo} alt="Clean Up" className="w-7 h-7 object-contain" />
-                    </div>
+                    {isDarkTheme ? <Sun size={18} /> : <Moon size={18} />}
                   </button>
                 </div>
                 {mobileWorkspaceExpanded && (
@@ -1168,7 +1350,7 @@ const Layout = () => {
         <>
           <div className="md:hidden fixed inset-x-4 bottom-4 z-40">
             <div className="relative">
-              <div className="bg-gradient-to-r from-[#1c0f2a] via-[#130a1f] to-[#1c0f2a] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-[32px] px-6 py-4 flex items-center justify-between animate-nav-glow">
+              <div className={`${mobileNavSurfaceClass} rounded-[32px] px-6 py-4 flex items-center justify-between animate-nav-glow`}>
                 <div className="flex items-center gap-6">
                   {mobileNavItems.slice(0, 2).map((item) => {
                     const Icon = item.icon;
@@ -1179,7 +1361,7 @@ const Layout = () => {
                         type="button"
                         onClick={() => handleMobileNav(item)}
                         className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-                          isActive ? 'text-white' : 'text-white/60'
+                          isActive ? mobileNavActiveClass : mobileNavInactiveClass
                         }`}
                       >
                         <Icon size={20} />
@@ -1198,7 +1380,7 @@ const Layout = () => {
                         type="button"
                         onClick={() => handleMobileNav(item)}
                         className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-                          isActive ? 'text-white' : 'text-white/60'
+                          isActive ? mobileNavActiveClass : mobileNavInactiveClass
                         }`}
                       >
                         <Icon size={20} />
@@ -1211,7 +1393,7 @@ const Layout = () => {
               <button
                 type="button"
                 onClick={handleFabClick}
-                className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-gray-900 border border-white/60 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1"
+                className={fabButtonClass}
               >
                 <Plus size={28} />
               </button>
@@ -1334,8 +1516,8 @@ const Layout = () => {
       )}
       {agentOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
-          <div className="flex-1" onClick={() => setAgentOpen(false)} />
-          <div className="rounded-t-[30px] bg-white animate-sheet-up max-h-[92vh] h-[88vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200">
+          <div className="h-px" onClick={() => setAgentOpen(false)} />
+          <div className="rounded-t-[24px] bg-white animate-sheet-up max-h-[99vh] h-[98vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-accent-700 text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
@@ -1457,6 +1639,19 @@ const Layout = () => {
                 }}
                 className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 shadow-sm"
               >
+                <button
+                  type="button"
+                  onClick={handleToggleRecording}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
+                    recordingAudio
+                      ? 'bg-red-50 border-red-200 text-red-600'
+                      : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                  }`}
+                  aria-label={recordingAudio ? 'Parar gravação' : 'Gravar áudio'}
+                  disabled={uploadingAudio}
+                >
+                  {recordingAudio ? <Square size={16} /> : <Mic size={16} />}
+                </button>
                 <input
                   type="text"
                   placeholder="Pergunte algo para o Clean Up Agent"
@@ -1478,6 +1673,12 @@ const Layout = () => {
                   <Send size={16} />
                 </button>
               </form>
+              {recordingAudio && (
+                <p className="mt-2 text-xs font-semibold text-red-600">Gravando... toque no quadrado para parar.</p>
+              )}
+              {uploadingAudio && (
+                <p className="mt-1 text-xs text-slate-500">Enviando/transcrevendo áudio…</p>
+              )}
             </div>
           </div>
         </div>

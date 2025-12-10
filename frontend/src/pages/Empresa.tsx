@@ -230,7 +230,7 @@ const Empresa = () => {
               <ExternalLink size={16} />
             </Link>
             <StatusBadge tone="primary">Plano {user?.planStatus ?? 'TRIAL'}</StatusBadge>
-          </div>
+            </div>
         }
       />
 
@@ -281,7 +281,7 @@ const Empresa = () => {
             Ajustes feitos aqui mantêm a consistência visual com o portal dos Clients e com a landing.
           </p>
         </SurfaceCard>
-      </div>
+        </div>
 
       <section className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
         <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-6 space-y-4">

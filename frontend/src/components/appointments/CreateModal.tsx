@@ -72,12 +72,20 @@ const CreateModal = ({
               <select
                 required
                 value={formData.customerId}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const id = e.target.value;
+                  const selected = customers.find((c) => c.id === id);
                   setFormData((prev) => ({
                     ...prev,
-                    customerId: e.target.value,
-                  }))
-                }
+                    customerId: id,
+                    price:
+                      prev.price && prev.price.trim() !== ''
+                        ? prev.price
+                        : selected?.defaultPrice !== undefined && selected.defaultPrice !== null
+                        ? selected.defaultPrice.toString()
+                        : '',
+                  }));
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Selecione um cliente</option>
@@ -191,11 +199,10 @@ const CreateModal = ({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Valor cobrado (USD) *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Valor cobrado (USD)</label>
                 <input
                   type="number"
                   step="0.01"
-                  required
                   placeholder="Ex: 150"
                   value={formData.price}
                   onChange={(e) =>
@@ -206,6 +213,7 @@ const CreateModal = ({
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">Se vazio, usa o preço padrão do cliente (se houver).</p>
               </div>
             </div>
             <div>

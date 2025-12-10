@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { addDays, format } from 'date-fns';
+import { addDays, endOfWeek, format, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import AgendaMensal from './AgendaMensal';
@@ -7,6 +7,7 @@ import AgendaSemanal from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader, SurfaceCard } from '../components/OwnerUI';
 import { pageGutters } from '../styles/uiTokens';
+import AudioQuickAdd from '../components/AudioQuickAdd';
 
 type AgendaView = 'week' | 'month';
 
@@ -69,32 +70,32 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
 
       <SurfaceCard className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="inline-flex bg-slate-100 rounded-full p-1 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => handleChangeView('week')}
+              <button
+                type="button"
+                onClick={() => handleChangeView('week')}
             className={`flex-1 px-4 py-2 text-sm font-semibold rounded-full transition-all ${
               viewMode === 'week' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Semana
-          </button>
-          <button
-            type="button"
-            onClick={() => handleChangeView('month')}
+                }`}
+              >
+                Semana
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChangeView('month')}
             className={`flex-1 px-4 py-2 text-sm font-semibold rounded-full transition-all ${
               viewMode === 'month' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Mês
-          </button>
-        </div>
+                }`}
+              >
+                Mês
+              </button>
+            </div>
         <div className="flex items-center gap-2 text-xs md:text-sm text-slate-600">
           <CalendarIcon size={16} className="text-primary-500" />
           {headerSubtitle}
         </div>
       </SurfaceCard>
 
-      {viewMode === 'month' && (
+        {viewMode === 'month' && (
         <SurfaceCard className="hidden md:block">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {quickFilters.map((filter) => (
@@ -108,9 +109,22 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
             ))}
           </div>
         </SurfaceCard>
-      )}
+        )}
 
       <div>{viewMode === 'week' ? <AgendaSemanal embedded quickCreateNonce={quickCreateNonce} /> : <AgendaMensal embedded />}</div>
+      <AudioQuickAdd contextHint={(() => {
+        if (viewMode === 'week') {
+          const now = new Date();
+          const weekStart = startOfWeek(now, { weekStartsOn: 0 });
+          const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
+          return `Usuário está na visão semanal. Semana corrente: ${format(weekStart, 'yyyy-MM-dd')} até ${format(
+            weekEnd,
+            'yyyy-MM-dd',
+          )}. Se ele disser "quinta-feira" ou "terça", use esta semana. Ano é o atual.`;
+        }
+        const now = new Date();
+        return `Usuário está na visão mensal. Mês atual: ${format(now, 'MMMM yyyy')}. Se disser só um dia (ex: dia 12), use este mês e ano atual.`;
+      })()} />
     </div>
   );
 };

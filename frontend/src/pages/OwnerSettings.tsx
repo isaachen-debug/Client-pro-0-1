@@ -75,14 +75,14 @@ const OwnerSettings = () => {
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
         <SurfaceCard className="space-y-4">
-          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl font-semibold overflow-hidden">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user?.name ?? 'Avatar'} className="w-full h-full object-cover" />
-              ) : (
-                initials
-              )}
-            </div>
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user?.name ?? 'Avatar'} className="w-full h-full object-cover" />
+                ) : (
+                  initials
+                )}
+              </div>
             <div className="space-y-1">
               <p className={labelSm}>Conta principal</p>
               <p className="text-lg font-semibold text-slate-900">{user?.name ?? 'Admin'}</p>
@@ -93,82 +93,82 @@ const OwnerSettings = () => {
                   {user?.isActive ? 'Ativa' : 'Inativa'}
                 </StatusBadge>
               </div>
+              </div>
             </div>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <Link
-              to="/app/empresa"
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Link
+                to="/app/empresa"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <User size={16} />
-              Ver perfil
-            </Link>
-            <Link
-              to="/app/profile"
+              >
+                <User size={16} />
+                Ver perfil
+              </Link>
+              <Link
+                to="/app/profile"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-4 py-2 text-sm font-semibold hover:bg-primary-700 transition"
-            >
-              <SettingsIcon size={16} />
-              Editar dados da empresa
-            </Link>
-          </div>
+              >
+                <SettingsIcon size={16} />
+                Editar dados da empresa
+              </Link>
+            </div>
         </SurfaceCard>
 
         <SurfaceCard className="space-y-3">
           <p className={labelSm}>Atalhos rápidos</p>
           <div className="divide-y divide-slate-100">
-            {QUICK_ACTIONS.map((action) => (
-              <Link
-                key={action.title}
-                to={action.to}
+              {QUICK_ACTIONS.map((action) => (
+                <Link
+                  key={action.title}
+                  to={action.to}
                 className="flex items-center gap-3 px-1 py-3 hover:bg-slate-50 rounded-xl"
-              >
+                >
                 <span className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600">
-                  <action.icon size={16} />
-                </span>
+                    <action.icon size={16} />
+                  </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-900">{action.title}</p>
                   <p className="text-xs text-slate-500 truncate">{action.subtitle}</p>
-                </div>
+                  </div>
                 <ChevronRight size={16} className="text-slate-400" />
-              </Link>
-            ))}
+                </Link>
+              ))}
           </div>
         </SurfaceCard>
-      </div>
+          </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <SurfaceCard className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Languages size={18} className="text-primary-600" />
-            <div>
+            <div className="flex items-center gap-2">
+              <Languages size={18} className="text-primary-600" />
+              <div>
               <p className="text-sm font-semibold text-slate-900">Idioma padrão</p>
               <p className="text-xs text-slate-500">Aplica-se ao dashboard, portal e notificações.</p>
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            {LANGUAGE_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm ${
+            <div className="space-y-2">
+              {LANGUAGE_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm ${
                   language === option.value ? 'border-primary-200 bg-primary-50' : 'border-slate-200'
-                }`}
-              >
-                <div>
+                  }`}
+                >
+                  <div>
                   <p className="font-semibold text-slate-900">{option.label}</p>
                   <p className="text-xs text-slate-500">{option.description}</p>
-                </div>
-                <input
-                  type="radio"
-                  name="language-owner"
-                  value={option.value}
-                  checked={language === option.value}
-                  onChange={() => handleLanguageChange(option.value)}
-                  className="w-4 h-4 accent-primary-600"
-                />
-              </label>
-            ))}
-          </div>
-          {languageMessage && <p className="text-xs text-primary-600">{languageMessage}</p>}
+                  </div>
+                  <input
+                    type="radio"
+                    name="language-owner"
+                    value={option.value}
+                    checked={language === option.value}
+                    onChange={() => handleLanguageChange(option.value)}
+                    className="w-4 h-4 accent-primary-600"
+                  />
+                </label>
+              ))}
+            </div>
+            {languageMessage && <p className="text-xs text-primary-600">{languageMessage}</p>}
         </SurfaceCard>
 
         <SurfaceCard className="space-y-3">
@@ -189,17 +189,17 @@ const OwnerSettings = () => {
             Ajustar canais
           </button>
         </SurfaceCard>
-      </div>
+          </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <SurfaceCard className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
+              <div>
               <p className={labelSm}>Integrações</p>
               <h3 className="text-lg font-semibold text-slate-900">Google Calendar e apps externos</h3>
               <p className="text-sm text-slate-500">
                 Sincronize agendas dos partners com os eventos oficiais e mantenha tudo atualizado.
-              </p>
+                </p>
             </div>
             <StatusBadge tone="neutral">Em breve</StatusBadge>
           </div>
@@ -225,22 +225,22 @@ const OwnerSettings = () => {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-4">
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={18} className="text-primary-600" />
-            <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={18} className="text-primary-600" />
+              <div>
               <p className="text-sm font-semibold text-slate-900">Time & acesso</p>
               <p className="text-xs text-slate-500">Upgrade rápido e convites extras.</p>
             </div>
           </div>
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Ativa a gestão de Helpers e Admins neste plano.
-          </div>
-          <button
-            type="button"
+              Ativa a gestão de Helpers e Admins neste plano.
+            </div>
+            <button
+              type="button"
             className="w-full rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700"
-          >
-            Gerenciar plano
-          </button>
+            >
+              Gerenciar plano
+            </button>
         </SurfaceCard>
       </div>
 

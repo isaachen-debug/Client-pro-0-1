@@ -3,11 +3,11 @@ import type { ReactNode } from 'react';
 type BadgeTone = 'primary' | 'success' | 'warning' | 'error' | 'neutral';
 
 const badgeToneClasses: Record<BadgeTone, string> = {
-  primary: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  success: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  warning: 'bg-amber-50 text-amber-700 border-amber-100',
-  error: 'bg-red-50 text-red-700 border-red-100',
-  neutral: 'bg-slate-100 text-slate-600 border-slate-200',
+  primary: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/12 dark:text-emerald-100 dark:border-emerald-400/30',
+  success: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/12 dark:text-emerald-100 dark:border-emerald-400/30',
+  warning: 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-400/12 dark:text-amber-100 dark:border-amber-300/30',
+  error: 'bg-red-50 text-red-700 border-red-100 dark:bg-red-500/12 dark:text-red-100 dark:border-red-400/30',
+  neutral: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/8 dark:text-[var(--text-secondary)] dark:border-white/12',
 };
 
 export const PageHeader = ({
@@ -28,10 +28,10 @@ export const PageHeader = ({
   <div className={`space-y-2 mt-3 md:mt-4 ${className}`}>
     <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
       <div className="space-y-1">
-        <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">{title}</h1>
+        <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text-primary)]">{title}</h1>
         {subtitle && (
           <p
-            className={`text-sm text-slate-500 max-w-2xl ${subtitleHiddenOnMobile ? 'hidden sm:block' : ''}`}
+            className={`text-sm text-[var(--text-secondary)] max-w-2xl ${subtitleHiddenOnMobile ? 'hidden sm:block' : ''}`}
           >
             {subtitle}
           </p>
@@ -52,7 +52,7 @@ export const SurfaceCard = ({
   padded?: boolean;
 }) => (
   <div
-    className={`bg-white rounded-2xl border border-slate-100 shadow-[0_12px_40px_rgba(15,23,42,0.04)] ${
+    className={`bg-[var(--card-bg)] text-[var(--text-primary)] rounded-2xl border border-[var(--card-border)] shadow-[0_12px_36px_rgba(0,0,0,0.18)] ${
       padded ? 'p-4 md:p-5' : ''
     } ${className}`}
   >

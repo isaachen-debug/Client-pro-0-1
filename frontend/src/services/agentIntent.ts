@@ -7,6 +7,11 @@ type Intent =
   | 'count_tomorrow'
   | 'unknown';
 
+export type AgentMessage = {
+  role: 'user' | 'assistant';
+  text: string;
+};
+
 export type AgentIntentResponse = {
   intent: Intent;
   requiresConfirmation?: boolean;
@@ -17,8 +22,8 @@ export type AgentIntentResponse = {
 };
 
 export const agentIntentApi = {
-  async parse(message: string) {
-    const { data } = await api.post<AgentIntentResponse>('/agent/intent', { message });
+  async parse(message: string, history?: AgentMessage[], context?: unknown) {
+    const { data } = await api.post<AgentIntentResponse>('/agent/intent', { message, history, context });
     return data;
   },
   async execute(intent: Intent, payload?: any) {
@@ -29,5 +34,4 @@ export const agentIntentApi = {
     return data;
   },
 };
-
 

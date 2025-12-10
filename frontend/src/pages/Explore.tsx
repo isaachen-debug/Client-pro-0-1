@@ -1,7 +1,10 @@
 import { Building2, Grid, UserPlus2, Users, Wallet, ArrowRight, AppWindow } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { PageHeader, SurfaceCard } from '../components/OwnerUI';
 import { pageGutters } from '../styles/uiTokens';
+import { dashboardApi } from '../services/api';
+import type { DashboardOverview } from '../types';
 
 const exploreCards = [
   {
@@ -9,6 +12,7 @@ const exploreCards = [
     description: 'Veja e gerencie sua base de clientes.',
     icon: Users,
     action: '/app/clientes',
+    metricKey: 'clientes',
   },
   {
     title: 'Financeiro',
@@ -32,6 +36,21 @@ const exploreCards = [
 
 const Explore = () => {
   const navigate = useNavigate();
+  const [metrics, setMetrics] = useState<DashboardOverview | null>(null);
+  const [metricsError, setMetricsError] = useState(false);
+
+  useEffect(() => {
+    const loadMetrics = async () => {
+      try {
+        const data = await dashboardApi.getMetrics();
+        setMetrics(data);
+      } catch (err) {
+        console.error('Erro ao carregar métricas do dashboard', err);
+        setMetricsError(true);
+      }
+    };
+    loadMetrics();
+  }, []);
 
   return (
     <div className={`${pageGutters} max-w-6xl mx-auto`}>
@@ -44,6 +63,12 @@ const Explore = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
         {exploreCards.map((card) => {
           const Icon = card.icon;
+          const metric =
+            card.metricKey === 'clientes'
+              ? metrics?.activeClientsCount
+              : card.metricKey === 'financeiro'
+              ? metrics?.pendingPaymentsMonth
+              : undefined;
           return (
             <button
               key={card.title}
@@ -51,14 +76,26 @@ const Explore = () => {
               onClick={() => navigate(card.action)}
               className="text-left rounded-2xl border border-slate-100 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.05)] p-4 md:p-5 transition hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.08)]"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center">
                   <Icon size={22} />
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="text-lg font-semibold text-slate-900">{card.title}</p>
+                    <p className="text-sm text-slate-500 leading-relaxed">{card.description}</p>
+                    {metric !== undefined && (
+                      <p className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-primary-700">
+                        {card.metricKey === 'financeiro'
+                          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD' }).format(metric)
+                          : metric}
+                        {card.metricKey === 'clientes' && <span className="text-xs font-medium text-slate-500">(ativos)</span>}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <ArrowRight size={18} className="text-slate-400" />
+                <ArrowRight size={18} className="text-slate-400 mt-1" />
               </div>
-              <p className="mt-4 text-lg font-semibold text-slate-900">{card.title}</p>
-              <p className="text-sm text-slate-500 mt-1 leading-relaxed">{card.description}</p>
             </button>
           );
         })}

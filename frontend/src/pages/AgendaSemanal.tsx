@@ -69,7 +69,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     startTime: '',
     endTime: '',
     price: '',
-  helperFee: '',
+    helperFee: '',
     isRecurring: false,
     recurrenceRule: '',
     notes: '',
@@ -225,12 +225,18 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
       setDateError('');
       const composedDate = formatDateToYMD(new Date(year, monthNumber - 1, dayNumber));
 
+      const selectedCustomer = customers.find((c) => c.id === createForm.customerId);
+      const priceNumber =
+        createForm.price && createForm.price.trim() !== ''
+          ? Number(createForm.price)
+          : selectedCustomer?.defaultPrice ?? 0;
+
       await appointmentsApi.create({
         customerId: createForm.customerId,
         date: composedDate,
         startTime: createForm.startTime,
         endTime: createForm.endTime || undefined,
-        price: parseFloat(createForm.price),
+        price: priceNumber,
         helperFee: createForm.helperFee ? Number(createForm.helperFee) : undefined,
         isRecurring: createForm.isRecurring,
         recurrenceRule: createForm.isRecurring ? createForm.recurrenceRule : undefined,
@@ -259,7 +265,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         date: editForm.date,
         startTime: editForm.startTime,
         endTime: editForm.endTime || undefined,
-        price: parseFloat(editForm.price),
+        price: editForm.price ? Number(editForm.price) : editingAppointment.price,
         helperFee: editForm.helperFee === '' ? undefined : Number(editForm.helperFee),
         notes: editForm.notes,
         status: editForm.status,
@@ -462,6 +468,13 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     openCreateAt(day, totalMinutes);
   };
 
+  const statusToneStyles: Record<string, string> = {
+    AGENDADO: 'bg-sky-50 border-sky-100 text-sky-700 dark:bg-white/5 dark:border-white/10 dark:text-white',
+    EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-800 dark:bg-white/6 dark:border-white/12 dark:text-amber-100',
+    CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-800 dark:bg-white/5 dark:border-white/10 dark:text-emerald-100',
+    CANCELADO: 'bg-red-50 border-red-100 text-red-700 dark:bg-white/5 dark:border-white/10 dark:text-red-100',
+  };
+
   const mobileList = (
     <div className="md:hidden space-y-3">
         {weekDays.map((day) => {
@@ -470,7 +483,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
           return (
             <div
               key={day.toISOString()}
-            className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm"
+            className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:bg-[var(--card-bg)] dark:border-[var(--card-border)]"
             onClick={() => handleDayCardClick(day)}
               role="button"
               tabIndex={0}
@@ -481,60 +494,73 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                 }
               }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-baseline gap-2">
-                <span className={`text-lg font-semibold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
-                    {format(day, 'd')}
+            <div className={`flex flex-col items-center justify-center w-16 rounded-xl ${isToday ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 text-gray-700'} dark:bg-white/8 dark:text-[var(--text-primary)]`}>
+              <span className="text-[11px] uppercase font-semibold tracking-wide">{format(day, 'EEE', { locale: ptBR })}</span>
+              <span className="text-2xl font-bold leading-tight">{format(day, 'd')}</span>
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)]">
+                    {isToday ? 'Hoje' : format(day, 'eeee', { locale: ptBR })}
                 </span>
-                <span className="text-sm text-gray-500">{format(day, 'EEE', { locale: ptBR })}</span>
+                  <span className="text-xs text-gray-500 dark:text-[var(--text-secondary)]">Toque para adicionar ou editar</span>
               </div>
               <button
                 type="button"
-                className="text-xs font-semibold text-primary-600 px-2 py-1 rounded-lg hover:bg-primary-50 transition"
-                onClick={() => handleDayCardClick(day)}
+                  className="text-xs font-semibold text-primary-600 px-2 py-1 rounded-lg hover:bg-primary-50 transition dark:hover:bg-white/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDayCardClick(day);
+                  }}
               >
                 + add
               </button>
               </div>
 
-              <div className="space-y-2">
-              {dayAgendamentos.length === 0 && <p className="text-xs text-gray-400">Nenhum atendimento encontrado.</p>}
+              <div className="grid grid-cols-2 gap-2">
+              {dayAgendamentos.length === 0 && (
+                <p className="col-span-2 text-sm text-gray-500 dark:text-[var(--text-secondary)]">
+                  Nenhum atendimento encontrado.
+                </p>
+              )}
               {dayAgendamentos
                     .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                    .map((ag) => (
-                      <button
-                        key={ag.id}
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openEditModal(ag);
-                        }}
-                    className="w-full text-left rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: getStatusColor(ag.status) }}
-                          aria-hidden
-                        />
-                        <span className="text-[12px] font-semibold text-gray-900">
-                          {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-semibold text-gray-600">
-                        {ag.status === 'AGENDADO'
+                    .map((ag) => {
+                      const statusLabel =
+                        ag.status === 'AGENDADO'
                           ? 'Pendente'
                           : ag.status === 'EM_ANDAMENTO'
                           ? 'Em andamento'
                           : ag.status === 'CONCLUIDO'
                           ? 'Concluído'
-                          : 'Cancelado'}
+                          : 'Cancelado';
+                      const statusTone = statusToneStyles[ag.status] || 'bg-gray-50 border-gray-100 text-gray-800 dark:bg-white/5 dark:border-white/10 dark:text-white';
+                      return (
+                        <button
+                          key={ag.id}
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEditModal(ag);
+                          }}
+                          className="w-full text-left rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition hover:border-primary-200 hover:bg-primary-50/40 dark:border-white/12 dark:bg-white/5"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)]">
+                              {ag.startTime ? `${ag.startTime}${ag.endTime ? ` - ${ag.endTime}` : ''}` : 'Dia todo'}
+                            </span>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusTone}`}>
+                              {statusLabel}
                       </span>
                     </div>
-                    <div className="mt-1 text-[13px] font-semibold text-gray-900 truncate">{ag.customer.name}</div>
+                          <p className="mt-1 text-[13px] font-semibold truncate text-gray-900 dark:text-[var(--text-primary)]">
+                            {ag.customer.name}
+                          </p>
                   </button>
-                ))}
+                      );
+                    })}
+            </div>
             </div>
           </div>
         );
@@ -637,11 +663,11 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
       <div className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {!embedded && (
-            <div className="space-y-1">
+          <div className="space-y-1">
               <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Agenda</p>
               <h1 className="text-xl md:text-3xl font-semibold text-slate-900">Agenda semanal</h1>
               <p className="hidden md:block text-sm text-slate-600">Acompanhe os serviços desta semana em um só lugar.</p>
-            </div>
+          </div>
           )}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
@@ -668,7 +694,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </button>
             </div>
           </div>
-        </div>
+          </div>
 
         <div
           className={`flex flex-wrap items-center gap-2 ${embedded ? 'hidden md:flex' : ''}`}
