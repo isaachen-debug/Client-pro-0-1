@@ -550,7 +550,7 @@ const Clientes = () => {
       {activeTab === 'list' ? (
         <>
           {/* Stats & quick actions */}
-          <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+          <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr] owner-grid-tight">
             <SurfaceCard className="space-y-3 bg-gradient-to-br from-primary-50 via-white to-accent-50 border-slate-100">
               <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
                 <span>Clientes</span>
@@ -574,16 +574,16 @@ const Clientes = () => {
 
             <SurfaceCard className="space-y-3">
               <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Ações rápidas</p>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 owner-stack">
                 <button
                   onClick={handleExportClientes}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="flex-1 owner-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Exportar CSV
                 </button>
                 <button
                   onClick={openCreateModal}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-primary-700"
+                  className="flex-1 owner-full inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-primary-700"
                 >
                   <Plus size={18} />
                   Novo cliente
@@ -632,7 +632,7 @@ const Clientes = () => {
 
       {/* Table */}
       <div className="bg-white rounded-none shadow-none border-0 overflow-hidden">
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block owner-table-wrap">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>

@@ -24,7 +24,7 @@ export const heroLabel =
 export const heroTitle = 'text-2xl md:text-3xl font-semibold text-slate-900';
 export const heroDescription = 'text-sm text-slate-500';
 
-export const pageGutters = 'px-3 sm:px-4 md:px-8 pt-0 pb-6 space-y-5 sm:space-y-6';
+export const pageGutters = 'owner-page px-3 sm:px-4 md:px-8 pt-0 pb-6 space-y-5 sm:space-y-6';
 export const surfaceCard =
   'bg-white rounded-2xl border border-slate-100 shadow-[0_12px_40px_rgba(15,23,42,0.04)]';
 export const surfaceMuted =

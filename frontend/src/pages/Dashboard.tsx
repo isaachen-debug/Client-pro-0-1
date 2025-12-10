@@ -208,7 +208,7 @@ const Dashboard = () => {
               <ChevronRight size={16} />
             </button>
           </div>
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 owner-grid-tight">
             <SurfaceCard className="rounded-2xl border-slate-200 bg-white px-4 py-3 shadow-sm">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">Pagamentos pendentes</p>
               <p className="text-2xl font-semibold mt-2 text-slate-900">{formatCurrency(data.pendingPaymentsMonth)}</p>
@@ -244,7 +244,7 @@ const Dashboard = () => {
           </div>
         </SurfaceCard>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-4 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-4 md:gap-6 owner-grid-tight">
           <SurfaceCard className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -259,7 +259,7 @@ const Dashboard = () => {
                 Abrir financeiro <ChevronRight size={14} />
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 owner-grid-tight">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-slate-900">Pagamentos pendentes</p>
@@ -351,7 +351,7 @@ const Dashboard = () => {
         </div>
 
         <SurfaceCard>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 owner-grid-tight">
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
           <div>

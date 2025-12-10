@@ -570,7 +570,7 @@ const Team = () => {
         }
       />
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 owner-grid-tight">
         {teamHighlights.map((card) => (
           <SurfaceCard key={card.label} className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
@@ -579,7 +579,7 @@ const Team = () => {
         ))}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-start">
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-start owner-grid-tight">
         <div className="space-y-6">
           <div className="rounded-[28px] border border-indigo-100 bg-white p-5 flex gap-4">
             <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
@@ -1008,7 +1008,7 @@ const Team = () => {
                           <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-sm text-red-600">{dayError}</div>
                         ) : dayData?.appointments.length ? (
                           <div className="space-y-4">
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                               {[
                                 { label: 'Serviços', value: dayData?.summary.total ?? 0 },
                                 { label: 'Pendentes', value: dayData?.summary.pending ?? 0 },

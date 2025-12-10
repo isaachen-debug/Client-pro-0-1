@@ -58,7 +58,7 @@ const Explore = () => {
         subtitle="Acesse rápido clientes, financeiro, empresa e equipe."
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-4 owner-grid-tight">
         {exploreCards.map((card) => {
           const Icon = card.icon;
           const metric =
@@ -127,7 +127,7 @@ const Explore = () => {
             </button>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 owner-grid-tight">
           {[
             { label: 'Clientes', icon: Users, path: '/app/clientes' },
             { label: 'Financeiro', icon: Wallet, path: '/app/financeiro' },

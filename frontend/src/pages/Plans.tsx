@@ -54,7 +54,7 @@ const Plans = () => {
         </div>
       </SurfaceCard>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 owner-grid-tight">
         {plans.map((plan) => {
           const isActive = plan.id === currentPlan;
           const isScale = plan.id === 'scale';
@@ -113,7 +113,7 @@ const Plans = () => {
           <Info size={18} className="text-emerald-600" />
           <p className="text-sm font-semibold text-gray-900">Como cada plano afeta limites e recursos</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700 owner-grid-tight">
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
             <p className="font-semibold text-emerald-800">Limites de clientes</p>
             <p className="text-gray-700 mt-2">

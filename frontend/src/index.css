@@ -245,3 +245,43 @@ button {
   animation: sheetSlideDown 0.35s ease forwards;
 }
 
+.owner-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.owner-table-wrap table {
+  min-width: 640px;
+}
+
+@media (max-width: 400px) {
+  .owner-page {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 0;
+    padding-bottom: 20px;
+  }
+
+  .owner-page > * + * {
+    margin-top: 14px;
+  }
+
+  .owner-grid-tight {
+    gap: 8px !important;
+  }
+
+  .owner-stack {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .owner-full {
+    width: 100%;
+  }
+
+  .owner-text-sm {
+    font-size: 13px;
+  }
+}
+

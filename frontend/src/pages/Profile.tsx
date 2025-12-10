@@ -176,7 +176,7 @@ const Profile = () => {
         subtitle="Dados pessoais e preferências da sua conta."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr] owner-grid-tight">
         <SurfaceCard className="space-y-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
@@ -202,7 +202,7 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 w-full lg:w-auto min-w-[260px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full lg:w-auto min-w-[260px]">
               <SurfaceCard className="space-y-1 bg-slate-50 border-slate-100">
                 <p className="text-xs text-slate-600 uppercase tracking-wide">Conta criada</p>
                 <p className="text-lg font-semibold text-slate-900">
@@ -252,7 +252,7 @@ const Profile = () => {
 
         <SurfaceCard className="space-y-3">
           <p className={labelSm}>Resumo rápido</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SurfaceCard className="bg-slate-50 border-slate-100">
               <p className="text-xs text-slate-600 uppercase tracking-wide">Email</p>
               <p className="text-sm font-semibold text-slate-900 break-all">{profileForm.email || user.email}</p>
@@ -262,7 +262,7 @@ const Profile = () => {
               <p className="text-sm font-semibold text-slate-900 break-all">{profileForm.contactPhone || '—'}</p>
             </SurfaceCard>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SurfaceCard className="bg-slate-50 border-slate-100">
               <p className="text-xs text-slate-600 uppercase tracking-wide">WhatsApp</p>
               <p className="text-sm font-semibold text-slate-900 break-all">{profileForm.whatsappNumber || '—'}</p>
@@ -277,7 +277,7 @@ const Profile = () => {
         </SurfaceCard>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 owner-grid-tight">
         <SurfaceCard className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -309,7 +309,7 @@ const Profile = () => {
             <p className={labelSm}>Preferências rápidas</p>
             <h3 className="text-lg font-semibold text-slate-900">Tema, idioma e cores do app</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SurfaceCard className="border-slate-100">
               <p className="text-xs text-slate-500 uppercase tracking-wide">Tema</p>
               <p className="text-sm font-semibold text-slate-900">
@@ -335,14 +335,14 @@ const Profile = () => {
         </SurfaceCard>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 owner-grid-tight">
         <SurfaceCard className="space-y-4">
           <div className="space-y-1">
             <p className={labelSm}>Informações básicas</p>
             <h3 className="text-lg font-semibold text-slate-900">Atualize foto, contato e idioma</h3>
           </div>
           <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
               <div className="space-y-1">
                 <label className="text-xs text-slate-600 font-semibold">Nome completo</label>
                 <input
@@ -364,7 +364,7 @@ const Profile = () => {
                 />
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
               <div className="space-y-1">
                 <label className="text-xs text-slate-600 font-semibold">Empresa</label>
                 <input
@@ -384,7 +384,7 @@ const Profile = () => {
                 />
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
               <div className="space-y-1">
                 <label className="text-xs text-slate-600 font-semibold">WhatsApp</label>
                 <input
@@ -406,7 +406,7 @@ const Profile = () => {
                 />
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
               <div className="space-y-1">
                 <label className="text-xs text-slate-600 font-semibold">Link do avatar (URL)</label>
                 <input
@@ -438,7 +438,7 @@ const Profile = () => {
                 </select>
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
               <div className="space-y-1">
                 <label className="text-xs text-slate-600 font-semibold">Idioma preferido</label>
                 <select
@@ -493,7 +493,7 @@ const Profile = () => {
                 required
               />
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
               <div className="space-y-1">
                 <label className="text-xs text-slate-600 font-semibold">Nova senha</label>
                 <input

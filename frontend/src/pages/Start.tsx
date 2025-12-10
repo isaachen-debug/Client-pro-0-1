@@ -263,7 +263,7 @@ const Start = () => {
         </SurfaceCard>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-[1.2fr,0.8fr] gap-4 md:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-[1.2fr,0.8fr] gap-4 md:gap-5 owner-grid-tight">
         <SurfaceCard className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -277,7 +277,7 @@ const Start = () => {
             </div>
             <StatusBadge tone="primary">{selectedDateLabel}</StatusBadge>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 owner-grid-tight">
                 <StatCard label="Serviços hoje" subtitle="Agendados para hoje." value={summary.totalAppointmentsToday} />
                 <StatCard label="Em andamento" subtitle="Já iniciados pela equipe." value={summary.inProgressCount} />
                 <StatCard label="Concluídos" subtitle="Finalizados e prontos para revisar." value={summary.completedCount} />

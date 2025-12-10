@@ -41,7 +41,7 @@ const HelperResources = () => {
         </div>
       </SurfaceCard>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 owner-grid-tight">
         {helperLinks.map((item) => {
           const Icon = item.icon;
           return (

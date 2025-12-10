@@ -117,6 +117,17 @@ Regras adicionais:
     if (parsed.intent === 'create_appointments_batch') {
       parsed.requiresConfirmation = true;
     }
+    if (parsed.intent === 'create_appointment') {
+      // Se já vier cliente, data e hora, não exigir confirmação
+      const hasAllFields =
+        parsed.payload &&
+        parsed.payload.customerName &&
+        parsed.payload.date &&
+        parsed.payload.startTime;
+      if (hasAllFields) {
+        parsed.requiresConfirmation = false;
+      }
+    }
 
     // Salvaguardas
     if (['delete', 'remove', 'drop'].some((w) => message.toLowerCase().includes(w))) {
@@ -363,6 +374,73 @@ router.post('/execute', async (req: Request, res: Response) => {
   if (!intent) return res.status(400).json({ error: 'Intent é obrigatória.' });
 
   const normalizeDate = (value: string) => {
+    if (!value) return null;
+    const trimmed = String(value).trim().toLowerCase();
+
+    const today = startOfDay(new Date());
+    const maybeTomorrow = ['amanha', 'amanhã', 'tomorrow'].includes(trimmed);
+    const maybeToday = ['hoje', 'today'].includes(trimmed);
+    const weekdays: Record<string, number> = {
+      domingo: 0,
+      dom: 0,
+      segunda: 1,
+      'segunda-feira': 1,
+      seg: 1,
+      terca: 2,
+      'terça': 2,
+      'terça-feira': 2,
+      ter: 2,
+      quarta: 3,
+      'quarta-feira': 3,
+      qua: 3,
+      quinta: 4,
+      'quinta-feira': 4,
+      qui: 4,
+      sexta: 5,
+      'sexta-feira': 5,
+      sex: 5,
+      sabado: 6,
+      sábado: 6,
+      sab: 6,
+      sáb: 6,
+    };
+
+    const nextWeekday = (target: number) => {
+      const result = startOfDay(new Date());
+      const current = result.getDay();
+      let delta = target - current;
+      if (delta <= 0) delta += 7;
+      result.setDate(result.getDate() + delta);
+      return result;
+    };
+
+    // "amanhã"
+    if (maybeTomorrow) {
+      const d = startOfDay(new Date(today));
+      d.setDate(d.getDate() + 1);
+      return d;
+    }
+    // "hoje"
+    if (maybeToday) {
+      return today;
+    }
+    // "quinta", "segunda", etc.
+    if (weekdays[trimmed] !== undefined) {
+      return nextWeekday(weekdays[trimmed]);
+    }
+    // "dia 12", "dia 5"
+    const diaMatch = trimmed.match(/dia\s+(\d{1,2})/);
+    if (diaMatch) {
+      const day = Number(diaMatch[1]);
+      const base = new Date(today);
+      base.setDate(day);
+      if (base < today) {
+        base.setMonth(base.getMonth() + 1);
+      }
+      return startOfDay(base);
+    }
+
+    // fallback ISO ou datas livres
     const d = new Date(value);
     if (!Number.isFinite(d.getTime())) return null;
     const currentYear = new Date().getFullYear();
@@ -370,6 +448,64 @@ router.post('/execute', async (req: Request, res: Response) => {
       d.setFullYear(currentYear);
     }
     return d;
+  };
+
+  const normalizeText = (value: string) =>
+    value
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim() ?? '';
+
+  const levenshtein = (a: string, b: string) => {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const v0 = new Array(b.length + 1).fill(0);
+    const v1 = new Array(b.length + 1).fill(0);
+    for (let i = 0; i <= b.length; i++) v0[i] = i;
+    for (let i = 0; i < a.length; i++) {
+      v1[0] = i + 1;
+      for (let j = 0; j < b.length; j++) {
+        const cost = a[i] === b[j] ? 0 : 1;
+        v1[j + 1] = Math.min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost);
+      }
+      for (let j = 0; j <= b.length; j++) v0[j] = v1[j];
+    }
+    return v1[b.length];
+  };
+
+  const findBestCustomer = async (name: string) => {
+    const normalized = normalizeText(name);
+    if (!normalized) return null;
+
+    // tentativa exata
+    const exact = await prisma.customer.findFirst({
+      where: { userId: req.user!.id, name: { equals: name, mode: 'insensitive' } },
+    });
+    if (exact) return exact;
+
+    const candidates = await prisma.customer.findMany({
+      where: { userId: req.user!.id },
+      select: { id: true, name: true, defaultPrice: true },
+      take: 200,
+    });
+
+    let best: { item: typeof candidates[number]; score: number } | null = null;
+    for (const item of candidates) {
+      const n = normalizeText(item.name);
+      const dist = levenshtein(normalized, n);
+      const maxLen = Math.max(normalized.length, n.length);
+      const similarity = 1 - dist / (maxLen || 1);
+      if (!best || similarity > best.score) {
+        best = { item, score: similarity };
+      }
+    }
+
+    if (best && best.score >= 0.45) {
+      return best.item;
+    }
+    return null;
   };
 
   try {
@@ -399,9 +535,7 @@ router.post('/execute', async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Data inválida.' });
       }
 
-      let customer = await prisma.customer.findFirst({
-        where: { userId: req.user!.id, name: { equals: customerName, mode: 'insensitive' } },
-      });
+      let customer = await findBestCustomer(customerName);
 
       if (!customer) {
         customer = await prisma.customer.create({
@@ -426,7 +560,7 @@ router.post('/execute', async (req: Request, res: Response) => {
           notes: notes || null,
         },
       });
-      return res.json({ ok: true, answer: `Agendamento criado para ${customerName} em ${date} ${startTime}.` });
+      return res.json({ ok: true, answer: `Agendamento criado para ${customer.name} em ${date} ${startTime}.` });
     }
 
     if (intent === 'create_appointments_batch') {
@@ -457,9 +591,7 @@ router.post('/execute', async (req: Request, res: Response) => {
         }
 
         try {
-          let customer = await prisma.customer.findFirst({
-            where: { userId: req.user!.id, name: { equals: customerName, mode: 'insensitive' } },
-          });
+          let customer = await findBestCustomer(customerName);
 
           if (!customer) {
             customer = await prisma.customer.create({

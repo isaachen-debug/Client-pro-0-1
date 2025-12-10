@@ -453,15 +453,8 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     openCreateAt(day, totalMinutes);
   };
 
-  const statusToneStyles: Record<string, string> = {
-    AGENDADO: 'bg-sky-50 border-sky-100 text-sky-700 dark:bg-white/5 dark:border-white/10 dark:text-white',
-    EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-800 dark:bg-white/6 dark:border-white/12 dark:text-amber-100',
-    CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-800 dark:bg-white/5 dark:border-white/10 dark:text-emerald-100',
-    CANCELADO: 'bg-red-50 border-red-100 text-red-700 dark:bg-white/5 dark:border-white/10 dark:text-red-100',
-  };
-
   const mobileList = (
-    <div className="md:hidden space-y-3">
+    <div className="md:hidden space-y-3 px-3 owner-grid-tight">
         {weekDays.map((day) => {
           const dayAgendamentos = getAgendamentosForDay(day);
           const isToday = isSameDay(day, new Date());
@@ -503,7 +496,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(90px,1fr))] gap-2 owner-grid-tight">
               {dayAgendamentos.length === 0 && (
                 <p className="col-span-2 text-sm text-gray-500 dark:text-[var(--text-secondary)]">
                   Nenhum atendimento encontrado.
@@ -512,15 +505,12 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               {dayAgendamentos
                     .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
                     .map((ag) => {
-                      const statusLabel =
-                        ag.status === 'AGENDADO'
-                          ? 'Pendente'
-                          : ag.status === 'EM_ANDAMENTO'
-                          ? 'Em andamento'
-                          : ag.status === 'CONCLUIDO'
-                          ? 'Concluído'
-                          : 'Cancelado';
-                      const statusTone = statusToneStyles[ag.status] || 'bg-gray-50 border-gray-100 text-gray-800 dark:bg-white/5 dark:border-white/10 dark:text-white';
+          const cardTone = {
+            AGENDADO: 'bg-white border-gray-100',
+            EM_ANDAMENTO: 'bg-amber-50 border-amber-100',
+            CONCLUIDO: 'bg-emerald-50 border-emerald-100',
+            CANCELADO: 'bg-red-50 border-red-100',
+          }[ag.status] || 'bg-white border-gray-100';
                       return (
                         <button
                           key={ag.id}
@@ -529,20 +519,17 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                             event.stopPropagation();
                             openEditModal(ag);
                           }}
-                          className="w-full text-left rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition hover:border-primary-200 hover:bg-primary-50/40 dark:border-white/12 dark:bg-white/5"
+              className={`w-full text-left rounded-xl px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-sm transition hover:border-primary-200 hover:bg-primary-50/40 dark:border-white/12 dark:bg-white/5 ${cardTone}`}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)]">
+                            <span className="font-semibold text-gray-900 dark:text-[var(--text-primary)]">
                               {ag.startTime ? `${ag.startTime}${ag.endTime ? ` - ${ag.endTime}` : ''}` : 'Dia todo'}
                             </span>
-                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusTone}`}>
-                              {statusLabel}
-                      </span>
                     </div>
                           <p className="mt-1 text-[13px] font-semibold truncate text-gray-900 dark:text-[var(--text-primary)]">
                             {ag.customer.name}
                           </p>
-                  </button>
+                    </button>
                       );
                     })}
             </div>

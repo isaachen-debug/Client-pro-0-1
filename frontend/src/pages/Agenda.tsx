@@ -97,7 +97,7 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
 
         {viewMode === 'month' && (
         <SurfaceCard className="hidden md:block">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 owner-grid-tight">
             {quickFilters.map((filter) => (
               <button
                 key={filter}

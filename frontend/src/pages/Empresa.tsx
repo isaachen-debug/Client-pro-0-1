@@ -234,7 +234,7 @@ const Empresa = () => {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr] owner-grid-tight">
         <SurfaceCard className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {['Portal do cliente', 'Pop-up “Sua empresa parceira”', 'Links oficiais'].map((tag) => (
@@ -263,7 +263,7 @@ const Empresa = () => {
               <p className="text-xl font-bold text-slate-900">{user?.companyName || user?.name || 'Adicione sua marca'}</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="grid grid-cols-3 gap-3 text-center owner-grid-tight">
             <div className="rounded-2xl bg-white border border-slate-100 px-3 py-2">
               <p className="text-[10px] uppercase tracking-wide text-slate-500">Links ativos</p>
               <p className="text-2xl font-bold text-slate-900">{reviewLinkPreview.filter((link) => link.url).length}</p>
@@ -283,7 +283,7 @@ const Empresa = () => {
         </SurfaceCard>
         </div>
 
-      <section className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+      <section className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr] owner-grid-tight">
         <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-500">
@@ -350,7 +350,7 @@ const Empresa = () => {
         </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+      <section className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr] owner-grid-tight">
         <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -432,7 +432,7 @@ const Empresa = () => {
         )}
 
         <form onSubmit={handleShowcaseSave} className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 owner-grid-tight">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Título principal</label>
               <input
@@ -544,7 +544,7 @@ const Empresa = () => {
 
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Links e redes</p>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2 owner-grid-tight">
               {REVIEW_LINKS.map((field) => (
                 <div key={field.key} className="space-y-1">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{field.label}</label>

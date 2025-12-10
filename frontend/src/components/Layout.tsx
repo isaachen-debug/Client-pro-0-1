@@ -1218,8 +1218,8 @@ const Layout = () => {
                     <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
                       <Bot size={16} />
                     </div>
-                    <span className="text-sm font-semibold">Abrir Agent</span>
-                    </button>
+                    <span className="text-sm font-semibold hidden sm:inline">Abrir Agent</span>
+                  </button>
                   </div>
                   <button
                     type="button"
@@ -1520,7 +1520,7 @@ const Layout = () => {
       {agentOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
           <div className="h-px" onClick={() => setAgentOpen(false)} />
-          <div className="rounded-t-[24px] bg-white animate-sheet-up max-h-[99vh] h-[98vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200">
+          <div className="rounded-t-[24px] bg-white animate-sheet-up max-h-[90vh] sm:max-h-[92vh] h-[90vh] sm:h-[92vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200 overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-accent-700 text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">

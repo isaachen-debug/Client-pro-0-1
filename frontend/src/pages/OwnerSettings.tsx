@@ -73,7 +73,7 @@ const OwnerSettings = () => {
         subtitle="Configurações gerais da conta e do workspace."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr] owner-grid-tight">
         <SurfaceCard className="space-y-4">
             <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl font-semibold overflow-hidden">
@@ -95,7 +95,7 @@ const OwnerSettings = () => {
               </div>
               </div>
             </div>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Link
                 to="/app/empresa"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
@@ -136,7 +136,7 @@ const OwnerSettings = () => {
         </SurfaceCard>
           </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 owner-grid-tight">
         <SurfaceCard className="space-y-3">
             <div className="flex items-center gap-2">
               <Languages size={18} className="text-primary-600" />
@@ -191,7 +191,7 @@ const OwnerSettings = () => {
         </SurfaceCard>
           </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 owner-grid-tight">
         <SurfaceCard className="space-y-4">
           <div className="flex items-center justify-between">
               <div>
@@ -203,7 +203,7 @@ const OwnerSettings = () => {
             </div>
             <StatusBadge tone="neutral">Em breve</StatusBadge>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-3 text-sm font-semibold text-primary-700 hover:bg-primary-50"

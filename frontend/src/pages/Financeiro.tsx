@@ -441,7 +441,7 @@ const Financeiro = () => {
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4 owner-grid-tight">
         <SurfaceCard className="space-y-1">
           <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Recebido</p>
           <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.revenuePaid)}</p>
@@ -531,7 +531,7 @@ const Financeiro = () => {
 
       {activeTab === 'receitas' && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4 owner-grid-tight">
             {receiptHighlightCards.map((card, index) => {
               const Icon = card.icon;
               const isAccentCard = index % 2 === 1;
@@ -626,7 +626,7 @@ const Financeiro = () => {
                 </div>
 
                 {/* Desktop table */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden md:block owner-table-wrap">
                   <table className="min-w-full text-sm">
                     <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
                       <tr>
@@ -697,7 +697,7 @@ const Financeiro = () => {
 
       {activeTab === 'custos' && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4 owner-grid-tight">
             {costOverviewCards.map((card, index) => (
               <div
                 key={card.label}
@@ -769,7 +769,7 @@ const Financeiro = () => {
               </div>
             ) : helperCostData ? (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 owner-grid-tight">
                   {[
                     { label: 'Receita bruta', value: usdFormatter.format(helperCostData.summary.revenueTotal) },
                     { label: 'Paga helper', value: usdFormatter.format(helperCostData.summary.payoutTotal) },
@@ -786,7 +786,7 @@ const Financeiro = () => {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-[0.9fr,1.1fr] gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[0.9fr,1.1fr] gap-6 owner-grid-tight">
                   <div className="space-y-4">
                     <div className="border border-gray-100 rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -800,7 +800,7 @@ const Financeiro = () => {
                       <p className="text-xs text-gray-500">
                         Defina valor fixo ou percentual para as próximas agendas desta helper.
                       </p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-[11px] uppercase text-gray-500 font-semibold">Modo</label>
                           <select
@@ -855,7 +855,7 @@ const Financeiro = () => {
 
                     <div className="border border-gray-100 rounded-2xl p-4 space-y-3">
                       <p className="text-sm font-semibold text-gray-900">Registrar gasto rápido</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-[11px] uppercase text-gray-500 font-semibold">Categoria</label>
                           <select
@@ -911,7 +911,7 @@ const Financeiro = () => {
                         </span>
                       </div>
                       {helperCostData.expenses.items.length ? (
-                        <div className="overflow-x-auto">
+                        <div className="owner-table-wrap">
                           <table className="min-w-full text-sm">
                             <thead>
                               <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
