@@ -16,18 +16,26 @@ export const PageHeader = ({
   subtitle,
   actions,
   className = '',
+  subtitleHiddenOnMobile = false,
 }: {
   label?: string;
   title: string;
   subtitle?: string;
   actions?: ReactNode;
   className?: string;
+  subtitleHiddenOnMobile?: boolean;
 }) => (
   <div className={`space-y-2 mt-3 md:mt-4 ${className}`}>
     <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">{title}</h1>
-        {subtitle && <p className="text-sm text-slate-500 max-w-2xl">{subtitle}</p>}
+        {subtitle && (
+          <p
+            className={`text-sm text-slate-500 max-w-2xl ${subtitleHiddenOnMobile ? 'hidden sm:block' : ''}`}
+          >
+            {subtitle}
+          </p>
+        )}
       </div>
       {actions}
     </div>

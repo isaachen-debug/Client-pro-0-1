@@ -636,19 +636,21 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     <>
       <div className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Agenda</p>
-            <h1 className="text-xl md:text-3xl font-semibold text-slate-900">Agenda semanal</h1>
-            <p className="hidden md:block text-sm text-slate-600">Acompanhe os serviços desta semana em um só lugar.</p>
-          </div>
-          <div className="flex items-center gap-2">
+          {!embedded && (
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Agenda</p>
+              <h1 className="text-xl md:text-3xl font-semibold text-slate-900">Agenda semanal</h1>
+              <p className="hidden md:block text-sm text-slate-600">Acompanhe os serviços desta semana em um só lugar.</p>
+            </div>
+          )}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={() => setCurrentDate(new Date())}
               className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
             >
               Hoje
             </button>
-            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm w-full sm:w-auto justify-between">
               <button
                 onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
                 className="p-2 hover:bg-slate-100 rounded-lg transition"
@@ -666,9 +668,11 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </button>
             </div>
           </div>
-          </div>
+        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div
+          className={`flex flex-wrap items-center gap-2 ${embedded ? 'hidden md:flex' : ''}`}
+        >
           <div className="hidden md:inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-sm">
             <CalendarIcon size={16} className="text-primary-500" />
             Semana atual · {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM yyyy', { locale: ptBR })}

@@ -20,7 +20,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader, SurfaceCard } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
+import { pageGutters } from '../styles/uiTokens';
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
@@ -572,7 +572,7 @@ const Clientes = () => {
             </SurfaceCard>
 
             <SurfaceCard className="space-y-3">
-              <p className={labelSm}>Ações rápidas</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Ações rápidas</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={handleExportClientes}

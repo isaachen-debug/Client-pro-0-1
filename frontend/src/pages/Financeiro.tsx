@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, DollarSign, Clock, CheckCircle, TrendingUp, Loader2 } from 'lucide-react';
 import { teamApi, transactionsApi } from '../services/api';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
+import { pageGutters } from '../styles/uiTokens';
 import type { HelperCostSummary, HelperPayoutMode, Transaction, User } from '../types';
 import { format } from 'date-fns';
 
@@ -443,22 +443,22 @@ const Financeiro = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         <SurfaceCard className="space-y-1">
-          <p className={labelSm}>Recebido</p>
+          <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Recebido</p>
           <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.revenuePaid)}</p>
           <p className="text-xs text-slate-500">{summary.paidCount} pagamentos recebidos</p>
         </SurfaceCard>
         <SurfaceCard className="space-y-1">
-          <p className={labelSm}>Pendente</p>
+          <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Pendente</p>
           <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.revenuePending)}</p>
           <p className="text-xs text-slate-500">{summary.pendingCount} aguardando pagamento</p>
         </SurfaceCard>
         <SurfaceCard className="space-y-1">
-          <p className={labelSm}>Total monitorado</p>
+          <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Total monitorado</p>
           <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.total)}</p>
           <p className="text-xs text-slate-500">Receita + pendente no período</p>
         </SurfaceCard>
         <SurfaceCard className="space-y-1">
-          <p className={labelSm}>Ticket médio</p>
+          <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Ticket médio</p>
           <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.ticket)}</p>
           <p className="text-xs text-slate-500">Por serviço concluído</p>
         </SurfaceCard>

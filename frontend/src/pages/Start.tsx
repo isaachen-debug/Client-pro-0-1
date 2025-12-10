@@ -6,7 +6,7 @@ import { ptBR } from 'date-fns/locale';
 import { PlayCircle, CheckCircle2, MapPin, RefreshCw, XCircle, Phone, Navigation2, ChevronRight } from 'lucide-react';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
+import { pageGutters } from '../styles/uiTokens';
 import { useNavigate } from 'react-router-dom';
 
 const statusLabels: Record<string, string> = {
@@ -206,6 +206,7 @@ const Start = () => {
         label="HOJE"
         title="Today"
         subtitle="Serviços do dia, em tempo real."
+        subtitleHiddenOnMobile
         actions={
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-slate-700">{selectedDateLabel}</span>
@@ -265,13 +266,13 @@ const Start = () => {
         <SurfaceCard className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className={labelSm}>Resumo do dia</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    Acompanhe os serviços de hoje em tempo real.
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {summary.totalAppointmentsToday} agendados · {summary.inProgressCount} em andamento · {summary.completedCount} concluídos
-                  </p>
+              <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Resumo do dia</p>
+              <p className="text-lg font-semibold text-slate-900 hidden sm:block">
+                Acompanhe os serviços de hoje em tempo real.
+              </p>
+              <p className="text-sm text-slate-500 hidden sm:block">
+                {summary.totalAppointmentsToday} agendados · {summary.inProgressCount} em andamento · {summary.completedCount} concluídos
+              </p>
             </div>
             <StatusBadge tone="primary">{selectedDateLabel}</StatusBadge>
           </div>
@@ -299,7 +300,7 @@ const Start = () => {
         <SurfaceCard className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className={labelSm}>Ações</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Ações</p>
               <p className="text-sm text-slate-600">Gerencie o dia em um toque</p>
             </div>
             <button
@@ -318,7 +319,7 @@ const Start = () => {
       <SurfaceCard className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <p className={labelSm}>Serviços do dia</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Serviços do dia</p>
             <p className="text-sm text-slate-600">
               Organize a rota, acompanhe status e abra mapas rapidamente.
             </p>
@@ -562,7 +563,7 @@ const Start = () => {
 const StatCard = ({ label, subtitle, value }: { label: string; subtitle?: string; value: string | number }) => (
   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
     <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">{label}</p>
-    {subtitle && <p className="text-xs text-slate-500 mt-1">{subtitle}</p>}
+    {subtitle && <p className="text-xs text-slate-500 mt-1 hidden sm:block">{subtitle}</p>}
     <p className="text-lg font-semibold text-slate-900 mt-1">{value}</p>
   </div>
 );

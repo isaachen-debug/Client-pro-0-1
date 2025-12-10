@@ -60,9 +60,10 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
     <div className={embedded ? 'space-y-6' : `${pageGutters}`}>
       {!embedded && (
         <PageHeader
-          label="AGENDA"
           title="Schedule"
           subtitle="Planeje sua semana e organize a rota da equipe."
+          subtitleHiddenOnMobile
+          className="hidden sm:block"
         />
       )}
 
@@ -94,7 +95,7 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
       </SurfaceCard>
 
       {viewMode === 'month' && (
-        <SurfaceCard>
+        <SurfaceCard className="hidden md:block">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {quickFilters.map((filter) => (
               <button

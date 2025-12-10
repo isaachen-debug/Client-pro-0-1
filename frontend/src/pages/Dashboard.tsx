@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DollarSign, Clock, Calendar, BellRing, X as CloseIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { dashboardApi, transactionsApi } from '../services/api';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
+import { pageGutters } from '../styles/uiTokens';
 import { DashboardOverview, TransactionStatus } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -135,17 +135,19 @@ const Dashboard = () => {
 
   return (
     <div className={`${pageGutters} max-w-6xl mx-auto`}>
-      <PageHeader
-        label="DASHBOARD"
-        title="Dashboard"
-        subtitle="Resumo da sua empresa hoje."
-        actions={
-          <div className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-3 py-2 shadow-sm text-sm font-semibold text-slate-700">
-            <Calendar size={16} className="text-primary-600" />
-            {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
-          </div>
-        }
-      />
+      <div className="hidden sm:block">
+        <PageHeader
+          title="Dashboard"
+          subtitle="Resumo da sua empresa hoje."
+          subtitleHiddenOnMobile
+          actions={
+            <div className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-3 py-2 shadow-sm text-sm font-semibold text-slate-700">
+              <Calendar size={16} className="text-primary-600" />
+              {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
+            </div>
+          }
+        />
+      </div>
 
       {shouldShowPushPrompt && (
         <SurfaceCard className="border-dashed border-slate-200 bg-white/90">
@@ -190,10 +192,10 @@ const Dashboard = () => {
       )}
 
       <div className="space-y-4 md:space-y-6">
-        <SurfaceCard className="rounded-[28px] bg-gradient-to-br from-white via-slate-50 to-slate-100 border-slate-100 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+        <SurfaceCard className="rounded-[28px] bg-gradient-to-br from-primary-50 via-white to-accent-50 border-slate-100 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.3em] font-semibold text-slate-500">Receita deste mês</p>
+              <p className="text-[11px] uppercase tracking-[0.3em] font-semibold text-slate-600">Receita deste mês</p>
               <p className="text-4xl font-bold leading-tight text-slate-900">{formatCurrency(data.totalRevenueMonth)}</p>
               <p className="text-sm text-slate-600">Total confirmado até agora.</p>
             </div>
@@ -246,7 +248,7 @@ const Dashboard = () => {
           <SurfaceCard className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className={labelSm}>Financeiro</p>
+                <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Financeiro</p>
                 <p className="text-lg font-semibold text-slate-900">Status rápido</p>
               </div>
               <button
@@ -280,7 +282,7 @@ const Dashboard = () => {
           <SurfaceCard className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className={labelSm}>Operação de hoje</p>
+                <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Operação de hoje</p>
                 <p className="text-lg font-semibold text-slate-900">Serviços e andamento</p>
               </div>
               <button
@@ -353,7 +355,7 @@ const Dashboard = () => {
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className={labelSm}>Receita</p>
+                  <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Receita</p>
                   <p className="text-lg font-semibold text-slate-900">Semanas do mês</p>
                 </div>
               </div>
@@ -383,7 +385,7 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={labelSm}>Clientes concluídos</p>
+                  <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Clientes concluídos</p>
                   <p className="text-sm text-slate-600">Últimos serviços</p>
                 </div>
                 <StatusBadge tone="neutral">{completedList.length}</StatusBadge>
