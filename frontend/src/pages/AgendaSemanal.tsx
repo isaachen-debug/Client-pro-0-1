@@ -376,21 +376,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     return filtered;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'AGENDADO':
-        return '#3b82f6';
-      case 'EM_ANDAMENTO':
-        return '#2563eb';
-      case 'CONCLUIDO':
-        return '#22c55e';
-      case 'CANCELADO':
-        return '#ef4444';
-      default:
-        return '#9ca3af';
-    }
-  };
-
   const statusBg: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-blue-50',
     EM_ANDAMENTO: 'bg-amber-50',

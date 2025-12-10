@@ -37,7 +37,6 @@ const exploreCards = [
 const Explore = () => {
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState<DashboardOverview | null>(null);
-  const [metricsError, setMetricsError] = useState(false);
 
   useEffect(() => {
     const loadMetrics = async () => {
@@ -46,7 +45,6 @@ const Explore = () => {
         setMetrics(data);
       } catch (err) {
         console.error('Erro ao carregar métricas do dashboard', err);
-        setMetricsError(true);
       }
     };
     loadMetrics();
