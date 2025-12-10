@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 import CreateModal, { CreateFormState } from '../components/appointments/CreateModal';
 import EditModal from '../components/appointments/EditModal';
+import { heroOuter, heroInner, heroLabel, heroTitle, heroDescription, chipPrimary, ctaSecondary } from '../styles/uiTokens';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
 
@@ -386,16 +387,16 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   };
 
   const statusBg: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-[#d7ecff]',
-    EM_ANDAMENTO: 'bg-[#ffe6bf]',
-    CONCLUIDO: 'bg-[#c9f1dc]',
-    CANCELADO: 'bg-[#ffd9df]',
+    AGENDADO: 'bg-blue-50',
+    EM_ANDAMENTO: 'bg-amber-50',
+    CONCLUIDO: 'bg-emerald-50',
+    CANCELADO: 'bg-red-50',
   };
   const statusText: Record<AppointmentStatus, string> = {
-    AGENDADO: 'text-[#0a3f70]',
-    EM_ANDAMENTO: 'text-[#704400]',
-    CONCLUIDO: 'text-[#0c5a34]',
-    CANCELADO: 'text-[#7a0f24]',
+    AGENDADO: 'text-blue-700',
+    EM_ANDAMENTO: 'text-amber-700',
+    CONCLUIDO: 'text-emerald-700',
+    CANCELADO: 'text-red-700',
   };
 
   const startHour = 0;
@@ -498,7 +499,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </div>
 
               <div className="space-y-2">
-              {dayAgendamentos.length === 0 && <p className="text-xs text-gray-400">Nenhum evento · Toque em +</p>}
+              {dayAgendamentos.length === 0 && <p className="text-xs text-gray-400">Nenhum atendimento encontrado.</p>}
               {dayAgendamentos
                     .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
                     .map((ag) => (
@@ -637,29 +638,30 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
       <div className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
-            <h1 className="text-xl md:text-3xl font-bold text-gray-900">Agenda semanal</h1>
-            <p className="hidden md:block text-sm text-gray-600">Visual estilo Google Calendar; deslize para ver horários.</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Agenda</p>
+            <h1 className="text-xl md:text-3xl font-semibold text-slate-900">Agenda semanal</h1>
+            <p className="hidden md:block text-sm text-slate-600">Acompanhe os serviços desta semana em um só lugar.</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+              className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
             >
               Hoje
             </button>
-            <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2 py-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm">
               <button
                 onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
               >
                 <ChevronLeft size={18} />
               </button>
-              <span className="text-sm font-medium text-gray-800 min-w-[140px] text-center">
+              <span className="text-sm font-medium text-slate-800 min-w-[140px] text-center">
                 {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM', { locale: ptBR })}
               </span>
               <button
                 onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
               >
                 <ChevronRight size={18} />
               </button>
@@ -668,21 +670,21 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
           </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="hidden md:inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs md:text-sm font-semibold text-gray-700 shadow-sm">
+          <div className="hidden md:inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-sm">
             <CalendarIcon size={16} className="text-primary-500" />
             Semana atual · {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM yyyy', { locale: ptBR })}
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              { key: 'todos', label: 'Todos', color: 'bg-gray-900 text-white', alt: 'bg-gray-100 text-gray-700 hover:bg-gray-200' },
+              { key: 'todos', label: 'Todos', color: 'bg-slate-900 text-white', alt: 'bg-slate-100 text-slate-700 hover:bg-slate-200' },
               { key: 'AGENDADO', label: 'Agendado', color: 'bg-blue-600 text-white', alt: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
-              { key: 'EM_ANDAMENTO', label: 'Em andamento', color: 'bg-indigo-600 text-white', alt: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
-              { key: 'CONCLUIDO', label: 'Concluído', color: 'bg-green-600 text-white', alt: 'bg-green-50 text-green-700 hover:bg-green-100' },
+              { key: 'EM_ANDAMENTO', label: 'Em andamento', color: 'bg-amber-500 text-white', alt: 'bg-amber-50 text-amber-700 hover:bg-amber-100' },
+              { key: 'CONCLUIDO', label: 'Concluído', color: 'bg-emerald-600 text-white', alt: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
             ].map((item) => (
               <button
                 key={item.key}
                 onClick={() => setFilter(item.key as any)}
-                className={`px-3 py-2 rounded-xl text-sm font-semibold transition ${
+                className={`px-3 py-2 rounded-full text-sm font-semibold transition ${
                   filter === item.key ? item.color : item.alt
                 }`}
               >
@@ -692,7 +694,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
           </div>
           <button
             onClick={() => handleDayCardClick(currentDate)}
-            className="ml-auto inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-primary-700 transition"
+            className="ml-auto inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-full shadow-sm hover:bg-primary-700 transition"
           >
             Novo agendamento
           </button>
@@ -756,7 +758,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     );
   }
 
-  const containerClasses = embedded ? 'space-y-6' : 'p-4 md:p-8 space-y-6';
+  const containerClasses = embedded ? 'space-y-6' : 'px-4 md:px-8 pt-0 pb-4 space-y-6';
 
   return <div className={containerClasses}>{pageSections}</div>;
 };

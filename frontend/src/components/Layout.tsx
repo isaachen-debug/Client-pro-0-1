@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  LayoutGrid,
   Users,
   Calendar,
   DollarSign,
@@ -12,6 +13,8 @@ import {
   Grid,
   Plus,
   Search,
+  Send,
+  ArrowRight,
   UserPlus,
   UserPlus2,
   ChevronDown,
@@ -35,6 +38,9 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
 import brandLogo from '../assets/brand-logo.png';
 import { QuickActionProvider, QuickActionKey } from '../contexts/QuickActionContext';
+import { agentApi } from '../services/agent';
+import { agentIntentApi } from '../services/agentIntent';
+import { StatusBadge } from './OwnerUI';
 
 const LogoMark = () => (
   <div className="w-12 h-12 rounded-3xl bg-white border border-gray-100 shadow-lg shadow-emerald-300/30 flex items-center justify-center overflow-hidden">
@@ -71,6 +77,17 @@ const Layout = () => {
   const [createTouchDelta, setCreateTouchDelta] = useState(0);
   const [launchTouchStart, setLaunchTouchStart] = useState<number | null>(null);
   const [launchTouchDelta, setLaunchTouchDelta] = useState(0);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [agentQuery, setAgentQuery] = useState('');
+  const [agentAnswer, setAgentAnswer] = useState<string | null>(null);
+  const [agentLoading, setAgentLoading] = useState(false);
+  const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
+  const [agentError, setAgentError] = useState<string | null>(null);
+  const [pendingIntent, setPendingIntent] = useState<{
+    intent: 'create_client' | 'create_appointment' | 'count_today' | 'count_tomorrow' | 'unknown';
+    summary?: string;
+    payload?: any;
+  } | null>(null);
   const quickActionHandlersRef = useRef(new Map<QuickActionKey, () => void>());
   const registerQuickAction = useCallback((key: QuickActionKey, handler: () => void) => {
     quickActionHandlersRef.current.set(key, handler);
@@ -188,8 +205,8 @@ const Layout = () => {
           type="button"
           onClick={() =>
             handleWorkspaceMenuAction(
-              undefined,
-              () => alert('Helper resources: em breve uma central de materiais para seu time.')
+              '/app/helper-resources',
+              undefined
             )
           }
           className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
@@ -198,6 +215,16 @@ const Layout = () => {
         >
           <HelpCircle size={16} />
           Helper resources
+        </button>
+        <button
+          type="button"
+          onClick={() => handleWorkspaceMenuAction('/app/apps')}
+          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+            isDarkTheme ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <LayoutGrid size={16} />
+          Apps
         </button>
       </div>
       <button
@@ -367,7 +394,7 @@ const Layout = () => {
     [quickCreateActions, quickCreateQuery],
   );
   const isDarkTheme = theme === 'dark';
-  const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2 py-1.5 space-y-1' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
+  const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2 py-1 space-y-1' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
   const mobileHeaderPanelSurface = isDarkTheme
     ? 'border border-white/12 bg-gradient-to-b from-[#090d19] to-[#04060d] shadow-[0_20px_60px_rgba(0,0,0,0.45)] text-white'
     : 'border border-gray-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,0.08)] text-gray-900';
@@ -387,6 +414,7 @@ const Layout = () => {
   const menuItems = [
     { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
     { path: '/app/start', icon: PlayCircle, labelKey: 'nav.today' },
+    { path: '/app/explore', icon: Grid, labelKey: 'nav.explore' },
     { path: '/app/clientes', icon: Users, labelKey: 'nav.clients' },
     { path: '/app/agenda', icon: Calendar, labelKey: 'nav.agenda' },
     { path: '/app/financeiro', icon: DollarSign, labelKey: 'nav.finance' },
@@ -395,6 +423,8 @@ const Layout = () => {
           { path: '/app/empresa', icon: Building2, labelKey: 'nav.company' },
           { path: '/app/team', icon: Users, labelKey: 'nav.team' },
           { path: '/app/settings', icon: SettingsIcon, labelKey: 'nav.settings' },
+          { path: '/app/helper-resources', icon: HelpCircle, labelKey: 'nav.helperResources' },
+          { path: '/app/apps', icon: LayoutGrid, labelKey: 'nav.apps' },
         ]
       : []),
     { path: '/app/profile', icon: UserCircle, labelKey: 'nav.profile' },
@@ -404,6 +434,7 @@ const Layout = () => {
     () => [
       { key: 'dashboard', label: t('nav.dashboard'), path: '/app/dashboard', icon: LayoutDashboard },
       { key: 'today', label: t('nav.today'), path: '/app/start', icon: PlayCircle },
+      { key: 'explore', label: t('nav.explore'), path: '/app/explore', icon: Grid },
       { key: 'clients', label: t('nav.clients'), path: '/app/clientes', icon: Users },
       { key: 'agenda', label: t('nav.agenda'), path: '/app/agenda', icon: Calendar },
       { key: 'finance', label: t('nav.finance'), path: '/app/financeiro', icon: DollarSign },
@@ -412,6 +443,8 @@ const Layout = () => {
             { key: 'company', label: t('nav.company'), path: '/app/empresa', icon: Building2 },
             { key: 'team', label: t('nav.team'), path: '/app/team', icon: Users },
             { key: 'settings', label: t('nav.settings'), path: '/app/settings', icon: SettingsIcon },
+            { key: 'helper-resources', label: t('nav.helperResources', { defaultValue: 'Helper resources' }), path: '/app/helper-resources', icon: HelpCircle },
+            { key: 'apps', label: t('nav.apps', { defaultValue: 'Apps' }), path: '/app/apps', icon: LayoutGrid },
           ]
         : []),
       { key: 'profile', label: t('nav.profile'), path: '/app/profile', icon: UserCircle },
@@ -505,6 +538,84 @@ const Layout = () => {
     setQuickCreateOpen(true);
   };
 
+  const handleAgentOpen = () => {
+    setAgentOpen(true);
+    setAgentAnswer(null);
+    setAgentError(null);
+    setAgentMessages([]);
+  };
+
+  const handleAgentSubmit = async (queryText?: string) => {
+    const q = (queryText ?? agentQuery).trim();
+    if (!q) {
+      setAgentAnswer('Digite uma pergunta ou escolha uma sugestão.');
+      return;
+    }
+    setAgentError(null);
+    setAgentAnswer(null);
+    setAgentLoading(true);
+    setPendingIntent(null);
+    setAgentMessages((prev) => [...prev, { role: 'user', text: q }]);
+    setAgentQuery('');
+    try {
+      const parsed = await agentIntentApi.parse(q);
+
+      if (parsed.error) {
+        setAgentError(parsed.error);
+      } else if (parsed.answer && !parsed.requiresConfirmation) {
+        // Intent de leitura executada direto (contagens)
+        setAgentMessages((prev) => [...prev, { role: 'assistant', text: parsed.answer! }]);
+        setAgentAnswer(parsed.answer);
+      } else if (parsed.requiresConfirmation) {
+        // Requer confirmação antes de executar (criações)
+        setPendingIntent({
+          intent: parsed.intent,
+          summary: parsed.summary,
+          payload: parsed.payload,
+        });
+        setAgentMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            text: parsed.summary || 'Posso executar esta ação. Deseja confirmar?',
+          },
+        ]);
+      } else {
+        // fallback texto simples
+        const answer = parsed.answer || 'Posso ajudar com clientes, agenda e financeiro.';
+        setAgentMessages((prev) => [...prev, { role: 'assistant', text: answer }]);
+        setAgentAnswer(answer);
+      }
+    } catch (error: any) {
+      console.error('Agent error', error);
+      const msg = error?.response?.data?.error || 'Não foi possível obter resposta agora.';
+      setAgentError(msg);
+    } finally {
+      setAgentLoading(false);
+    }
+  };
+
+  const handleAgentConfirm = async () => {
+    if (!pendingIntent) return;
+    setAgentLoading(true);
+    setAgentError(null);
+    try {
+      const result = await agentIntentApi.execute(pendingIntent.intent, pendingIntent.payload);
+      if (result.error) {
+        setAgentError(result.error);
+      } else if (result.answer) {
+        setAgentMessages((prev) => [...prev, { role: 'assistant', text: result.answer! }]);
+        setAgentAnswer(result.answer);
+        setPendingIntent(null);
+      }
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || 'Falha ao executar ação.';
+      setAgentError(msg);
+    } finally {
+      setAgentLoading(false);
+    }
+  };
+
   const [showProfileTip, setShowProfileTip] = useState(() => {
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('clientepro:profile-tip-dismissed') !== 'true';
@@ -553,7 +664,7 @@ const Layout = () => {
   const mobileNavItems = [
     {
       key: 'home',
-      label: 'Home',
+      label: 'Dashboard',
       path: '/app/dashboard',
       icon: LayoutDashboard,
       type: 'route' as const,
@@ -567,16 +678,17 @@ const Layout = () => {
     },
     {
       key: 'today',
-      label: 'Hoje',
+      label: 'Today',
       path: '/app/start',
       icon: PlayCircle,
       type: 'route' as const,
     },
     {
-      key: 'launch',
+      key: 'explore',
       label: 'Explore',
+      path: '/app/explore',
       icon: Grid,
-      type: 'launcher' as const,
+      type: 'route' as const,
     },
   ];
 
@@ -592,7 +704,7 @@ const Layout = () => {
 
   return (
     <QuickActionProvider value={quickActionContextValue}>
-      <div className="min-h-screen bg-gray-50 flex transition-colors duration-200">
+      <div className="min-h-screen bg-[#f6f7fb] flex transition-colors duration-200">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-72 bg-[#f8f6fb] border-r border-[#eadff8] h-screen sticky top-0">
@@ -673,7 +785,7 @@ const Layout = () => {
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="fixed inset-0 bg-black/70" onClick={() => setSidebarOpen(false)} />
           <aside className={`fixed top-0 bottom-0 left-0 right-0 z-50 overflow-y-auto ${sidebarSurfaceClass}`}>
-            <div className="px-6 pt-6 pb-8 space-y-6">
+            <div className="px-6 pt-6 pb-8 space-y-5">
               <div className="flex items-center justify-between">
                 <p className="text-lg font-semibold">Profile & Settings</p>
                 <button
@@ -687,55 +799,72 @@ const Layout = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div
-                  className={`relative w-20 h-20 rounded-full flex items-center justify-center text-2xl font-semibold overflow-hidden ${
-                    isDarkTheme ? 'bg-white text-gray-900' : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user?.name ?? 'Avatar'} className="w-full h-full object-cover" />
-                  ) : (
-                    initials
-                  )}
-                  <span
-                    className={`absolute bottom-2 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 ${
-                      isDarkTheme ? 'border-[#05070c]' : 'border-white'
+              <div
+                className={`rounded-[24px] border ${
+                  isDarkTheme ? 'border-white/12 bg-white/5' : 'border-gray-200 bg-white'
+                } shadow-[0_16px_40px_rgba(15,23,42,0.08)] p-4 space-y-4`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`relative w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-semibold overflow-hidden ${
+                      isDarkTheme ? 'bg-white text-gray-900' : 'bg-gray-100 text-gray-900'
                     }`}
-                  />
+                  >
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user?.name ?? 'Avatar'} className="w-full h-full object-cover" />
+                    ) : (
+                      initials
+                    )}
+                    <span
+                      className={`absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 ${
+                        isDarkTheme ? 'border-[#05070c]' : 'border-white'
+                      }`}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-base font-semibold">{user?.name || 'Owner'}</p>
+                    <p className={isDarkTheme ? 'text-white/60 text-sm' : 'text-gray-500 text-sm'}>{user?.email}</p>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-1">
+                        Online
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 text-primary-700 border border-primary-100 px-2 py-1">
+                        Plano Starter
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xl font-semibold">{user?.name || 'Owner'}</p>
-                  <p className={isDarkTheme ? 'text-white/60 text-sm' : 'text-gray-500 text-sm'}>{user?.email}</p>
-                </div>
-                <div className="flex items-center gap-3 w-full">
+
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       navigate('/app/profile');
                       setSidebarOpen(false);
                     }}
-                    className={`flex-1 rounded-2xl py-2 font-semibold text-sm border ${
-                      isDarkTheme ? 'border-white/15 bg-white/5 text-white' : 'border-gray-200 bg-gray-100 text-gray-900'
+                    className={`w-full rounded-2xl py-2 font-semibold text-sm flex items-center justify-center gap-2 ${
+                      isDarkTheme ? 'bg-white/10 border border-white/15 text-white' : 'bg-gray-900 text-white'
                     }`}
                   >
                     Edit profile
                   </button>
-                  <div className="flex-1">
-                    <button
-                      type="button"
-                      onClick={() => alert('Em breve você vai acompanhar resumos automáticos do time por aqui.')}
-                      className={`w-full rounded-2xl py-2 font-semibold text-sm flex items-center justify-center gap-2 border ${
-                        isDarkTheme ? 'border-white/15 bg-white/5 text-white' : 'border-gray-200 bg-gray-100 text-gray-900'
-                      }`}
-                    >
-                      <Bot size={16} /> AI StandUp
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => alert('Em breve você vai acompanhar resumos automáticos do time por aqui.')}
+                    className={`w-full rounded-2xl py-2 font-semibold text-sm flex items-center justify-center gap-2 border ${
+                      isDarkTheme ? 'border-white/15 bg-white/5 text-white' : 'border-gray-200 bg-white text-gray-900'
+                    }`}
+                  >
+                    <Bot size={16} /> AI StandUp
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-1 text-sm">
+              <div
+                className={`rounded-[24px] border ${
+                  isDarkTheme ? 'border-white/12 bg-white/5' : 'border-gray-200 bg-white'
+                } shadow-[0_16px_40px_rgba(15,23,42,0.08)] p-4 space-y-2`}
+              >
                 {[
                   { label: 'My Calendar', icon: CalendarDays, path: '/app/agenda' },
                   { label: 'Notification settings', icon: Bell },
@@ -752,60 +881,62 @@ const Layout = () => {
                         }
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl transition ${
-                        isDarkTheme ? 'hover:bg-white/5' : 'hover:bg-gray-100 text-gray-800'
+                        isDarkTheme ? 'hover:bg-white/5 text-white/80' : 'hover:bg-gray-50 text-gray-800'
                       }`}
                     >
                       <Icon size={18} className={isDarkTheme ? 'text-white/70' : 'text-gray-500'} />
-                      <span className="text-base">{item.label}</span>
+                      <span className="text-base font-semibold">{item.label}</span>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="space-y-2 text-sm">
-                <p className={`text-xs uppercase tracking-wide ${isDarkTheme ? 'text-white/40' : 'text-gray-500'}`}>General info</p>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span className={isDarkTheme ? 'text-white' : 'text-gray-900'}>Online</span>
-                </div>
-                <button
-                  type="button"
-                  className={`flex items-center gap-2 ${isDarkTheme ? 'text-white/80' : 'text-gray-600'}`}
-                  onClick={() => {
-                    if (user?.email) {
-                      navigator.clipboard?.writeText(user.email);
-                    }
-                  }}
-                >
-                  <Mail size={16} /> {user?.email || 'email@clientpro.com'}
-                </button>
-                <div className={`flex items-center gap-2 ${isDarkTheme ? 'text-white/80' : 'text-gray-600'}`}>
-                  <Star size={16} /> Favorite
-                </div>
-              </div>
-
-              <div className="space-y-3 text-sm">
-                <p className={`text-xs uppercase tracking-wide ${isDarkTheme ? 'text-white/40' : 'text-gray-500'}`}>Plans</p>
+              <div className="grid gap-3 md:grid-cols-2">
                 <div
-                  className={`rounded-2xl p-3 border ${
-                    isDarkTheme ? 'border-white/10 bg-white/5 text-white' : 'border-gray-200 bg-gray-50 text-gray-900'
-                  }`}
+                  className={`rounded-[20px] border ${
+                    isDarkTheme ? 'border-white/12 bg-white/5' : 'border-gray-200 bg-white'
+                  } shadow-[0_16px_40px_rgba(15,23,42,0.06)] p-4 space-y-2`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">General info</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span className={isDarkTheme ? 'text-white' : 'text-gray-900'}>Online</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 text-sm ${isDarkTheme ? 'text-white/80' : 'text-gray-700'}`}
+                    onClick={() => {
+                      if (user?.email) navigator.clipboard?.writeText(user.email);
+                    }}
+                  >
+                    <Mail size={16} /> {user?.email || 'email@clientpro.com'}
+                  </button>
+                  <div className={`flex items-center gap-2 text-sm ${isDarkTheme ? 'text-white/80' : 'text-gray-700'}`}>
+                    <Star size={16} /> Favorite
+                  </div>
+                </div>
+
+                <div
+                  className={`rounded-[20px] border ${
+                    isDarkTheme ? 'border-white/12 bg-white/5' : 'border-gray-200 bg-white'
+                  } shadow-[0_16px_40px_rgba(15,23,42,0.06)] p-4 space-y-3`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Plano</p>
                       <p className="text-sm font-semibold">Starter</p>
-                      <p className="text-xs opacity-70">Até 50 Clients ativos</p>
+                      <p className="text-xs text-gray-500">Até 50 Clients ativos</p>
                     </div>
-                    <span className="text-xs font-semibold text-primary-300">Plano atual</span>
+                    <StatusBadge tone="primary" className="text-xs">Plano atual</StatusBadge>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/app/plans')}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl bg-primary-600 text-white text-sm font-semibold shadow-sm hover:bg-primary-700 transition"
+                  >
+                    Ver planos e upgrades
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/app/plans')}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl border border-primary-200 text-sm font-semibold text-primary-600 hover:bg-primary-50 transition"
-                >
-                  Ver planos e upgrades
-                </button>
               </div>
 
             </div>
@@ -819,7 +950,7 @@ const Layout = () => {
         <header className={mobileHeaderContainerClass} style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div
             className={`px-4 transition-all duration-300 ${
-              mobileHeaderCondensed ? 'pt-2 pb-2' : mobileWorkspaceExpanded ? 'pt-4 pb-6' : 'pt-4 pb-4'
+              mobileHeaderCondensed ? 'pt-1 pb-1' : mobileWorkspaceExpanded ? 'pt-3 pb-4' : 'pt-3 pb-3'
             }`}
           >
             {mobileHeaderCondensed ? (
@@ -860,11 +991,13 @@ const Layout = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => alert('Agent em breve')}
-                    className="w-9 h-9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center dark:bg-white/10 dark:border-white/15 transition-all duration-200"
+                    onClick={handleAgentOpen}
+                    className="w-12 h-12 bg-gray-100 border border-gray-200 text-gray-900 rounded-2xl flex items-center justify-center transition-all duration-200"
                     aria-label="Abrir Agent"
                   >
-                    <Bot size={16} className={isDarkTheme ? 'text-white/80' : 'text-gray-700'} />
+                  <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
+                    <Bot size={18} />
+                  </div>
                   </button>
                   <button
                     type="button"
@@ -929,13 +1062,14 @@ const Layout = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => alert('Agent em breve')}
-                    className={`w-12 h-12 ${mobileIconButtonClass} transition-all duration-200`}
+                    onClick={handleAgentOpen}
+                    className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-2xl border bg-white border-gray-200 text-gray-900 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
                     aria-label="Abrir Agent"
                   >
-                    <div className="w-9 h-9 rounded-2xl flex items-center justify-center overflow-hidden bg-white/80 border border-white/40">
-                      <Bot size={18} className={isDarkTheme ? 'text-white' : 'text-gray-900'} />
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
+                      <Bot size={16} />
                     </div>
+                    <span className="text-sm font-semibold">Abrir Agent</span>
                   </button>
                   <button
                     type="button"
@@ -949,20 +1083,6 @@ const Layout = () => {
                 </div>
                 {mobileWorkspaceExpanded && (
                   <>
-                    <div className="mt-3 flex items-center justify-end">
-                      <button
-                        type="button"
-                        onClick={() => alert('Agent em breve')}
-                        className={`w-full max-w-[220px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl border ${
-                          isDarkTheme
-                            ? 'bg-white/10 border-white/15 text-white hover:bg-white/15'
-                            : 'bg-white border-gray-200 text-gray-900 hover:shadow-md'
-                        } transition-all duration-200 hover:-translate-y-0.5`}
-                      >
-                        <Bot size={16} />
-                        <span className="text-sm font-semibold">Abrir Agent</span>
-                      </button>
-                    </div>
                     <div className="mt-3">
                       <div className={mobileInputWrapperClass}>
                         <Search size={16} className={mobileSecondaryTextClass} />
@@ -1248,10 +1368,161 @@ const Layout = () => {
           )}
         </>
       )}
+      {agentOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+          <div className="flex-1" onClick={() => setAgentOpen(false)} />
+          <div className="rounded-t-[30px] bg-white animate-sheet-up max-h-[92vh] h-[88vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-accent-700 text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
+                  <Bot size={20} />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">
+                    Clean Up Agent
+                  </p>
+                  <p className="text-base font-semibold text-slate-900">
+                    Pergunte sobre clientes, agenda e financeiro
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAgentOpen(false)}
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                aria-label="Fechar agent"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-5 pt-4 pb-3">
+              <div className="rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] px-4 py-4 text-white flex items-center gap-3 shadow-[0_18px_50px_rgba(34,197,94,0.32)]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-lg font-semibold">
+                  {user?.companyName?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'C'}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold truncate">
+                    {user?.companyName || user?.name || 'Workspace'}
+                  </span>
+                  <span className="text-xs text-white/80">Assistente focado no seu negócio</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+      {agentMessages.length === 0 && !agentError && !agentLoading && (
+                <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 mb-2">
+                    Sugestões
+                  </p>
+                  <div className="grid gap-2">
+                    {[
+                      'Quais clientes têm agendamentos esta semana?',
+                      'Criar um agendamento amanhã às 10h',
+                      'Qual status das cobranças deste mês?',
+                      'Mostrar agendamentos pendentes para hoje',
+                    ].map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => handleAgentSubmit(item)}
+                        className="w-full text-left px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold text-slate-700 flex items-center gap-2"
+                      >
+                        <span className="text-slate-300 text-lg leading-none">→</span>
+                        <span className="truncate">{item}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/60 p-3 min-h-[150px]">
+                {agentMessages.map((msg, idx) => (
+                  <div
+                    key={`${msg.role}-${idx}`}
+                    className={`rounded-2xl px-3 py-2 text-sm ${
+                      msg.role === 'user'
+                        ? 'bg-white text-slate-900 border border-emerald-100 shadow-sm'
+                        : 'bg-gradient-to-r from-primary-50 via-white to-accent-50 text-slate-900 border border-slate-100 shadow-sm'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                ))}
+                {agentLoading && <div className="text-sm text-slate-500 px-1">Pensando…</div>}
+                {agentError && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {agentError}
+                  </div>
+                )}
+                {pendingIntent && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 space-y-2">
+                    <div>{pendingIntent.summary || 'Confirmar esta ação?'}</div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAgentConfirm}
+                        className="px-3 py-1.5 rounded-full bg-emerald-600 text-white text-sm font-semibold disabled:opacity-60"
+                        disabled={agentLoading}
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingIntent(null)}
+                        className="px-3 py-1.5 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                        disabled={agentLoading}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!agentLoading && agentMessages.length === 0 && !agentError && (
+                  <div className="text-sm text-slate-500">Digite ou escolha uma sugestão para começar.</div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-auto px-5 pt-3 pb-5 border-t border-slate-100 bg-white">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAgentSubmit();
+                }}
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 shadow-sm"
+              >
+                <input
+                  type="text"
+                  placeholder="Pergunte algo para o Clean Up Agent"
+                  value={agentQuery}
+                  onChange={(e) => setAgentQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAgentSubmit();
+                    }
+                  }}
+                  className="flex-1 border-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-white text-sm disabled:opacity-40 transition hover:bg-primary-700"
+                  aria-label="Enviar"
+                >
+                  <Send size={16} />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </QuickActionProvider>
   );
 };
 
 export default Layout;
+
 

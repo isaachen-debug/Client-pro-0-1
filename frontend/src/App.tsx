@@ -10,6 +10,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Invoice from './pages/Invoice';
+import Explore from './pages/Explore';
+import HelperResources from './pages/HelperResources';
+import Apps from './pages/Apps';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
@@ -47,6 +50,7 @@ function App() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="start" element={<Start />} />
+              <Route path="explore" element={<Explore />} />
               <Route path="clientes" element={<Clientes />} />
               <Route path="agenda" element={<Agenda />} />
               <Route path="semana" element={<Agenda initialMode="week" />} />
@@ -56,6 +60,8 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<OwnerSettings />} />
               <Route path="team" element={<Team />} />
+              <Route path="apps" element={<Apps />} />
+              <Route path="helper-resources" element={<HelperResources />} />
               <Route path="invoice/:id" element={<Invoice />} />
             </Route>
 

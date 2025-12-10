@@ -16,6 +16,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "openai": "^4.55.3",
     "@prisma/client": "^5.7.0",
     "@types/multer": "^2.0.0",
     "axios": "^1.13.2",

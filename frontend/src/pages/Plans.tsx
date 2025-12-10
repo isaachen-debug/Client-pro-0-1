@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Crown, Info, Sparkles, Users, Bell, Shield, ArrowRight } from 'lucide-react';
 import { plans, formatPrice, planFeatures, PlanId, localPlanStorageKey } from '../constants/plans';
+import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
+import { pageGutters, labelSm } from '../styles/uiTokens';
 
 const badgeColors: Record<PlanId, string> = {
   free: 'text-emerald-600 bg-emerald-50 border border-emerald-100',
@@ -27,27 +29,30 @@ const Plans = () => {
   const currentPlanData = useMemo(() => plans.find((p) => p.id === currentPlan) ?? plans[0], [currentPlan]);
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-6xl mx-auto">
-      <header className="rounded-[28px] border border-gray-100 bg-gradient-to-br from-emerald-50 via-white to-indigo-50 p-5 md:p-7 shadow-[0_25px_60px_rgba(15,23,42,0.08)]">
+    <div className={`${pageGutters} max-w-6xl mx-auto space-y-6`}>
+      <PageHeader
+        label="PLANOS"
+        title="Planos & Billing"
+        subtitle="Escolha o plano ideal para sua operação. Stripe entra depois; aqui você testa o visual e define limites."
+      />
+
+      <SurfaceCard className="bg-gradient-to-br from-primary-50 via-white to-accent-50 border-slate-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-emerald-600 font-semibold">Planos & Billing</p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Escolha o plano ideal para sua operação</h1>
-            <p className="text-sm text-gray-600">
-              Definimos limites claros para clientes e helpers, além de liberar portal do cliente e notificações nos planos avançados.
-              O Stripe será integrado depois; por enquanto, selecione e teste os recursos visualmente.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm w-full md:w-auto">
-            <p className="text-xs uppercase tracking-wide text-gray-500">Plano atual (mock)</p>
-            <p className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <p className={labelSm}>Seu plano atual</p>
+            <p className="text-2xl md:text-3xl font-semibold text-slate-900 flex items-center gap-2">
               {currentPlanData.name}
               {currentPlanData.id === 'scale' && <Crown size={16} className="text-amber-500" />}
             </p>
-            <p className="text-sm text-gray-500">Alterar aqui afeta só o front por enquanto.</p>
+            <p className="text-sm text-slate-600">
+              Alterar aqui afeta apenas o front por enquanto. Limites e recursos seguem o plano selecionado.
+            </p>
           </div>
+          <StatusBadge tone="primary" className="whitespace-nowrap">
+            Plano atual (mock)
+          </StatusBadge>
         </div>
-      </header>
+      </SurfaceCard>
 
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {plans.map((plan) => {
@@ -57,19 +62,19 @@ const Plans = () => {
             <div
               key={plan.id}
               className={`relative rounded-[24px] border bg-white p-5 space-y-4 shadow-sm ${
-                isActive ? 'border-emerald-200 shadow-[0_20px_50px_rgba(16,185,129,0.2)]' : 'border-gray-100'
+                isActive ? 'border-primary-200 shadow-[0_20px_50px_rgba(34,197,94,0.18)]' : 'border-slate-100'
               }`}
             >
               <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${badgeColors[plan.id]}`}>
                 {plan.name}
-                {isActive && <span className="text-emerald-700">• ativo</span>}
+                {isActive && <span className="text-emerald-700">Plano atual</span>}
               </div>
               <div>
-                <p className="text-3xl font-bold text-gray-900">{formatPrice(plan.priceCents)}</p>
-                {plan.priceCents > 0 && <p className="text-xs text-gray-500">por mês</p>}
-                <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
+                <p className="text-3xl font-bold text-slate-900">{formatPrice(plan.priceCents)}</p>
+                {plan.priceCents > 0 && <p className="text-xs text-slate-500">por mês</p>}
+                <p className="text-sm text-slate-600 mt-2">{plan.description}</p>
               </div>
-              <div className="space-y-2 text-sm text-gray-700">
+              <div className="space-y-2 text-sm text-slate-700">
                 <FeatureLine icon={Users} label={`${planFeatures.maxClientsLabel(plan)} no CRM`} />
                 <FeatureLine icon={Users} label={`${planFeatures.maxHelpersLabel(plan)} helpers`} />
                 <FeatureLine icon={Sparkles} label="Portal do cliente" enabled={plan.clientPortal} />
@@ -88,13 +93,13 @@ const Plans = () => {
                   <button
                     type="button"
                     onClick={() => handleSelect(plan.id)}
-                    className={`w-full rounded-xl py-3 font-semibold transition ${
+                    className={`w-full rounded-full py-3 font-semibold transition ${
                       isActive
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                        : 'border border-gray-200 bg-white text-gray-900 hover:border-emerald-200 hover:text-emerald-700'
+                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                        : 'border border-slate-200 bg-white text-slate-900 hover:border-primary-200 hover:text-primary-700'
                     }`}
                   >
-                    {isActive ? 'Plano ativo' : 'Selecionar'}
+                    {isActive ? 'Plano ativo' : 'Mudar para este plano'}
                   </button>
                 )}
               </div>

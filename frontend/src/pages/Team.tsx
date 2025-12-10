@@ -17,6 +17,8 @@ import type { CompanyShowcase, CompanyShowcaseSection, Customer, HelperAppointme
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
+import { PageHeader, SurfaceCard } from '../components/OwnerUI';
+import { pageGutters } from '../styles/uiTokens';
 
 const generateSectionId = () => Math.random().toString(36).substring(2, 10);
 
@@ -552,55 +554,28 @@ const Team = () => {
   const canAddShowcaseSection = showcaseForm.sections.length < 5;
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#05040f] text-white shadow-[0_40px_120px_rgba(5,4,15,0.55)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4c1d95] to-[#0f172a] opacity-90" />
-        <div className="relative p-6 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-4">
-            <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Squad & Helpers</p>
-            <h1 className="text-3xl md:text-4xl font-semibold">Equipe alinhada ao novo fluxo FlowOps</h1>
-            <p className="text-sm text-white/70 max-w-2xl">
-              Convide helpers, acompanhe rotas diárias e envie recados direto para o app delas. Toda gestão fica centralizada em
-              um painel rápido e responsivo.
-            </p>
-            <div className="flex flex-wrap gap-2 text-xs font-semibold">
-              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
-                <BarChart3 size={16} className="text-white/70" />
-                {helpers.length} helpers monitoradas
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
-                Última atualização {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-              </span>
-            </div>
-          </div>
-          <div className="w-full md:w-auto flex flex-col gap-3">
-            <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1">
-              <p className="text-sm text-white/70">Capacidade atual</p>
-              <p className="text-3xl font-semibold">{helpers.length}/10 helpers</p>
-              <p className="text-xs text-white/60">
-                {Math.max(0, 10 - helpers.length)} vagas disponíveis para convites imediatos
-              </p>
-            </div>
-            <a
-              href="#create-helper"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-gray-900 px-5 py-3 text-sm font-semibold shadow-[0_20px_40px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 transition"
-            >
-              <UserPlus size={18} />
-              Adicionar helper agora
-            </a>
-          </div>
-        </div>
-      </section>
+    <div className={`${pageGutters} max-w-6xl mx-auto space-y-6 md:space-y-8`}>
+      <PageHeader
+        label="EQUIPE"
+        title="Team"
+        subtitle="Organize helpers e permissões em um só painel."
+        actions={
+          <a
+            href="#create-helper"
+            className="inline-flex items-center gap-2 rounded-full bg-primary-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-primary-700"
+          >
+            <UserPlus size={18} />
+            Adicionar helper
+          </a>
+        }
+      />
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {teamHighlights.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-gray-100 bg-white/90 backdrop-blur-sm p-4 shadow-[0_20px_50px_rgba(15,23,42,0.05)]"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
-            <p className="text-2xl font-semibold text-gray-900 mt-1">{card.value}</p>
-          </div>
+          <SurfaceCard key={card.label} className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
+            <p className="text-2xl font-semibold text-slate-900 mt-1">{card.value}</p>
+          </SurfaceCard>
         ))}
       </section>
 

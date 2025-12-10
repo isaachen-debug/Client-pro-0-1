@@ -345,7 +345,7 @@ const translations: Record<Language, Translation> = {
       tabs: ['Projects', 'Marketing', 'Product & Eng', 'IT', 'HR', 'Leadership'],
       highlights: [
         { title: 'Intake Agent padroniza kickoffs', description: 'Centralize briefings e checklists iniciais sem formulários soltos.' },
-        { title: 'Assign Agent define donos das tarefas', description: 'Regras inteligentes distribuem responsabilidades conforme o plano.' },
+        { title: 'Assign Agent distribui responsáveis', description: 'Regras inteligentes distribuem responsabilidades conforme o plano.' },
         { title: 'Timeline Agent vigia entregas', description: 'Alertas inteligentes antes de qualquer atraso na agenda.' },
         { title: 'Live Answers mantém todos informados', description: 'Clients recebem respostas na hora via portal, sem precisar ligar.' },
       ],

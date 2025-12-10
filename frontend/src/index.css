@@ -16,11 +16,13 @@ html {
 
 :root {
   color-scheme: light;
-  --app-bg: #f8fafc;
+  --app-bg: #f6f7fb;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #4b5563;
   --card-bg: #ffffff;
-  --card-border: #e2e8f0;
+  --card-border: #e5e7ef;
+  --surface-muted: #eef2f8;
+  --accent: #201335;
 }
 
 [data-theme='dark'] {

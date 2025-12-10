@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, DollarSign, Clock, CheckCircle, TrendingUp, Loader2 } from 'lucide-react';
 import { teamApi, transactionsApi } from '../services/api';
+import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
+import { pageGutters, labelSm } from '../styles/uiTokens';
 import type { HelperCostSummary, HelperPayoutMode, Transaction, User } from '../types';
 import { format } from 'date-fns';
 
@@ -372,23 +374,23 @@ const Financeiro = () => {
 
   const receiptHighlightCards = [
     {
-      label: 'Recebido',
+      label: 'Receita confirmada',
       value: formatCurrency(summary.revenuePaid),
-      detail: `${summary.paidCount} pagamentos recebidos`,
+      detail: 'Pagamentos já recebidos.',
       icon: DollarSign,
       iconColor: 'text-emerald-400',
       accent: 'from-emerald-500/20 via-transparent to-transparent',
     },
     {
-      label: 'Pendente',
+      label: 'A receber',
       value: formatCurrency(summary.revenuePending),
-      detail: `${summary.pendingCount} aguardando pagamento`,
+      detail: 'Pagamentos pendentes neste período.',
       icon: Clock,
       iconColor: 'text-orange-400',
       accent: 'from-orange-500/15 via-transparent to-transparent',
     },
     {
-      label: 'Concluídos',
+      label: 'Serviços no período',
       value: summary.concludedCount.toString(),
       detail: period ? `${format(period.start, 'dd/MM')} - ${format(period.end, 'dd/MM')}` : 'Período selecionado',
       icon: CheckCircle,
@@ -398,7 +400,7 @@ const Financeiro = () => {
     {
       label: 'Ticket médio',
       value: formatCurrency(summary.ticket),
-      detail: 'Por serviço concluído',
+      detail: 'Valor médio por serviço concluído.',
       icon: TrendingUp,
       iconColor: 'text-purple-400',
       accent: 'from-purple-500/20 via-transparent to-transparent',
@@ -421,68 +423,62 @@ const Financeiro = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-6xl mx-auto">
-      <section className="relative overflow-hidden rounded-[32px] md:rounded-[40px] bg-gradient-to-br from-[#190530] via-[#0e152c] to-[#02201a] text-white shadow-[0_30px_90px_rgba(3,5,12,0.45)]">
-        <div className="relative p-5 md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between min-w-0">
-          <div className="space-y-4 min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.4em] text-white/70 font-semibold">Finance Hub</p>
-            {showFinanceTip && (
-              <div className="inline-flex items-center gap-3 text-sm font-medium text-white/80 bg-white/10 border border-white/15 rounded-2xl px-4 py-2 shadow-[0_15px_35px_rgba(5,8,20,0.35)] transition">
-                <span>Monitore recebimentos, cobranças e custos em tempo real.</span>
-                <button
-                  type="button"
-                  onClick={() => setShowFinanceTip(false)}
-                  className="text-xs font-semibold uppercase tracking-wide text-white/70 hover:text-white"
-                >
-                  Fechar
-                </button>
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2 text-sm font-semibold">
-              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2">
-                <Clock size={16} className="text-white/70" />
-                {periodLabel}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-white/80">
-                {transactions.length} transações
-              </span>
-            </div>
-          </div>
-          <div className="w-full md:w-auto flex flex-col gap-3 min-w-0">
-            <div className="rounded-3xl border border-white/20 bg-white/10 px-5 py-4 space-y-1 min-w-0">
-              <p className="text-sm text-white/70">Total monitorado</p>
-              <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight overflow-hidden text-ellipsis break-words">
-                {formatCurrency(summary.total)}
-              </p>
-              <p className="text-xs text-white/60">
-                Recebido {formatCurrency(summary.revenuePaid)} • Pendente {formatCurrency(summary.revenuePending)}
-              </p>
-            </div>
+    <div className={`${pageGutters} max-w-6xl mx-auto`}>
+      <PageHeader
+        label="FINANCEIRO"
+        title="Finance"
+        subtitle="Receitas, pendências e custos em um painel."
+        actions={
+          <div className="flex items-center gap-2">
+            <StatusBadge tone="neutral">{periodLabel}</StatusBadge>
             <button
               onClick={handleExportar}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-gray-900 px-5 py-3 text-sm font-semibold shadow-[0_20px_40px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50"
             >
-              <Download size={18} />
+              <Download size={16} />
               Exportar CSV
             </button>
           </div>
-        </div>
-      </section>
+        }
+      />
 
-      <section className="rounded-[28px] border border-gray-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.05)] p-5 md:p-6 space-y-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+        <SurfaceCard className="space-y-1">
+          <p className={labelSm}>Recebido</p>
+          <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.revenuePaid)}</p>
+          <p className="text-xs text-slate-500">{summary.paidCount} pagamentos recebidos</p>
+        </SurfaceCard>
+        <SurfaceCard className="space-y-1">
+          <p className={labelSm}>Pendente</p>
+          <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.revenuePending)}</p>
+          <p className="text-xs text-slate-500">{summary.pendingCount} aguardando pagamento</p>
+        </SurfaceCard>
+        <SurfaceCard className="space-y-1">
+          <p className={labelSm}>Total monitorado</p>
+          <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.total)}</p>
+          <p className="text-xs text-slate-500">Receita + pendente no período</p>
+        </SurfaceCard>
+        <SurfaceCard className="space-y-1">
+          <p className={labelSm}>Ticket médio</p>
+          <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.ticket)}</p>
+          <p className="text-xs text-slate-500">Por serviço concluído</p>
+        </SurfaceCard>
+      </div>
+
+      <SurfaceCard className="space-y-5">
         <div className="space-y-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900">Período e visão</p>
-          <p className="text-sm text-gray-500">Escolha o intervalo para atualizar indicadores e alternar as visões.</p>
+          <p className="text-sm font-semibold text-slate-900">Período e visão</p>
+          <p className="text-sm text-slate-500">Escolha o intervalo para atualizar indicadores e alternar as visões.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {PERIOD_OPTIONS.map((option) => (
             <button
               key={option.value}
               onClick={() => setPeriodo(option.value)}
-              className={`px-4 py-2 rounded-2xl text-sm font-semibold border transition ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
                 periodo === option.value
                   ? 'bg-primary-600 text-white border-primary-600 shadow-[0_15px_40px_rgba(34,197,94,0.35)]'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary-200 hover:text-primary-600'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-primary-200 hover:text-primary-600'
               }`}
             >
               {option.label}
@@ -493,38 +489,38 @@ const Financeiro = () => {
         {periodo === 'personalizado' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Data início</label>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Data início</label>
               <input
                 type="date"
                 value={dataInicio}
                 onChange={(e) => setDataInicio(e.target.value)}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
               />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Data fim</label>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Data fim</label>
               <input
                 type="date"
                 value={dataFim}
                 onChange={(e) => setDataFim(e.target.value)}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
               />
             </div>
           </div>
         )}
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-gray-100 pt-4 min-w-0">
-          <p className="text-sm font-medium text-gray-500 min-w-0">{periodFullLabel}</p>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-slate-100 pt-4 min-w-0">
+          <p className="text-sm font-medium text-slate-500 min-w-0">{periodFullLabel}</p>
           <div className="flex flex-wrap gap-2">
             {FINANCE_TABS.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-2xl text-sm font-semibold border transition ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
                   activeTab === tab.key
                     ? 'bg-primary-600 text-white border-primary-600 shadow-[0_12px_30px_rgba(34,197,94,0.35)]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary-200 hover:text-primary-600'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-primary-200 hover:text-primary-600'
                 }`}
               >
                 {tab.label}
@@ -532,7 +528,7 @@ const Financeiro = () => {
             ))}
           </div>
         </div>
-      </section>
+      </SurfaceCard>
 
       {activeTab === 'receitas' && (
         <section className="space-y-6">
@@ -585,8 +581,9 @@ const Financeiro = () => {
             </div>
 
             {transactions.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-center py-12 text-sm text-gray-500">
-                Nenhuma transação encontrada para o período selecionado.
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-center py-12 text-sm text-gray-500 space-y-2">
+                <p className="text-lg font-semibold text-slate-900">Nenhum lançamento neste período.</p>
+                <p>Altere o filtro de datas ou registre novos recebimentos.</p>
               </div>
             ) : (
               <>

@@ -552,7 +552,7 @@ const Today = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-2xl font-bold text-gray-900">{appointment.startTime}</p>
-                            <span className="text-xs text-gray-400 font-semibold">#{index + 1}</span>
+                              <span className="text-xs text-gray-400 font-semibold">#{index + 1}</span>
                             <span
                               className={`text-xs font-semibold px-3 py-1 rounded-full ${
                                 statusBadgeClasses[appointment.status] || 'bg-gray-100 text-gray-600'
@@ -635,10 +635,10 @@ const Today = () => {
                           )}
                           {appointment.status === 'EM_ANDAMENTO' && (
                             <>
-                              <button
-                                type="button"
-                                disabled={actionLoading === appointment.id}
-                                onClick={() => handleStatusChange(appointment, 'CONCLUIDO')}
+                            <button
+                              type="button"
+                              disabled={actionLoading === appointment.id}
+                              onClick={() => handleStatusChange(appointment, 'CONCLUIDO')}
                                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gray-800 text-white font-semibold py-3 hover:bg-gray-900 transition disabled:opacity-60"
                               >
                                 {actionLoading === appointment.id ? (
@@ -653,14 +653,14 @@ const Today = () => {
                                 disabled={actionLoading === appointment.id}
                                 onClick={() => handleStatusChange(appointment, 'CANCELADO')}
                                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 text-white font-semibold py-3 hover:bg-red-700 transition disabled:opacity-60"
-                              >
-                                {actionLoading === appointment.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <CheckCircle size={18} />
-                                )}
+                            >
+                              {actionLoading === appointment.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <CheckCircle size={18} />
+                              )}
                                 Cancelar
-                              </button>
+                            </button>
                             </>
                           )}
                           {appointment.status === 'CONCLUIDO' && (

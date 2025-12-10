@@ -333,30 +333,33 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
     appointments.filter((ag) => isSameDay(parseDateFromInput(ag.date), day));
 
   const statusSurfaces: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-[#d1ecff] text-[#0a4b78]',
-    EM_ANDAMENTO: 'bg-[#ffecc7] text-[#7a4a00]',
-    CONCLUIDO: 'bg-[#c8f3dd] text-[#0f5b34]',
-    CANCELADO: 'bg-[#ffd9dd] text-[#7a1024]',
+    AGENDADO: 'bg-blue-50 text-blue-700',
+    EM_ANDAMENTO: 'bg-amber-50 text-amber-700',
+    CONCLUIDO: 'bg-emerald-50 text-emerald-700',
+    CANCELADO: 'bg-red-50 text-red-700',
   };
 
   const headerAndGrid = (
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Agenda</h1>
+          <div className="space-y-1">
+            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Agenda</p>
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Agenda mensal</h1>
+          </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white"
             >
               <ChevronLeft size={20} />
             </button>
-            <span className="text-lg font-medium text-gray-700 min-w-[150px] text-center">
+            <span className="text-lg font-medium text-slate-800 min-w-[150px] text-center">
               {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
             </span>
             <button
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white"
             >
               <ChevronRight size={20} />
             </button>
@@ -367,7 +370,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
             resetForm(currentDate);
             setShowCreateModal(true);
           }}
-          className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-full hover:bg-primary-700 transition-colors shadow-sm"
         >
           <Plus size={20} />
           <span>Novo Agendamento</span>
@@ -546,7 +549,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
     );
   }
 
-  return embedded ? layoutContent : <div className="p-4 md:p-8 space-y-6">{layoutContent}</div>;
+  return embedded ? layoutContent : <div className="px-4 md:px-8 pt-0 pb-4 space-y-6">{layoutContent}</div>;
 };
 
 export default AgendaMensal;

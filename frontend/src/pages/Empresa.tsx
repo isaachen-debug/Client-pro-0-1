@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Building2, ExternalLink, Globe, MapPin, Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { CompanyShowcase, CompanyShowcaseSection, OwnerReviewLinks } from '../types';
+import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
+import { pageGutters, labelSm } from '../styles/uiTokens';
 
 const generateSectionId = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `section-${Date.now()}-${Math.random()}`;
@@ -213,40 +215,41 @@ const Empresa = () => {
   ].filter((card) => card.value);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
-      <section className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_70px_rgba(15,23,42,0.08)] px-6 py-6 lg:py-8 grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Empresa</p>
-            <h1 className="text-3xl font-bold text-gray-900">Identidade da sua marca no Clean Up</h1>
-            <p className="text-sm text-gray-600">
-              Esta visão é o espelho do que os Clients enxergam no portal. Edição oficial em
-              <strong> Clientes → Acesso ao app</strong>.
-            </p>
-          </div>
+    <div className={`${pageGutters} max-w-6xl mx-auto space-y-8`}>
+      <PageHeader
+        label="EMPRESA"
+        title="Brand & Company"
+        subtitle="Identidade, dados oficiais e presença online."
+        actions={
           <div className="flex flex-wrap gap-2">
-            {['Portal do cliente', 'Pop-up “Sua empresa parceira”', 'Links oficiais'].map((tag) => (
-              <span key={tag} className="px-3 py-1 rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-3">
             <Link
               to="/app/clientes"
-              className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold hover:bg-gray-50 text-gray-900"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
             >
               Ajustar no painel de clientes
               <ExternalLink size={16} />
             </Link>
-            <div className="inline-flex items-center gap-2 rounded-2xl bg-gray-900 text-white px-4 py-3 text-sm font-semibold">
-              Plano {user?.planStatus ?? 'TRIAL'}
-            </div>
+            <StatusBadge tone="primary">Plano {user?.planStatus ?? 'TRIAL'}</StatusBadge>
           </div>
-        </div>
-        <div className="rounded-[28px] bg-gradient-to-br from-[#0d0b2d] via-[#181641] to-[#311859] text-white shadow-[0_25px_60px_rgba(15,23,42,0.35)] p-5 space-y-4">
+        }
+      />
+
+      <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+        <SurfaceCard className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {['Portal do cliente', 'Pop-up “Sua empresa parceira”', 'Links oficiais'].map((tag) => (
+              <span key={tag} className="px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                {tag}
+              </span>
+            ))}
+          </div>
+          <p className="text-sm text-slate-600">
+            Esta visão é o espelho do que os Clients enxergam no portal. Edição oficial em <strong>Clientes → Acesso ao app</strong>.
+          </p>
+        </SurfaceCard>
+        <SurfaceCard className="bg-gradient-to-br from-primary-50 via-white to-accent-50 border-slate-100 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-3xl bg-white/15 flex items-center justify-center text-white text-xl font-semibold">
+            <div className="w-14 h-14 rounded-3xl bg-primary-100 text-primary-700 flex items-center justify-center text-xl font-semibold">
               {(user?.companyName || user?.name || 'CP')
                 .split(' ')
                 .filter(Boolean)
@@ -256,29 +259,29 @@ const Empresa = () => {
                 .toUpperCase()}
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">Marca exibida</p>
-              <p className="text-xl font-bold">{user?.companyName || user?.name || 'Adicione sua marca'}</p>
+              <p className={labelSm}>Marca exibida</p>
+              <p className="text-xl font-bold text-slate-900">{user?.companyName || user?.name || 'Adicione sua marca'}</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-2xl bg-white/10 border border-white/20 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-white/70">Links ativos</p>
-              <p className="text-2xl font-bold">{reviewLinkPreview.filter((link) => link.url).length}</p>
+            <div className="rounded-2xl bg-white border border-slate-100 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">Links ativos</p>
+              <p className="text-2xl font-bold text-slate-900">{reviewLinkPreview.filter((link) => link.url).length}</p>
             </div>
-            <div className="rounded-2xl bg-white/10 border border-white/20 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-white/70">Destaques</p>
-              <p className="text-2xl font-bold">{showcase.sections.length}</p>
+            <div className="rounded-2xl bg-white border border-slate-100 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">Destaques</p>
+              <p className="text-2xl font-bold text-slate-900">{showcase.sections.length}</p>
             </div>
-            <div className="rounded-2xl bg-white/10 border border-white/20 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-white/70">Plano atual</p>
-              <p className="text-2xl font-bold">{user?.planStatus ?? 'Trial'}</p>
+            <div className="rounded-2xl bg-white border border-slate-100 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">Plano atual</p>
+              <p className="text-2xl font-bold text-slate-900">{user?.planStatus ?? 'Trial'}</p>
             </div>
           </div>
-          <p className="text-sm text-white/80">
+          <p className="text-sm text-slate-600">
             Ajustes feitos aqui mantêm a consistência visual com o portal dos Clients e com a landing.
           </p>
-        </div>
-      </section>
+        </SurfaceCard>
+      </div>
 
       <section className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
         <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-6 space-y-4">
@@ -287,9 +290,9 @@ const Empresa = () => {
               <Building2 size={22} />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Identidade interna</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Identidade visual</p>
               <p className="text-lg font-semibold text-gray-900">{user?.companyName || user?.name || 'Sem nome cadastrado'}</p>
-              <p className="text-xs text-gray-500">Esses dados aparecem para Owners, Partners e Clients.</p>
+              <p className="text-xs text-gray-500">Ajuste logo, cores e descrição da marca.</p>
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
@@ -325,6 +328,7 @@ const Empresa = () => {
 
         <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-6 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Links oficiais</p>
+          <p className="text-sm text-gray-500">Site, redes sociais e canais de contato.</p>
           <div className="space-y-2">
             {reviewLinkPreview.map((link) => (
               <div key={link.key} className="flex items-center justify-between rounded-2xl border border-gray-100 p-3 text-sm">
@@ -350,8 +354,8 @@ const Empresa = () => {
         <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Pop-up “Sua empresa parceira”</p>
-              <p className="text-sm text-gray-500">Preview que aparece para o Client no portal.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Posicionamento</p>
+              <p className="text-sm text-gray-500">Mostre por que sua empresa é diferente.</p>
             </div>
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
               Layout {showcase.layout === 'stacked' ? 'Blocos verticais' : 'Cartões lado a lado'}
@@ -402,7 +406,7 @@ const Empresa = () => {
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-gray-100 bg-white shadow-sm p-6 space-y-6">
+      <section className="rounded-none border-0 bg-white shadow-none p-6 space-y-6">
         <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Personalizar portal do cliente</p>

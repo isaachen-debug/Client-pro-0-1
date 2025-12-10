@@ -19,6 +19,8 @@ import { parseDateFromInput } from '../utils/date';
 import { useAuth } from '../contexts/AuthContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
+import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
+import { pageGutters, labelSm } from '../styles/uiTokens';
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
@@ -515,82 +517,78 @@ const Clientes = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8">
-      <div className="rounded-[32px] border border-gray-100 bg-white shadow-[0_30px_60px_rgba(15,23,42,0.06)] px-6 py-6 lg:py-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-2 text-center lg:text-left">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Client success hub</p>
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-gray-900">Central de clientes</h1>
-            <p className="text-sm text-gray-500">
-              Organize cadastros, contratos e acesso ao portal em um fluxo visual.
-            </p>
+    <div className={`${pageGutters} max-w-6xl mx-auto space-y-8`}>
+      <PageHeader
+        label="CLIENTES"
+        title="Clients"
+        subtitle="Base de clientes e contratos em um só lugar."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { key: 'list', label: 'Clientes' },
+              { key: 'contracts', label: 'Contracts' },
+            ].map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                    isActive ? 'bg-primary-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:text-primary-600'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-2 bg-gray-100 rounded-full p-1">
-          {[
-            { key: 'list', label: 'Clientes' },
-            { key: 'contracts', label: 'Contracts' },
-          ].map((tab) => {
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition ${
-                  isActive ? 'bg-white text-gray-900 shadow' : 'text-gray-500'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        }
+      />
 
       {activeTab === 'list' ? (
         <>
           {/* Stats & quick actions */}
           <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
-            <div className="rounded-[28px] border border-white/10 bg-[#151936] text-white px-6 py-6 space-y-4 shadow-[0_12px_30px_rgba(15,23,42,0.2)] md:border-none md:bg-gradient-to-br md:from-[#0d0b2d] md:via-[#181641] md:to-[#311858] md:shadow-[0_25px_60px_rgba(15,23,42,0.35)]">
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
+            <SurfaceCard className="space-y-3 bg-gradient-to-br from-primary-50 via-white to-accent-50 border-slate-100">
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
                 <span>Clientes</span>
-                <span className="text-white/30">•</span>
+                <span className="text-slate-300">•</span>
                 <span>Portal + contratos</span>
               </div>
               <div className="flex flex-wrap items-end gap-6">
                 <div>
-                  <p className="text-sm text-white/70">Cadastros totais</p>
-                  <p className="text-4xl font-bold">{clientes.length}</p>
+                  <p className="text-sm text-slate-600">Cadastros totais</p>
+                  <p className="text-4xl font-bold text-slate-900">{clientes.length}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/70">Com acesso ao app</p>
-                  <p className="text-2xl font-semibold">{customersWithPortal}</p>
+                  <p className="text-sm text-slate-600">Com acesso ao app</p>
+                  <p className="text-2xl font-semibold text-slate-900">{customersWithPortal}</p>
                 </div>
               </div>
-              <p className="text-sm text-white/70">
+              <p className="text-sm text-slate-600">
                 Conecte cada Client ao portal e automatize contratos e feedbacks.
               </p>
-            </div>
+            </SurfaceCard>
 
-            <div className="rounded-2xl border-l-4 border-emerald-200 bg-white shadow-sm p-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ações rápidas</p>
+            <SurfaceCard className="space-y-3">
+              <p className={labelSm}>Ações rápidas</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={handleExportClientes}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Exportar CSV
                 </button>
                 <button
                   onClick={openCreateModal}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gray-900 text-white px-4 py-3 text-sm font-semibold shadow-lg hover:bg-black"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-primary-700"
                 >
                   <Plus size={18} />
                   Novo cliente
                 </button>
               </div>
-            </div>
+            </SurfaceCard>
           </div>
 
       {/* Search */}
@@ -599,7 +597,7 @@ const Clientes = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
-                placeholder="Buscar por nome, telefone ou serviço..."
+                placeholder="Buscar por nome, endereço ou contrato..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
@@ -632,7 +630,7 @@ const Clientes = () => {
           </div>
 
       {/* Table */}
-      <div className="bg-white rounded-[32px] shadow-[0_25px_60px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-none shadow-none border-0 overflow-hidden">
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -782,7 +780,8 @@ const Clientes = () => {
           </table>
           {!loading && clientes.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">Nenhum cliente encontrado</p>
+            <p className="text-gray-500">Nenhum cliente cadastrado ainda.</p>
+            <p className="text-sm text-slate-500">Clique em “Novo cliente” para começar sua base.</p>
             </div>
           )}
         </div>
@@ -862,7 +861,10 @@ const Clientes = () => {
             </div>
           ))}
           {!loading && clientes.length === 0 && (
-            <p className="text-center text-gray-500 py-8">Nenhum cliente encontrado</p>
+          <div className="text-center text-gray-500 py-8 space-y-2">
+            <p className="text-sm font-semibold text-slate-900">Nenhum cliente cadastrado ainda.</p>
+            <p className="text-xs text-slate-500">Clique em “Novo cliente” para começar sua base.</p>
+          </div>
           )}
         </div>
       </div>

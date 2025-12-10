@@ -3,14 +3,17 @@ import { appointmentsApi } from '../services/api';
 import { Appointment } from '../types';
 import { differenceInMinutes, format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone, Navigation2 } from 'lucide-react';
+import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone, Navigation2, ChevronRight } from 'lucide-react';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
+import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
+import { pageGutters, labelSm } from '../styles/uiTokens';
+import { useNavigate } from 'react-router-dom';
 
 const statusStyles: Record<string, string> = {
-  AGENDADO: 'bg-gray-100 text-gray-700',
-  EM_ANDAMENTO: 'bg-blue-100 text-blue-700',
-  CONCLUIDO: 'bg-green-100 text-green-700',
-  CANCELADO: 'bg-red-100 text-red-700',
+  AGENDADO: 'bg-blue-50 text-blue-700',
+  EM_ANDAMENTO: 'bg-amber-50 text-amber-700',
+  CONCLUIDO: 'bg-emerald-50 text-emerald-700',
+  CANCELADO: 'bg-red-50 text-red-700',
 };
 
 const statusLabels: Record<string, string> = {
@@ -58,6 +61,7 @@ const buildWazeLink = (appointment: Appointment) => {
 };
 
 const Start = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -191,6 +195,9 @@ const Start = () => {
     : isSameDay(selectedDate, addDays(new Date(), 1))
       ? 'Amanhã'
       : format(selectedDate, "dd 'de' MMMM", { locale: ptBR });
+  const progressPercent = summary.totalAppointmentsToday
+    ? Math.min(100, Math.round(((summary.completedCount + summary.inProgressCount * 0.4) / summary.totalAppointmentsToday) * 100))
+    : 0;
 
   if (loading) {
     return (
@@ -201,27 +208,27 @@ const Start = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-6xl mx-auto">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-3xl border border-gray-100 bg-white shadow-sm px-4 py-4 sm:px-5 min-w-0">
-        <div className="space-y-1 min-w-0">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-primary-500 font-semibold">Daily agenda</p>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">
-            {isSameDay(selectedDate, new Date())
-              ? 'Today'
-              : isSameDay(selectedDate, addDays(new Date(), 1))
-                ? 'Amanhã'
-                : format(selectedDate, "EEEE',' dd 'de' MMMM", { locale: ptBR })}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Deslize pelas datas para conferir os serviços do dia e acompanhe o progresso em tempo real.
-          </p>
-        </div>
-        <div className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-inner">
-          Dia selecionado: {selectedDateLabel}
-        </div>
-      </div>
+    <div className={`${pageGutters} max-w-6xl mx-auto`}>
+      <PageHeader
+        label="HOJE"
+        title="Today"
+        subtitle="Serviços do dia, em tempo real."
+        actions={
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-slate-700">{selectedDateLabel}</span>
+            <button
+              type="button"
+              onClick={() => fetchAppointments(selectedDate)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 transition"
+            >
+              <RefreshCw size={16} />
+              Atualizar
+            </button>
+          </div>
+        }
+      />
 
-      <div className="flex flex-wrap gap-2 pb-1">
+      <div className="flex flex-wrap gap-2">
         {Array.from({ length: 5 }).map((_, index) => {
           const dateChip = addDays(new Date(), index);
           const isActive = isSameDay(dateChip, selectedDate);
@@ -229,15 +236,15 @@ const Start = () => {
             ? 'Hoje'
             : isSameDay(dateChip, addDays(new Date(), 1))
               ? 'Amanhã'
-              : format(dateChip, 'dd/MM');
+              : 'Próximos dias';
           return (
             <button
               key={dateChip.toISOString()}
               onClick={() => setSelectedDate(dateChip)}
-              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                 isActive
-                  ? 'bg-primary-600 text-white shadow-md'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-200 hover:text-primary-600'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:border-primary-200 hover:text-primary-600'
               }`}
             >
               {label}
@@ -247,72 +254,117 @@ const Start = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
+        <SurfaceCard className="border border-red-100 bg-red-50 text-red-700">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold">{error}</p>
+            <button
+              type="button"
+              onClick={() => fetchAppointments(selectedDate)}
+              className="text-sm font-semibold underline"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </SurfaceCard>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
-        <SummaryCard
-          title="Serviços hoje"
-          value={summary.totalAppointmentsToday}
-          icon={<Clock4 className="text-primary-600" size={20} />}
-        />
-        <SummaryCard
-          title="Em andamento"
-          value={summary.inProgressCount}
-          icon={<PlayCircle className="text-blue-600" size={20} />}
-        />
-        <SummaryCard
-          title="Concluídos"
-          value={summary.completedCount}
-          icon={<CheckCircle2 className="text-green-600" size={20} />}
-        />
-        <SummaryCard
-          title="Tempo estimado"
-          value={formatMinutes(summary.estimatedTotalMinutes)}
-          icon={<Clock4 className="text-gray-600" size={20} />}
-        />
-        <WorkingClockCard seconds={liveWorkedSeconds} />
+      <div className="grid grid-cols-1 md:grid-cols-[1.2fr,0.8fr] gap-4 md:gap-5">
+        <SurfaceCard className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={labelSm}>Resumo do dia</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    Acompanhe os serviços de hoje em tempo real.
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {summary.totalAppointmentsToday} agendados · {summary.inProgressCount} em andamento · {summary.completedCount} concluídos
+                  </p>
+            </div>
+            <StatusBadge tone="primary">{selectedDateLabel}</StatusBadge>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard label="Serviços hoje" subtitle="Agendados para hoje." value={summary.totalAppointmentsToday} />
+                <StatCard label="Em andamento" subtitle="Já iniciados pela equipe." value={summary.inProgressCount} />
+                <StatCard label="Concluídos" subtitle="Finalizados e prontos para revisar." value={summary.completedCount} />
+                <StatCard label="Tempo estimado" subtitle="Soma do tempo de todos os serviços." value={formatMinutes(summary.estimatedTotalMinutes)} />
+          </div>
+          <div>
+            <div className="flex items-center justify-between text-sm font-semibold text-slate-700 mb-2">
+              <span>Progresso</span>
+              <span>{progressPercent}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+              <div
+                className="h-full bg-primary-500 rounded-full transition-all"
+                style={{ width: `${progressPercent}%` }}
+                aria-label={`Progresso ${progressPercent}%`}
+              />
+            </div>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={labelSm}>Ações</p>
+              <p className="text-sm text-slate-600">Gerencie o dia em um toque</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/app/agenda')}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition"
+            >
+              Ver agenda completa
+              <ChevronRight size={14} />
+            </button>
+          </div>
+          <WorkingClockCard seconds={liveWorkedSeconds} />
+        </SurfaceCard>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="space-y-1 min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Serviços de {selectedDateLabel.toLowerCase()}
-            </h2>
-            <p className="text-sm text-gray-500">
-              Organize sua rota e acompanhe o status de cada atendimento.
+      <SurfaceCard className="space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <p className={labelSm}>Serviços do dia</p>
+            <p className="text-sm text-slate-600">
+              Organize a rota, acompanhe status e abra mapas rapidamente.
             </p>
           </div>
           <button
             type="button"
             onClick={() => fetchAppointments(selectedDate)}
-            className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 transition"
           >
             <RefreshCw size={16} />
-            <span>Atualizar</span>
+            Atualizar
           </button>
         </div>
 
         {appointments.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            Nenhum serviço agendado para {selectedDateLabel.toLowerCase()}.
+          <div className="text-center py-10 text-slate-500 space-y-3">
+            <p className="text-lg font-semibold text-slate-900">Nenhum serviço para hoje.</p>
+            <p className="text-sm">Use a Agenda para criar novos atendimentos.</p>
+            <button
+              type="button"
+              onClick={() => navigate('/app/agenda?quick=create')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition"
+            >
+              Criar novo agendamento
+            </button>
           </div>
         ) : (
           <div className="space-y-3">
             {appointments.map((appointment) => (
               <div
                 key={appointment.id}
-                className="border border-gray-100 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 shadow-sm"
+                className="border border-slate-100 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 shadow-sm"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="min-w-0">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900">
                       {appointment.customer.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-slate-500">
                       {appointment.customer.serviceType ?? 'Serviço'} •{' '}
                       {format(parseDateFromInput(appointment.date), "EEEE',' dd MMM", {
                         locale: ptBR,
@@ -320,18 +372,14 @@ const Start = () => {
                       às {appointment.startTime}
                     </p>
                   </div>
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                      statusStyles[appointment.status] || statusStyles.AGENDADO
-                    }`}
-                  >
+                  <StatusBadge tone={appointment.status === 'CONCLUIDO' ? 'success' : appointment.status === 'CANCELADO' ? 'error' : appointment.status === 'AGENDADO' ? 'primary' : 'warning'}>
                     {statusLabels[appointment.status] || appointment.status}
-                  </span>
+                  </StatusBadge>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-gray-600">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-slate-600">
                   <div className="flex items-center space-x-2">
-                    <MapPin size={16} className="text-gray-400 flex-shrink-0" />
+                    <MapPin size={16} className="text-slate-400 flex-shrink-0" />
                     {appointment.customer.address ? (
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -348,7 +396,7 @@ const Start = () => {
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Phone size={16} className="text-gray-400 flex-shrink-0" />
+                    <Phone size={16} className="text-slate-400 flex-shrink-0" />
                     {appointment.customer.phone ? (
                       <a href={`tel:${appointment.customer.phone}`} className="text-primary-600 hover:underline">
                         {appointment.customer.phone}
@@ -358,15 +406,15 @@ const Start = () => {
                     )}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Horário:</span>{' '}
+                    <span className="font-medium text-slate-700">Horário:</span>{' '}
                     {appointment.startTime}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Valor:</span>{' '}
+                    <span className="font-medium text-slate-700">Valor:</span>{' '}
                     {usdFormatter.format(appointment.price)}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Duração estimada:</span>{' '}
+                    <span className="font-medium text-slate-700">Duração estimada:</span>{' '}
                     {appointment.endTime
                       ? formatMinutes(
                           differenceInMinutes(
@@ -383,7 +431,7 @@ const Start = () => {
                 {(appointment.customer.latitude ||
                   appointment.customer.longitude ||
                   appointment.customer.address) && (
-                  <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden border border-gray-100">
+                  <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden border border-slate-100">
                     {(() => {
                       const mapsLink = buildMapsLink(appointment);
                       const wazeLink = buildWazeLink(appointment);
@@ -439,7 +487,7 @@ const Start = () => {
                 )}
 
                 {appointment.status === 'EM_ANDAMENTO' && appointment.startedAt && (
-                  <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
+                  <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
                     Em execução há {formatMinutes(getElapsedMinutes(appointment))}
                   </p>
                 )}
@@ -447,7 +495,7 @@ const Start = () => {
                 {appointment.status === 'CONCLUIDO' &&
                   appointment.startedAt &&
                   appointment.finishedAt && (
-                    <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+                    <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
                       Tempo total: {formatMinutes(getElapsedMinutes(appointment))}
                     </p>
                   )}
@@ -458,7 +506,7 @@ const Start = () => {
                       <button
                         type="button"
                         onClick={() => handleStart(appointment.id)}
-                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors text-sm font-medium"
                       >
                         <PlayCircle size={18} />
                         <span>Iniciar</span>
@@ -466,7 +514,7 @@ const Start = () => {
                       <button
                         type="button"
                         onClick={() => handleCancel(appointment.id)}
-                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors text-sm font-medium"
                       >
                         <XCircle size={18} />
                         <span>Cancelar</span>
@@ -478,7 +526,7 @@ const Start = () => {
                       <button
                         type="button"
                         onClick={() => handleFinish(appointment.id)}
-                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors text-sm font-medium"
                       >
                         <CheckCircle2 size={18} />
                         <span>Concluir</span>
@@ -486,7 +534,7 @@ const Start = () => {
                       <button
                         type="button"
                         onClick={() => handleCancel(appointment.id)}
-                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors text-sm font-medium"
                       >
                         <XCircle size={18} />
                         <span>Cancelar</span>
@@ -497,14 +545,14 @@ const Start = () => {
                     <button
                       type="button"
                       disabled
-                      className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed text-sm font-medium"
+                      className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-slate-100 text-slate-500 rounded-full cursor-not-allowed text-sm font-medium"
                     >
                       <CheckCircle2 size={18} />
                       <span>Finalizado</span>
                     </button>
                   )}
                   {appointment.status === 'CANCELADO' && (
-                    <span className="inline-flex items-center px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-medium">
+                    <span className="inline-flex items-center px-4 py-2 rounded-full bg-red-50 text-red-600 text-sm font-medium">
                       Serviço cancelado
                     </span>
                   )}
@@ -513,26 +561,16 @@ const Start = () => {
             ))}
           </div>
         )}
-      </div>
+      </SurfaceCard>
     </div>
   );
 };
 
-type SummaryCardProps = {
-  title: string;
-  value: string | number;
-  icon: ReactNode;
-};
-
-const SummaryCard = ({ title, value, icon }: SummaryCardProps) => (
-  <div className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center space-x-3 shadow-sm">
-    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600 text-sm">
-      {icon}
-    </div>
-    <div>
-      <p className="text-xs uppercase tracking-wide text-gray-500">{title}</p>
-      <p className="text-lg sm:text-xl font-bold text-gray-900">{value}</p>
-    </div>
+const StatCard = ({ label, subtitle, value }: { label: string; subtitle?: string; value: string | number }) => (
+  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">{label}</p>
+    {subtitle && <p className="text-xs text-slate-500 mt-1">{subtitle}</p>}
+    <p className="text-lg font-semibold text-slate-900 mt-1">{value}</p>
   </div>
 );
 
