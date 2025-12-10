@@ -1,20 +1,13 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { appointmentsApi } from '../services/api';
 import { Appointment } from '../types';
 import { differenceInMinutes, format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlayCircle, CheckCircle2, Clock4, MapPin, RefreshCw, XCircle, Phone, Navigation2, ChevronRight } from 'lucide-react';
+import { PlayCircle, CheckCircle2, MapPin, RefreshCw, XCircle, Phone, Navigation2, ChevronRight } from 'lucide-react';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
 import { pageGutters, labelSm } from '../styles/uiTokens';
 import { useNavigate } from 'react-router-dom';
-
-const statusStyles: Record<string, string> = {
-  AGENDADO: 'bg-blue-50 text-blue-700',
-  EM_ANDAMENTO: 'bg-amber-50 text-amber-700',
-  CONCLUIDO: 'bg-emerald-50 text-emerald-700',
-  CANCELADO: 'bg-red-50 text-red-700',
-};
 
 const statusLabels: Record<string, string> = {
   AGENDADO: 'Agendado',

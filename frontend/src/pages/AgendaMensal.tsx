@@ -73,6 +73,8 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
     notes: '',
     status: 'AGENDADO' as AppointmentStatus,
     assignedHelperId: '',
+    isRecurring: false,
+    recurrenceRule: '',
   });
 
   useEffect(() => {
@@ -256,6 +258,8 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
       notes: appointment.notes || '',
       status: appointment.status,
       assignedHelperId: appointment.assignedHelperId ?? '',
+      isRecurring: appointment.isRecurring ?? false,
+      recurrenceRule: appointment.recurrenceRule ?? '',
     });
     setShowEditModal(true);
   };
@@ -517,8 +521,13 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
       {showEditModal && editingAppointment && (
         <EditModal
           appointment={editingAppointment}
-          formData={editForm}
-          setFormData={setEditForm}
+          formData={{ ...editForm, isRecurring: editForm.isRecurring ?? false, recurrenceRule: editForm.recurrenceRule ?? '' }}
+          setFormData={(updater) =>
+            setEditForm((prev) => {
+              const next = typeof updater === 'function' ? (updater as any)(prev) : updater;
+              return { ...prev, ...next };
+            })
+          }
           helpers={helpers}
           saving={saving}
           onClose={() => {

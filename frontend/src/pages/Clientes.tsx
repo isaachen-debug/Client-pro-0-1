@@ -19,7 +19,7 @@ import { parseDateFromInput } from '../utils/date';
 import { useAuth } from '../contexts/AuthContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
-import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
+import { PageHeader, SurfaceCard } from '../components/OwnerUI';
 import { pageGutters, labelSm } from '../styles/uiTokens';
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });

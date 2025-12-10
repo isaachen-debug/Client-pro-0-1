@@ -56,7 +56,6 @@ const Financeiro = () => {
   const [savingPayout, setSavingPayout] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [removingExpenseId, setRemovingExpenseId] = useState<string | null>(null);
-  const [showFinanceTip, setShowFinanceTip] = useState(true);
 
   useEffect(() => {
     fetchFinanceiroData();

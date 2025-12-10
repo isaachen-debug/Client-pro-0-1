@@ -1,4 +1,4 @@
-import { LayoutGrid, ArrowRight, Bot, Sparkles, Home } from 'lucide-react';
+import { ArrowRight, Bot, Sparkles, Home } from 'lucide-react';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
 import { pageGutters, labelSm } from '../styles/uiTokens';
 

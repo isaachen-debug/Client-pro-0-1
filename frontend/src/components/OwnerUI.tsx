@@ -11,13 +11,13 @@ const badgeToneClasses: Record<BadgeTone, string> = {
 };
 
 export const PageHeader = ({
-  label,
+  label: _label,
   title,
   subtitle,
   actions,
   className = '',
 }: {
-  label: string;
+  label?: string;
   title: string;
   subtitle?: string;
   actions?: ReactNode;

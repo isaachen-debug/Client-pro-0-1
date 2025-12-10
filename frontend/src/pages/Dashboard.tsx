@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, Clock, Users, Calendar, BellRing, X as CloseIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { DollarSign, Clock, Calendar, BellRing, X as CloseIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { dashboardApi, transactionsApi } from '../services/api';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
 import { pageGutters, labelSm } from '../styles/uiTokens';

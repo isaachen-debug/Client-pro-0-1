@@ -1,6 +1,6 @@
 import { BookOpen, Clock, Shield, Smartphone } from 'lucide-react';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
+import { pageGutters } from '../styles/uiTokens';
 
 const helperLinks = [
   {

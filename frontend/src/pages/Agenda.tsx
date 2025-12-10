@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { addDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader, SurfaceCard } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
+import { pageGutters } from '../styles/uiTokens';
 
 type AgendaView = 'week' | 'month';
 

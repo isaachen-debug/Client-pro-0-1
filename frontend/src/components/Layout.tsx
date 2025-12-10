@@ -14,7 +14,6 @@ import {
   Plus,
   Search,
   Send,
-  ArrowRight,
   UserPlus,
   UserPlus2,
   ChevronDown,
@@ -38,7 +37,6 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
 import brandLogo from '../assets/brand-logo.png';
 import { QuickActionProvider, QuickActionKey } from '../contexts/QuickActionContext';
-import { agentApi } from '../services/agent';
 import { agentIntentApi } from '../services/agentIntent';
 import { StatusBadge } from './OwnerUI';
 
@@ -79,7 +77,6 @@ const Layout = () => {
   const [launchTouchDelta, setLaunchTouchDelta] = useState(0);
   const [agentOpen, setAgentOpen] = useState(false);
   const [agentQuery, setAgentQuery] = useState('');
-  const [agentAnswer, setAgentAnswer] = useState<string | null>(null);
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
   const [agentError, setAgentError] = useState<string | null>(null);
@@ -98,15 +95,6 @@ const Layout = () => {
       }
     };
   }, []);
-  const triggerQuickAction = useCallback((key: QuickActionKey) => {
-    const handler = quickActionHandlersRef.current.get(key);
-    if (handler) {
-      handler();
-      return true;
-    }
-    return false;
-  }, []);
-
   const handleWorkspaceNavigate = useCallback(
     (path: string) => {
       navigate(path);
@@ -443,8 +431,8 @@ const Layout = () => {
             { key: 'company', label: t('nav.company'), path: '/app/empresa', icon: Building2 },
             { key: 'team', label: t('nav.team'), path: '/app/team', icon: Users },
             { key: 'settings', label: t('nav.settings'), path: '/app/settings', icon: SettingsIcon },
-            { key: 'helper-resources', label: t('nav.helperResources', { defaultValue: 'Helper resources' }), path: '/app/helper-resources', icon: HelpCircle },
-            { key: 'apps', label: t('nav.apps', { defaultValue: 'Apps' }), path: '/app/apps', icon: LayoutGrid },
+            { key: 'helper-resources', label: t('nav.helperResources'), path: '/app/helper-resources', icon: HelpCircle },
+            { key: 'apps', label: t('nav.apps'), path: '/app/apps', icon: LayoutGrid },
           ]
         : []),
       { key: 'profile', label: t('nav.profile'), path: '/app/profile', icon: UserCircle },
@@ -508,21 +496,6 @@ const Layout = () => {
     setLaunchTouchDelta(0);
   };
 
-  const currentQuickAction = useMemo<QuickActionKey | null>(() => {
-    const path = location.pathname;
-    const params = new URLSearchParams(location.search);
-    if (path.startsWith('/app/clientes')) {
-      return 'clients:add';
-    }
-    if (path.startsWith('/app/team')) {
-      return params.get('view') === 'portal' ? 'team:portal-access' : 'team:add-helper';
-    }
-    if (path.startsWith('/app/agenda') || path.startsWith('/app/semana')) {
-      return 'agenda:add';
-    }
-    return null;
-  }, [location.pathname, location.search]);
-
   const currentSectionTitle = useMemo(() => {
     const linkMatch = workspaceLinks.find((link) => location.pathname.startsWith(link.path));
     if (linkMatch) {
@@ -540,7 +513,6 @@ const Layout = () => {
 
   const handleAgentOpen = () => {
     setAgentOpen(true);
-    setAgentAnswer(null);
     setAgentError(null);
     setAgentMessages([]);
   };
@@ -548,11 +520,10 @@ const Layout = () => {
   const handleAgentSubmit = async (queryText?: string) => {
     const q = (queryText ?? agentQuery).trim();
     if (!q) {
-      setAgentAnswer('Digite uma pergunta ou escolha uma sugestão.');
+      setAgentError('Digite uma pergunta ou escolha uma sugestão.');
       return;
     }
     setAgentError(null);
-    setAgentAnswer(null);
     setAgentLoading(true);
     setPendingIntent(null);
     setAgentMessages((prev) => [...prev, { role: 'user', text: q }]);
@@ -565,7 +536,6 @@ const Layout = () => {
       } else if (parsed.answer && !parsed.requiresConfirmation) {
         // Intent de leitura executada direto (contagens)
         setAgentMessages((prev) => [...prev, { role: 'assistant', text: parsed.answer! }]);
-        setAgentAnswer(parsed.answer);
       } else if (parsed.requiresConfirmation) {
         // Requer confirmação antes de executar (criações)
         setPendingIntent({
@@ -584,7 +554,6 @@ const Layout = () => {
         // fallback texto simples
         const answer = parsed.answer || 'Posso ajudar com clientes, agenda e financeiro.';
         setAgentMessages((prev) => [...prev, { role: 'assistant', text: answer }]);
-        setAgentAnswer(answer);
       }
     } catch (error: any) {
       console.error('Agent error', error);
@@ -605,7 +574,6 @@ const Layout = () => {
         setAgentError(result.error);
       } else if (result.answer) {
         setAgentMessages((prev) => [...prev, { role: 'assistant', text: result.answer! }]);
-        setAgentAnswer(result.answer);
         setPendingIntent(null);
       }
     } catch (error: any) {
@@ -694,10 +662,6 @@ const Layout = () => {
 
 
   const handleMobileNav = (item: (typeof mobileNavItems)[number]) => {
-    if (item.type === 'launcher') {
-      setMorePanelOpen(true);
-      return;
-    }
     navigate(item.path);
   };
 

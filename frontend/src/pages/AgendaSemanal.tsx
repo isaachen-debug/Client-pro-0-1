@@ -8,7 +8,6 @@ import { ptBR } from 'date-fns/locale';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 import CreateModal, { CreateFormState } from '../components/appointments/CreateModal';
 import EditModal from '../components/appointments/EditModal';
-import { heroOuter, heroInner, heroLabel, heroTitle, heroDescription, chipPrimary, ctaSecondary } from '../styles/uiTokens';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
 
