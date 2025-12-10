@@ -15,6 +15,9 @@ import clientPortalRouter from './routes/clientPortal';
 import notificationsRouter from './routes/notifications';
 import aiRouter from './routes/ai';
 import agentIntentRouter from './routes/agentIntent';
+import faqsRouter from './routes/faqs';
+import templatesRouter from './routes/templates';
+import agentAudioRouter from './routes/agentAudio';
 import { initDailyReminderJob } from './jobs/dailyReminders';
 
 dotenv.config();
@@ -46,6 +49,9 @@ app.use('/api/client', clientPortalRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/agent', aiRouter);
 app.use('/api/agent/intent', agentIntentRouter);
+app.use('/api/agent/audio', agentAudioRouter);
+app.use('/api/faqs', faqsRouter);
+app.use('/api/templates', templatesRouter);
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);

@@ -10,6 +10,7 @@ router.use(authenticate);
 type Intent =
   | 'create_client'
   | 'create_appointment'
+  | 'create_appointments_batch'
   | 'count_today'
   | 'count_tomorrow'
   | 'count_clients'
@@ -37,6 +38,7 @@ NUNCA use ações destrutivas. PROIBIDO deletar contas ou dados. Se pedido para 
 Intents permitidas:
 - create_client: cria cliente. Campos: name (obrigatório), phone?, email?, address?
 - create_appointment: cria agendamento. Campos: customerName (obrigatório), date (YYYY-MM-DD), startTime (HH:mm), endTime?, price?, notes?
+- create_appointments_batch: cria vários agendamentos. payload: { appointments: [{ customerName, date, startTime, endTime?, price?, notes? }] }. Se mais de 1 item, marcar requiresConfirmation=true.
 - count_today: responder quantos agendamentos hoje.
 - count_tomorrow: responder quantos agendamentos amanhã.
 - count_clients: responder quantos clientes cadastrados.
@@ -65,7 +67,11 @@ const endOfDay = (date: Date) => {
 };
 
 router.post('/', async (req: Request, res: Response) => {
-  const { message, context } = req.body || {};
+  const { message, context, history } = (req.body || {}) as {
+    message?: string;
+    context?: unknown;
+    history?: { role: 'user' | 'assistant'; text: string }[];
+  };
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'Campo "message" é obrigatório.' });
   }
@@ -78,10 +84,22 @@ router.post('/', async (req: Request, res: Response) => {
   const client = new OpenAI({ apiKey });
 
   try {
+    const contextMessage = context
+      ? ({ role: 'system', content: `Contexto (dados recentes do usuário): ${JSON.stringify(context)}` } as const)
+      : null;
+
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
+        {
+          role: 'system',
+          content: `${systemPrompt}
+Regras adicionais:
+- Se a data não tiver ano ou vier em ano passado, assuma o ano atual.
+- Se cliente, data e hora estiverem presentes, pode executar direto sem pedir confirmação.
+`,
+        },
+        ...(contextMessage ? [contextMessage] : []),
         { role: 'user', content: message },
       ],
       temperature: 0.2,
@@ -96,32 +114,56 @@ router.post('/', async (req: Request, res: Response) => {
       parsed = { intent: 'unknown', reason: 'parse_error' };
     }
 
+    if (parsed.intent === 'create_appointments_batch') {
+      parsed.requiresConfirmation = true;
+    }
+
     // Salvaguardas
     if (['delete', 'remove', 'drop'].some((w) => message.toLowerCase().includes(w))) {
       parsed = { intent: 'unknown', reason: 'delete_blocked' };
     }
     if (parsed.intent === 'unknown') {
       // fallback: resposta livre, sem ações
+      const historyMessages =
+        Array.isArray(history)
+          ? (history
+              .slice(-6)
+              .map((m) => ({
+                role: m.role === 'assistant' ? 'assistant' : 'user',
+                content: String(m.text ?? '').slice(0, 1000),
+              }))
+              .filter((m) => m.content.trim().length > 0) as any[])
+          : [];
+
       const chatCompletion = await client.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
             content: `
-Você é o Assistente IA do app CleanUp (ClientPro). Ajuda empresas de limpeza com agenda, clientes, finanças e comunicações.
+Você é o Assistente IA do app CleanUp (ClientPro). Ajuda empresas de limpeza com agenda, clientes, finanças e comunicações,
+e pode responder perguntas gerais de forma segura e concisa.
 Tom: simples, profissional, direto, educado. Nunca invente dados ou faça ações destrutivas.
 Funções:
 - Explicar passos do app (adicionar cliente, marcar serviço, ver ganhos).
 - Responder dúvidas de dados do app (ganhos, clientes, custos, ticket médio). Formato breve tipo: 📊 Resumo: Ganhos $X; Clientes Y; Custos $Z; Lucro $W. Se faltar dados, peça para cadastrar/autorizar.
 - Gerar mensagens profissionais para clientes e traduzir PT ⇄ EN quando pedido.
 - Personalizar conforme perfil (empresa pequena → prático; grande → mais contexto/automação).
-Para valores/preços, sugira consultar tabelas internas do usuário.
+- Para valores/preços, sugira consultar tabelas internas do usuário.
+- Assuntos gerais: responder de modo informativo e curto; se for tema sensível/proibido, recusar educadamente.
+
+Quando perguntarem “como funciona o Clean Up?”, “o que é o app?” ou “como vender o app?”:
+- Comece com 1 frase curta de resumo.
+- Em seguida, liste 3–6 bullets com as partes principais do produto (Agenda, Clientes, Financeiro, Atalhos, IA/Agent).
+- Não use passo a passo numerado (1,2,3) salvo se o usuário pedir explicitamente “passo a passo”.
             `,
           },
+          ...(context ? ([{ role: 'system', content: `Contexto: ${JSON.stringify(context)}` }] as const) : []),
+          ...historyMessages,
           { role: 'user', content: message },
         ],
         temperature: 0.4,
-        max_tokens: 200,
+        max_tokens: 400,
       });
       const answer = chatCompletion.choices?.[0]?.message?.content ?? 'Posso ajudar com clientes, agenda e financeiro.';
       return res.json({ intent: 'unknown', answer });
@@ -320,6 +362,16 @@ router.post('/execute', async (req: Request, res: Response) => {
   const { intent, payload } = req.body || {};
   if (!intent) return res.status(400).json({ error: 'Intent é obrigatória.' });
 
+  const normalizeDate = (value: string) => {
+    const d = new Date(value);
+    if (!Number.isFinite(d.getTime())) return null;
+    const currentYear = new Date().getFullYear();
+    if (d.getFullYear() < currentYear) {
+      d.setFullYear(currentYear);
+    }
+    return d;
+  };
+
   try {
     if (intent === 'create_client') {
       const { name, phone, email, address } = payload || {};
@@ -342,6 +394,11 @@ router.post('/execute', async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Campos obrigatórios: cliente, data, início.' });
       }
 
+      const normalizedDate = normalizeDate(date);
+      if (!normalizedDate) {
+        return res.status(400).json({ error: 'Data inválida.' });
+      }
+
       let customer = await prisma.customer.findFirst({
         where: { userId: req.user!.id, name: { equals: customerName, mode: 'insensitive' } },
       });
@@ -355,19 +412,102 @@ router.post('/execute', async (req: Request, res: Response) => {
         });
       }
 
+      const priceNumber = price != null && price !== '' ? Number(price) : customer.defaultPrice ?? 0;
+
       const created = await prisma.appointment.create({
         data: {
           userId: req.user!.id,
           customerId: customer.id,
-          date: new Date(date),
+          date: normalizedDate,
           startTime,
           endTime: endTime || null,
-          price: price ? Number(price) : 0,
+          price: priceNumber,
           status: 'AGENDADO',
           notes: notes || null,
         },
       });
       return res.json({ ok: true, answer: `Agendamento criado para ${customerName} em ${date} ${startTime}.` });
+    }
+
+    if (intent === 'create_appointments_batch') {
+      const items = Array.isArray(payload?.appointments) ? payload.appointments : [];
+      if (!items.length) {
+        return res.status(400).json({ error: 'Nenhum agendamento encontrado no payload.' });
+      }
+
+      const results: { customerName?: string; date?: string; startTime?: string; ok: boolean; error?: string }[] = [];
+
+      for (const item of items) {
+        const { customerName, date, startTime, endTime, price, notes } = item || {};
+        if (!customerName || !date || !startTime) {
+          results.push({
+            customerName,
+            date,
+            startTime,
+            ok: false,
+            error: 'Faltam campos obrigatórios (cliente, data, início).',
+          });
+          continue;
+        }
+
+        const normalizedDate = normalizeDate(String(date));
+        if (!normalizedDate) {
+          results.push({ customerName, date, startTime, ok: false, error: 'Data inválida.' });
+          continue;
+        }
+
+        try {
+          let customer = await prisma.customer.findFirst({
+            where: { userId: req.user!.id, name: { equals: customerName, mode: 'insensitive' } },
+          });
+
+          if (!customer) {
+            customer = await prisma.customer.create({
+              data: {
+                userId: req.user!.id,
+                name: customerName,
+              },
+            });
+          }
+
+          const priceNumber = price != null && price !== '' ? Number(price) : customer.defaultPrice ?? 0;
+
+          await prisma.appointment.create({
+            data: {
+              userId: req.user!.id,
+              customerId: customer.id,
+              date: normalizedDate,
+              startTime,
+              endTime: endTime || null,
+              price: priceNumber,
+              status: 'AGENDADO',
+              notes: notes || null,
+            },
+          });
+
+          results.push({ customerName, date: normalizedDate.toISOString().slice(0, 10), startTime, ok: true });
+        } catch (err) {
+          results.push({
+            customerName,
+            date,
+            startTime,
+            ok: false,
+            error: 'Falha ao criar agendamento.',
+          });
+        }
+      }
+
+      const okCount = results.filter((r) => r.ok).length;
+      const failCount = results.length - okCount;
+      const summaryParts = [];
+      if (okCount) summaryParts.push(`${okCount} criado(s)`);
+      if (failCount) summaryParts.push(`${failCount} falhou/ram`);
+
+      return res.json({
+        ok: okCount > 0,
+        answer: `Lote concluído: ${summaryParts.join(', ')}.`,
+        results,
+      });
     }
 
     return res.status(400).json({ error: 'Intent não suportada para execução.' });
