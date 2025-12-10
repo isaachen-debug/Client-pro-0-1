@@ -120,6 +120,14 @@ body {
   border-color: var(--card-border) !important;
 }
 
+/* Evita zoom automático em inputs no iOS (font-size >= 16px) */
+input,
+select,
+textarea,
+button {
+  font-size: 16px;
+}
+
 [data-theme='dark'] .text-gray-900 {
   color: var(--text-primary) !important;
 }
