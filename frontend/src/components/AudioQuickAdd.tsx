@@ -184,23 +184,50 @@ const AudioQuickAdd = ({ contextHint }: AudioQuickAddProps) => {
         </div>
       )}
 
+      {recording && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div className="relative flex flex-col items-center gap-2">
+            <div className="absolute -inset-10 pointer-events-none">
+              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(248,113,113,0.28),rgba(248,113,113,0.05))] blur-2xl opacity-80 animate-pulse" />
+              <div className="absolute inset-0 rounded-full bg-[conic-gradient(at_50%_50%,#ef4444,#f97316,#ef4444,#f43f5e,#ef4444)] opacity-50 animate-[spin_14s_linear_infinite]" />
+              <div className="absolute inset-4 rounded-full bg-gradient-to-br from-red-500/65 via-rose-500/55 to-orange-400/65 blur-md opacity-70 animate-pulse" />
+              <div className="absolute inset-8 rounded-full bg-red-500/18 backdrop-blur-md border border-red-300/30" />
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleRecording}
+              disabled={uploading}
+              className="relative h-14 w-14 rounded-full text-sm font-semibold transition shadow-[0_16px_32px_rgba(15,23,42,0.32)] flex items-center justify-center overflow-hidden bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 text-white border border-red-300 animate-pulse"
+            >
+              <Square size={18} />
+              {uploading && <Loader2 size={18} className="absolute -bottom-2 right-1 animate-spin text-slate-200" />}
+            </button>
+            <div className="text-[11px] font-semibold text-red-700 bg-white/90 backdrop-blur px-2 py-1 rounded-full border border-red-200 shadow-sm">
+              Parar gravação
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="fixed right-4 bottom-24 z-40 flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={handleToggleRecording}
-          disabled={uploading}
-          className={`relative h-14 w-14 rounded-full text-sm font-semibold transition shadow-[0_15px_35px_rgba(15,23,42,0.25)] flex items-center justify-center ${
-            recording
-              ? 'bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 text-white border border-red-300 animate-pulse'
-              : 'bg-gradient-to-r from-[#0f172a] via-[#1d1b3a] to-[#0f766e] text-white border border-white/10 hover:shadow-[0_20px_45px_rgba(34,197,94,0.35)]'
-          }`}
-        >
-          {!recording && (
-            <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-400/20 via-cyan-500/15 to-purple-500/15 blur-lg opacity-70 pointer-events-none" />
-          )}
-          {recording ? <Square size={18} /> : <Mic size={18} />}
-          {uploading && <Loader2 size={16} className="absolute -bottom-2 right-1 animate-spin text-slate-200" />}
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={handleToggleRecording}
+            disabled={uploading}
+            className={`relative h-14 w-14 rounded-full text-sm font-semibold transition shadow-[0_18px_40px_rgba(15,23,42,0.3)] flex items-center justify-center overflow-hidden ${
+              recording
+                ? 'bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 text-white border border-red-300 animate-pulse'
+                : 'bg-gradient-to-r from-[#0f172a] via-[#1d1b3a] to-[#0f766e] text-white border border-white/10 hover:shadow-[0_20px_45px_rgba(34,197,94,0.35)]'
+            }`}
+          >
+            {!recording && (
+              <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-400/20 via-cyan-500/15 to-purple-500/15 blur-lg opacity-70 pointer-events-none" />
+            )}
+            {recording ? <Square size={18} /> : <Mic size={18} />}
+            {uploading && <Loader2 size={16} className="absolute -bottom-2 right-1 animate-spin text-slate-200" />}
+          </button>
+        </div>
         <div className="text-[11px] font-semibold text-slate-600 bg-white/80 backdrop-blur px-2 py-1 rounded-full border border-slate-200 shadow-sm">
           {recording ? 'Gravando...' : 'Agende por voz'}
         </div>

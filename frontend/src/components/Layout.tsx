@@ -1193,7 +1193,10 @@ const Layout = () => {
                         isDarkTheme ? 'text-white' : 'text-gray-900'
                       }`}
                     >
-                      {user?.companyName || 'Clean Up'}
+                      {(() => {
+                        const name = user?.companyName || 'Clean Up';
+                        return name.length > 7 ? `${name.slice(0, 7)}…` : name;
+                      })()}
                       <ChevronDown
                         size={16}
                         className={`${mobileSecondaryTextClass} transition-transform ${
