@@ -69,7 +69,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     startTime: '',
     endTime: '',
     price: '',
-    helperFee: '',
+  helperFee: '',
     isRecurring: false,
     recurrenceRule: '',
     notes: '',

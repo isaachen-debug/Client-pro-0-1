@@ -134,7 +134,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className={`${pageGutters} max-w-6xl mx-auto`}>
+    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto`}>
       <div className="hidden sm:block">
         <PageHeader
           title="Dashboard"

@@ -215,7 +215,7 @@ const Empresa = () => {
   ].filter((card) => card.value);
 
   return (
-    <div className={`${pageGutters} max-w-6xl mx-auto space-y-8`}>
+    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-8`}>
       <PageHeader
         label="EMPRESA"
         title="Brand & Company"

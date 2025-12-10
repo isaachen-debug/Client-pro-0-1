@@ -66,7 +66,7 @@ const OwnerSettings = () => {
   };
 
   return (
-    <div className={`${pageGutters} max-w-6xl mx-auto space-y-6`}>
+    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-6`}>
       <PageHeader
         label="CONFIGURAÇÕES"
         title="Settings"

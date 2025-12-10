@@ -422,7 +422,7 @@ const Financeiro = () => {
   }
 
   return (
-    <div className={`${pageGutters} max-w-6xl mx-auto`}>
+    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto`}>
       <PageHeader
         label="FINANCEIRO"
         title="Finance"

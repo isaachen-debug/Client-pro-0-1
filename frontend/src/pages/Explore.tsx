@@ -51,14 +51,14 @@ const Explore = () => {
   }, []);
 
   return (
-    <div className={`${pageGutters} max-w-6xl mx-auto`}>
+    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto`}>
       <PageHeader
         label="EXPLORE"
         title="Hub da operação"
         subtitle="Acesse rápido clientes, financeiro, empresa e equipe."
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-4">
         {exploreCards.map((card) => {
           const Icon = card.icon;
           const metric =
