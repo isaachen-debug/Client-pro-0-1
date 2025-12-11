@@ -410,32 +410,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CANCELADO: 'bg-red-500',
   };
 
-
-  const renderAppointmentCard = (ag: Appointment) => {
-    const badgeClasses = statusToneClasses[ag.status] ?? statusToneClasses.PENDENTE;
-    return (
-      <button
-        key={ag.id}
-        onClick={() => openEditModal(ag)}
-        className="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-primary-200 hover:shadow-md transition"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-sm font-semibold text-slate-900">
-            {ag.startTime ? `${ag.startTime}${ag.endTime ? ` - ${ag.endTime}` : ''}` : 'Dia todo'}
-          </div>
-          <span className={`text-[11px] font-semibold px-2 py-1 rounded-full border ${badgeClasses}`}>
-            {ag.status}
-          </span>
-        </div>
-        <p className="text-sm text-slate-700 truncate">{ag.customer.name}</p>
-        {ag.price ? (
-          <p className="text-sm font-semibold text-slate-900 mt-1">{currencyFormatter.format(ag.price)}</p>
-        ) : null}
-        {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
-      </button>
-    );
-  };
-
   const formatFirstName = (full: string) => full.split(' ')[0] || full;
 
   const renderWeekSection = () => {
@@ -939,4 +913,3 @@ const DayActionsModal = ({ date, appointments, onAdd, onEdit, onClose, formatCur
 );
 
 export default AgendaSemanal;
-

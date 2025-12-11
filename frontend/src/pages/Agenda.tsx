@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { addDays, endOfWeek, format, startOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { endOfWeek, format, startOfWeek } from 'date-fns';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
