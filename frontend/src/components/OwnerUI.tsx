@@ -3,11 +3,11 @@ import type { ReactNode } from 'react';
 type BadgeTone = 'primary' | 'success' | 'warning' | 'error' | 'neutral';
 
 const badgeToneClasses: Record<BadgeTone, string> = {
-  primary: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/12 dark:text-emerald-100 dark:border-emerald-400/30',
-  success: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/12 dark:text-emerald-100 dark:border-emerald-400/30',
-  warning: 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-400/12 dark:text-amber-100 dark:border-amber-300/30',
-  error: 'bg-red-50 text-red-700 border-red-100 dark:bg-red-500/12 dark:text-red-100 dark:border-red-400/30',
-  neutral: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/8 dark:text-[var(--text-secondary)] dark:border-white/12',
+  primary: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  success: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  warning: 'bg-amber-50 text-amber-700 border-amber-100',
+  error: 'bg-red-50 text-red-700 border-red-100',
+  neutral: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
 export const PageHeader = ({

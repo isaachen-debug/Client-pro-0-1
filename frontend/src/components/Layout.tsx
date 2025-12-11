@@ -29,10 +29,9 @@ import {
   CreditCard,
   AppWindow,
   Wallet,
-  Sun,
-  Moon,
   Mic,
   Square,
+  Home as HomeIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TouchEvent, UIEvent } from 'react';
@@ -70,7 +69,7 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const { canInstall, install, dismissed, dismiss } = useInstallPrompt();
-  const { t, theme, setThemePreference } = usePreferences();
+  const { t } = usePreferences();
   const isOwner = user?.role === 'OWNER';
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [morePanelOpen, setMorePanelOpen] = useState(false);
@@ -83,6 +82,8 @@ const Layout = () => {
   const [createTouchDelta, setCreateTouchDelta] = useState(0);
   const [launchTouchStart, setLaunchTouchStart] = useState<number | null>(null);
   const [launchTouchDelta, setLaunchTouchDelta] = useState(0);
+  const [extraMenuOpen, setExtraMenuOpen] = useState(false);
+  const EXTRA_SLOT_STORAGE_KEY = 'clientepro-extra-slot';
   const [agentOpen, setAgentOpen] = useState(false);
   const [agentQuery, setAgentQuery] = useState('');
   const [agentLoading, setAgentLoading] = useState(false);
@@ -400,10 +401,7 @@ const Layout = () => {
       }),
     [quickCreateActions, quickCreateQuery],
   );
-  const isDarkTheme = theme === 'dark';
-  const handleThemeToggle = useCallback(() => {
-    setThemePreference(isDarkTheme ? 'light' : 'dark');
-  }, [isDarkTheme, setThemePreference]);
+  const isDarkTheme = false;
   const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2 py-1 space-y-1' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
   const mobileHeaderPanelSurface = isDarkTheme
     ? 'border border-white/12 bg-gradient-to-r from-[#0b1020] via-[#0f172a] to-[#0b1020] text-white shadow-[0_20px_60px_rgba(0,0,0,0.48)] backdrop-blur-2xl'
@@ -414,7 +412,6 @@ const Layout = () => {
   const mobileHeaderPanelClass = `${mobileHeaderSpacingClass} ${mobileHeaderPanelSurface} transition-all duration-300 ${
     mobileHeaderCondensed ? 'scale-[0.95]' : ''
   }`;
-  const mobileIconButtonClass = `${isDarkTheme ? 'bg-white/8 border border-white/15 text-white hover:bg-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-gray-100 border border-gray-200 text-gray-900'} rounded-2xl flex items-center justify-center transition-all duration-200`;
   const mobileInputWrapperClass = `rounded-2xl flex items-center gap-2 px-4 py-2.5 ${isDarkTheme ? 'bg-white/6 border border-white/12' : 'bg-gray-50 border border-gray-200'}`;
   const mobileInputClass = `bg-transparent flex-1 text-sm placeholder:text-current/40 focus:outline-none ${isDarkTheme ? 'text-white' : 'text-gray-900'}`;
   const mobileMutedTextClass = isDarkTheme ? 'text-white/50' : 'text-gray-500';
@@ -430,12 +427,13 @@ const Layout = () => {
     : 'absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-primary-600 border border-primary-200 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1 hover:bg-primary-50';
 
   const menuItems = [
-    { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-    { path: '/app/start', icon: PlayCircle, labelKey: 'nav.today' },
-    { path: '/app/explore', icon: Grid, labelKey: 'nav.explore' },
-    { path: '/app/clientes', icon: Users, labelKey: 'nav.clients' },
+    { path: '/app/home', icon: HomeIcon, labelKey: 'nav.dashboard' },
     { path: '/app/agenda', icon: Calendar, labelKey: 'nav.agenda' },
+    { path: '/app/clientes', icon: Users, labelKey: 'nav.clients' },
     { path: '/app/financeiro', icon: DollarSign, labelKey: 'nav.finance' },
+    { path: '/app/start', icon: PlayCircle, labelKey: 'nav.today' },
+    { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+    { path: '/app/explore', icon: Grid, labelKey: 'nav.explore' },
     ...(user?.role === 'OWNER'
       ? [
           { path: '/app/empresa', icon: Building2, labelKey: 'nav.company' },
@@ -800,36 +798,79 @@ const Layout = () => {
   const mobileNavItems = [
     {
       key: 'home',
-      label: 'Dashboard',
-      path: '/app/dashboard',
-      icon: LayoutDashboard,
+      label: 'Home',
+      path: '/app/home',
+      icon: HomeIcon,
       type: 'route' as const,
     },
     {
       key: 'agenda',
-      label: 'Schedule',
+      label: 'Agenda',
       path: '/app/agenda',
       icon: Calendar,
       type: 'route' as const,
     },
     {
-      key: 'today',
-      label: 'Today',
-      path: '/app/start',
-      icon: PlayCircle,
-      type: 'route' as const,
-    },
-    {
-      key: 'explore',
-      label: 'Explore',
-      path: '/app/explore',
-      icon: Grid,
+      key: 'clientes',
+      label: 'Clientes',
+      path: '/app/clientes',
+      icon: Users,
       type: 'route' as const,
     },
   ];
+  const extraMenuItems = [
+    { key: 'financeiro', label: 'Financeiro', path: '/app/financeiro', icon: DollarSign },
+    { key: 'dashboard', label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
+    { key: 'start', label: 'Hoje', path: '/app/start', icon: PlayCircle },
+    { key: 'explore', label: 'Explorar', path: '/app/explore', icon: Grid },
+    { key: 'empresa', label: 'Empresa', path: '/app/empresa', icon: Building2 },
+    { key: 'team', label: 'Equipe', path: '/app/team', icon: Users },
+    { key: 'settings', label: 'Configurações', path: '/app/settings', icon: SettingsIcon },
+    { key: 'helper-resources', label: 'Helpers', path: '/app/helper-resources', icon: HelpCircle },
+    { key: 'apps', label: 'Apps', path: '/app/apps', icon: LayoutGrid },
+    { key: 'profile', label: 'Perfil', path: '/app/profile', icon: UserCircle },
+  ];
+  const [extraSlot, setExtraSlot] = useState(() => extraMenuItems[0]);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(EXTRA_SLOT_STORAGE_KEY);
+      if (stored) {
+        const found = extraMenuItems.find((i) => i.key === stored);
+        if (found) {
+          setExtraSlot(found);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const navItems = useMemo(
+    () => [
+      ...mobileNavItems,
+      {
+        ...extraSlot,
+        type: 'route' as const,
+        dynamicSlot: true,
+      },
+    ],
+    [mobileNavItems, extraSlot],
+  );
+  const leftNavItems = navItems.slice(0, 2);
+  const rightNavItems = navItems.slice(2);
 
 
-  const handleMobileNav = (item: (typeof mobileNavItems)[number]) => {
+  const handleMobileNav = (item: { path: string }) => {
+    navigate(item.path);
+  };
+  const handleExtraSelect = (item: (typeof extraMenuItems)[number]) => {
+    setExtraSlot(item);
+    setExtraMenuOpen(false);
+    try {
+      localStorage.setItem(EXTRA_SLOT_STORAGE_KEY, item.key);
+    } catch (e) {
+      // ignore
+    }
     navigate(item.path);
   };
 
@@ -1103,7 +1144,7 @@ const Layout = () => {
                     <button
                       type="button"
                       onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                      className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/10 dark:border-white/15"
+                      className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200"
                       aria-label="Abrir menu rápido"
                     >
                       <div className="flex items-center gap-1">
@@ -1115,7 +1156,7 @@ const Layout = () => {
                           {user?.avatarUrl ? (
                             <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-[11px] font-semibold flex items-center justify-center h-full text-gray-900 dark:text-white">
+                            <span className="text-[11px] font-semibold flex items-center justify-center h-full text-gray-900">
                               {initials}
                             </span>
                           )}
@@ -1141,14 +1182,6 @@ const Layout = () => {
                     <Bot size={18} />
                   </div>
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleThemeToggle}
-                    className={`${mobileIconButtonClass} w-11 h-11 hover:-translate-y-0.5`}
-                    aria-label={isDarkTheme ? 'Ativar tema claro' : 'Ativar tema escuro'}
-                  >
-                    {isDarkTheme ? <Sun size={18} /> : <Moon size={18} />}
-                  </button>
                 </div>
               </div>
             ) : (
@@ -1159,7 +1192,7 @@ const Layout = () => {
                     <button
                       type="button"
                       onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200 dark:bg-white/8 dark:border-white/15"
+                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200"
                       aria-label="Abrir menu rápido"
                     >
                       <div className="flex items-center gap-1">
@@ -1176,7 +1209,7 @@ const Layout = () => {
                             </span>
                           )}
                         </div>
-                          <div className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center dark:border-white/20 dark:bg-white/10">
+                          <div className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center">
                           <img src={brandLogo} alt="Clean Up" className="w-4 h-4 object-contain" />
                         </div>
                       </div>
@@ -1220,15 +1253,17 @@ const Layout = () => {
                     </div>
                     <span className="text-sm font-semibold hidden sm:inline">Abrir Agent</span>
                   </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleThemeToggle}
-                    className={`${mobileIconButtonClass} w-11 h-11 hover:-translate-y-0.5`}
-                    aria-label={isDarkTheme ? 'Ativar tema claro' : 'Ativar tema escuro'}
+                  <Link
+                    to="/app/settings"
+                    className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-2xl border text-sm font-semibold transition ${
+                      isDarkTheme
+                        ? 'bg-white/8 border-white/12 text-white hover:bg-white/12'
+                        : 'bg-white border-gray-200 text-gray-900 hover:shadow-md'
+                    }`}
                   >
-                    {isDarkTheme ? <Sun size={18} /> : <Moon size={18} />}
-                  </button>
+                    <SettingsIcon size={16} />
+                  </Link>
+                  </div>
                 </div>
                 {mobileWorkspaceExpanded && (
                   <>
@@ -1355,9 +1390,9 @@ const Layout = () => {
             <div className="relative">
               <div className={`${mobileNavSurfaceClass} rounded-[32px] px-6 py-4 flex items-center justify-between animate-nav-glow`}>
                 <div className="flex items-center gap-6">
-                  {mobileNavItems.slice(0, 2).map((item) => {
+                  {leftNavItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = item.type === 'route' && location.pathname.startsWith(item.path);
+                    const isActive = location.pathname.startsWith(item.path ?? '');
                     return (
                       <button
                         key={item.key}
@@ -1374,17 +1409,30 @@ const Layout = () => {
                   })}
                 </div>
                 <div className="flex items-center gap-6">
-                  {mobileNavItems.slice(2).map((item) => {
+                  {rightNavItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = item.type === 'route' && location.pathname.startsWith(item.path ?? '');
+                    const isActive = location.pathname.startsWith(item.path ?? '');
+                    const isDynamicSlot = item.dynamicSlot;
                     return (
                       <button
                         key={item.key}
                         type="button"
-                        onClick={() => handleMobileNav(item)}
+                        onClick={() => {
+                          if (isDynamicSlot) {
+                            const isOnPage = location.pathname.startsWith(item.path ?? '');
+                            if (isOnPage) {
+                              setExtraMenuOpen((prev) => !prev);
+                            } else {
+                              setExtraMenuOpen(false);
+                              handleMobileNav(item);
+                            }
+                          } else {
+                            handleMobileNav(item);
+                          }
+                        }}
                         className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
                           isActive ? mobileNavActiveClass : mobileNavInactiveClass
-                        }`}
+                        } ${isDynamicSlot && extraMenuOpen ? 'text-primary-600' : ''}`}
                       >
                         <Icon size={20} />
                         <span>{item.label}</span>
@@ -1402,6 +1450,53 @@ const Layout = () => {
               </button>
             </div>
           </div>
+
+          {extraMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
+                onClick={() => setExtraMenuOpen(false)}
+              />
+              <div className="fixed inset-x-4 bottom-24 z-50">
+                <div className="rounded-[28px] border border-slate-100 bg-gradient-to-br from-primary-50 via-white to-accent-50 shadow-[0_18px_50px_rgba(15,23,42,0.12)] p-4 space-y-3 text-slate-900">
+                  <p className="text-xs font-semibold text-slate-600 px-1">Mais páginas</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {extraMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = extraSlot.key === item.key;
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => handleExtraSelect(item)}
+                          className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-3 transition ${
+                            isActive
+                              ? 'bg-primary-50 border-primary-200 text-primary-700'
+                              : 'bg-gray-50 border-gray-100 hover:border-primary-200 hover:bg-primary-50/70'
+                          }`}
+                        >
+                          <div
+                            className={`w-12 h-12 rounded-2xl border flex items-center justify-center shadow-sm ${
+                              isActive ? 'bg-white border-primary-200 text-primary-700' : 'bg-white border-gray-200 text-primary-600'
+                            }`}
+                          >
+                            <Icon size={20} />
+                          </div>
+                          <span
+                            className={`text-[12px] font-semibold ${
+                              isActive ? 'text-primary-700' : 'text-gray-700'
+                            }`}
+                          >
+                            {item.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {quickCreateOpen && (
             <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">

@@ -32,7 +32,7 @@ const Profile = () => {
     companyName: user?.companyName ?? '',
     primaryColor: user?.primaryColor ?? '#22c55e',
     avatarUrl: user?.avatarUrl ?? '',
-    preferredTheme: (user?.preferredTheme ?? 'light') as ThemeOption,
+    preferredTheme: 'light' as ThemeOption,
     preferredLanguage: (user?.preferredLanguage ?? 'pt') as LanguageOption,
     whatsappNumber: user?.whatsappNumber ?? '',
     contactPhone: user?.contactPhone ?? '',
@@ -65,7 +65,7 @@ const Profile = () => {
         companyName: user.companyName ?? '',
         primaryColor: user.primaryColor ?? '#22c55e',
         avatarUrl: user.avatarUrl ?? '',
-        preferredTheme: (user.preferredTheme ?? 'light') as ThemeOption,
+      preferredTheme: 'light' as ThemeOption,
         preferredLanguage: (user.preferredLanguage ?? 'pt') as LanguageOption,
         whatsappNumber: user.whatsappNumber ?? '',
         contactPhone: user.contactPhone ?? '',
@@ -157,10 +157,7 @@ const Profile = () => {
     }
   };
 
-  const themeOptions: { value: ThemeOption; label: string }[] = [
-    { value: 'light', label: 'Claro' },
-    { value: 'dark', label: 'Escuro' },
-  ];
+  const themeOptions: { value: ThemeOption; label: string }[] = [{ value: 'light', label: 'Claro' }];
 
   const languageOptions: { value: LanguageOption; label: string }[] = [
     { value: 'pt', label: 'Português' },
@@ -312,9 +309,7 @@ const Profile = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SurfaceCard className="border-slate-100">
               <p className="text-xs text-slate-500 uppercase tracking-wide">Tema</p>
-              <p className="text-sm font-semibold text-slate-900">
-                {profileForm.preferredTheme === 'dark' ? 'Escuro' : 'Claro'}
-              </p>
+              <p className="text-sm font-semibold text-slate-900">Claro</p>
             </SurfaceCard>
             <SurfaceCard className="border-slate-100">
               <p className="text-xs text-slate-500 uppercase tracking-wide">Idioma</p>

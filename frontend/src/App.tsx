@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
 import Agenda from './pages/Agenda';
 import Financeiro from './pages/Financeiro';
+import Home from './pages/Home';
 import Empresa from './pages/Empresa';
 import Start from './pages/Start';
 import Login from './pages/Login';
@@ -47,7 +48,8 @@ function App() {
                 </PrivateRoute>
               }
             >
-              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route index element={<Navigate to="home" replace />} />
+              <Route path="home" element={<Home />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="start" element={<Start />} />
               <Route path="explore" element={<Explore />} />

@@ -52,24 +52,24 @@ const EditModal = ({
 }: EditModalProps) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-    <div className="bg-white rounded-xl shadow-xl z-50 w-full max-w-md max-h-[90vh] overflow-y-auto">
-      <div className="p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Editar Agendamento</h2>
-            <p className="text-sm text-gray-500">
+    <div className="bg-white rounded-xl shadow-xl z-50 w-full max-w-md max-h-[90vh] overflow-y-auto border border-slate-100">
+      <div className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-gray-900">Editar Agendamento</h2>
+            <p className="text-xs text-gray-500">
               {appointment.customer.name} — {appointment.customer.serviceType || 'Serviço'}
             </p>
           </div>
-          <Link to={`/invoice/${appointment.id}`} className="text-sm font-semibold text-primary-600 hover:underline whitespace-nowrap">
+          <Link to={`/invoice/${appointment.id}`} className="text-xs font-semibold text-primary-600 hover:underline whitespace-nowrap">
             Ver fatura
           </Link>
         </div>
 
-        <form className="space-y-4" onSubmit={onSubmit}>
-          <div className="grid grid-cols-2 gap-4">
+        <form className="space-y-3" onSubmit={onSubmit}>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Data</label>
               <input
                 type="date"
                 value={formData.date}
@@ -79,11 +79,11 @@ const EditModal = ({
                     date: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Início</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Início</label>
               <input
                 type="time"
                 value={formData.startTime}
@@ -93,14 +93,14 @@ const EditModal = ({
                     startTime: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Término</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Término</label>
               <input
                 type="time"
                 value={formData.endTime}
@@ -110,11 +110,11 @@ const EditModal = ({
                     endTime: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Valor cobrado (USD)</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Valor cobrado (USD)</label>
               <input
                 type="number"
                 step="0.01"
@@ -126,13 +126,13 @@ const EditModal = ({
                     price: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pagamento da helper (USD)</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Pagamento da helper (USD)</label>
             <input
               type="number"
               step="0.01"
@@ -144,13 +144,13 @@ const EditModal = ({
                   helperFee: e.target.value,
                 }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             />
-            <p className="text-xs text-gray-500 mt-1">Quanto você repassa para a helper neste serviço.</p>
+            <p className="text-[11px] text-gray-500 mt-1">Quanto você repassa para a helper neste serviço.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Status</label>
             <select
               value={formData.status}
               onChange={(e) =>
@@ -159,7 +159,7 @@ const EditModal = ({
                   status: e.target.value as AppointmentStatus,
                 }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             >
               <option value="AGENDADO">Agendado</option>
               <option value="EM_ANDAMENTO">Em andamento</option>
@@ -170,7 +170,7 @@ const EditModal = ({
 
           {helpers.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Helper atribuído</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Helper atribuído</label>
               <select
                 value={formData.assignedHelperId}
                 onChange={(e) =>
@@ -179,7 +179,7 @@ const EditModal = ({
                     assignedHelperId: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
               >
                 <option value="">Sem helper</option>
                 {helpers.map((helper) => (
@@ -192,7 +192,7 @@ const EditModal = ({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Observações</label>
             <textarea
               rows={3}
               value={formData.notes}
@@ -202,7 +202,7 @@ const EditModal = ({
                   notes: e.target.value,
                 }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             />
           </div>
 
@@ -220,12 +220,12 @@ const EditModal = ({
                 }
                 className="rounded text-primary-600 focus:ring-primary-500"
               />
-              <span className="text-sm font-medium text-gray-700">Agendamento recorrente</span>
+              <span className="text-xs font-semibold text-gray-700">Agendamento recorrente</span>
             </label>
           </div>
           {formData.isRecurring && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Periodicidade</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Periodicidade</label>
               <select
                 value={formData.recurrenceRule}
                 onChange={(e) =>
@@ -234,7 +234,7 @@ const EditModal = ({
                     recurrenceRule: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
               >
                 <option value="">Selecione</option>
                 <option value="FREQ=WEEKLY">Semanal</option>
@@ -246,44 +246,37 @@ const EditModal = ({
           )}
 
           <div className="space-y-2">
-            <p className="text-xs text-gray-500">Ações rápidas</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => onQuickStatus('EM_ANDAMENTO')}
-                className="px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
-              >
-                Iniciar
-              </button>
+            <p className="text-[11px] text-gray-500">Ações rápidas</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => onQuickStatus('CONCLUIDO')}
-                className="px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
+                className="px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-semibold hover:bg-emerald-100 transition-colors"
               >
-                Concluir
+                Iniciar/Concluir
               </button>
               <button
                 type="button"
                 onClick={() => onQuickStatus('CANCELADO')}
-                className="px-3 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors col-span-2"
+                className="px-3 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
               >
                 Cancelar agendamento
               </button>
             </div>
           </div>
 
-          <div className="flex space-x-3 pt-4">
+          <div className="flex space-x-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Fechar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Salvando...' : 'Salvar alterações'}
             </button>

@@ -214,7 +214,7 @@ const Start = () => {
             <button
               type="button"
               onClick={() => fetchAppointments(selectedDate)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 transition dark:border-white/12 dark:bg-white/8 dark:text-[var(--text-primary)] dark:hover:bg-white/12"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 transition"
             >
               <RefreshCw size={16} />
               Atualizar
@@ -239,7 +239,7 @@ const Start = () => {
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                 isActive
                   ? 'bg-primary-600 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:border-primary-200 hover:text-primary-600 dark:bg-white/6 dark:border-white/12 dark:text-[var(--text-secondary)] dark:hover:border-emerald-400/40 dark:hover:text-white'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:border-primary-200 hover:text-primary-600'
               }`}
             >
               {label}
@@ -288,7 +288,7 @@ const Start = () => {
               <span>Progresso</span>
               <span>{progressPercent}%</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-200 overflow-hidden dark:bg-white/10">
+            <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
               <div
                 className="h-full bg-primary-500 rounded-full transition-all"
                 style={{ width: `${progressPercent}%` }}
@@ -328,7 +328,7 @@ const Start = () => {
           <button
             type="button"
             onClick={() => fetchAppointments(selectedDate)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 transition dark:border-white/12 dark:bg-white/8 dark:text-[var(--text-primary)] dark:hover:bg-white/12"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800 hover:bg-slate-50 transition"
           >
             <RefreshCw size={16} />
             Atualizar
@@ -336,8 +336,8 @@ const Start = () => {
         </div>
 
         {appointments.length === 0 ? (
-          <div className="text-center py-10 text-slate-500 space-y-3 dark:text-[var(--text-secondary)]">
-            <p className="text-lg font-semibold text-slate-900 dark:text-[var(--text-primary)]">Nenhum serviço para hoje.</p>
+          <div className="text-center py-10 text-slate-500 space-y-3">
+            <p className="text-lg font-semibold text-slate-900">Nenhum serviço para hoje.</p>
             <p className="text-sm">Use a Agenda para criar novos atendimentos.</p>
             <button
               type="button"
@@ -428,7 +428,7 @@ const Start = () => {
                     <button
                       type="button"
                       onClick={() => setOpenMapId((prev) => (prev === appointment.id ? null : appointment.id))}
-                      className="w-full inline-flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition dark:border-[var(--card-border)] dark:bg-white/5 dark:text-[var(--text-primary)]"
+                      className="w-full inline-flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
                     >
                       <span className="inline-flex items-center gap-2">
                         <MapPin size={16} />
@@ -440,7 +440,7 @@ const Start = () => {
                       />
                     </button>
                     {openMapId === appointment.id && (
-                      <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden border border-slate-100 dark:border-[var(--card-border)]">
+                      <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden border border-slate-100">
                     {(() => {
                       const mapsLink = buildMapsLink(appointment);
                       const wazeLink = buildWazeLink(appointment);
@@ -451,7 +451,7 @@ const Start = () => {
                               <button
                                 type="button"
                                 onClick={() => window.open(mapsLink, '_blank')}
-                                    className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm hover:bg-white dark:bg-white/10 dark:text-emerald-200 dark:border dark:border-white/10 dark:hover:bg-white/16"
+                                    className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm hover:bg-white"
                               >
                                 <Navigation2 size={14} /> Maps
                               </button>
@@ -460,7 +460,7 @@ const Start = () => {
                               <button
                                 type="button"
                                 onClick={() => window.open(wazeLink, '_blank')}
-                                    className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-white dark:bg-white/10 dark:text-blue-200 dark:border dark:border-white/10 dark:hover:bg-white/16"
+                                    className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-white"
                               >
                                 <Navigation2 size={14} /> Waze
                               </button>
@@ -498,7 +498,7 @@ const Start = () => {
                 )}
 
                 {appointment.status === 'EM_ANDAMENTO' && appointment.startedAt && (
-                  <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2 dark:bg-amber-500/12 dark:text-amber-100">
+                  <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
                     Em execução há {formatMinutes(getElapsedMinutes(appointment))}
                   </p>
                 )}
@@ -506,7 +506,7 @@ const Start = () => {
                 {appointment.status === 'CONCLUIDO' &&
                   appointment.startedAt &&
                   appointment.finishedAt && (
-                    <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 dark:bg-emerald-500/12 dark:text-emerald-100">
+                    <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
                       Tempo total: {formatMinutes(getElapsedMinutes(appointment))}
                     </p>
                   )}
@@ -525,7 +525,7 @@ const Start = () => {
                       <button
                         type="button"
                         onClick={() => handleCancel(appointment.id)}
-                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors text-sm font-medium dark:bg-red-500/12 dark:text-red-100 dark:hover:bg-red-500/18"
+                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors text-sm font-medium"
                       >
                         <XCircle size={18} />
                         <span>Cancelar</span>
@@ -545,7 +545,7 @@ const Start = () => {
                       <button
                         type="button"
                         onClick={() => handleCancel(appointment.id)}
-                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors text-sm font-medium dark:bg-red-500/12 dark:text-red-100 dark:hover:bg-red-500/18"
+                        className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors text-sm font-medium"
                       >
                         <XCircle size={18} />
                         <span>Cancelar</span>
@@ -578,10 +578,10 @@ const Start = () => {
 };
 
 const StatCard = ({ label, subtitle, value }: { label: string; subtitle?: string; value: string | number }) => (
-  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:bg-white/6 dark:border-white/12">
-    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold dark:text-[var(--text-secondary)]">{label}</p>
-    {subtitle && <p className="text-xs text-slate-500 mt-1 hidden sm:block dark:text-[var(--text-secondary)]">{subtitle}</p>}
-    <p className="text-lg font-semibold text-slate-900 mt-1 dark:text-[var(--text-primary)]">{value}</p>
+  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">{label}</p>
+    {subtitle && <p className="text-xs text-slate-500 mt-1 hidden sm:block">{subtitle}</p>}
+    <p className="text-lg font-semibold text-slate-900 mt-1">{value}</p>
   </div>
 );
 
@@ -595,8 +595,8 @@ const WorkingClockCard = ({ seconds }: { seconds: number }) => {
   const dashArray = 2 * Math.PI * 45;
   const dashOffset = dashArray - (secondsProgress / 3600) * dashArray;
   return (
-    <div className="relative flex flex-col items-center justify-center bg-white border border-gray-100 rounded-2xl p-4 shadow-sm dark:bg-[var(--card-bg)] dark:border-[var(--card-border)]">
-      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 dark:text-[var(--text-secondary)]">Tempo trabalhado</p>
+    <div className="relative flex flex-col items-center justify-center bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Tempo trabalhado</p>
       <div className="relative w-24 h-24 sm:w-28 sm:h-28">
         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
           <circle cx="50" cy="50" r="45" fill="transparent" stroke={workingClockColors.background} strokeWidth="6" />
@@ -612,11 +612,11 @@ const WorkingClockCard = ({ seconds }: { seconds: number }) => {
             strokeLinecap="round"
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center flex-col text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)]">
+        <div className="absolute inset-0 flex items-center justify-center flex-col text-sm font-semibold text-gray-900">
           <span className="text-base">{display}</span>
         </div>
       </div>
-      <p className="text-xs text-gray-500 mt-2 text-center dark:text-[var(--text-secondary)]">Atualiza quando você conclui serviços</p>
+      <p className="text-xs text-gray-500 mt-2 text-center">Atualiza quando você conclui serviços</p>
     </div>
   );
 };
