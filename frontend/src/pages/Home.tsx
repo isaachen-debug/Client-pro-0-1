@@ -1,6 +1,5 @@
 import { Users, CalendarDays, DollarSign, Search, PlusCircle, ShieldCheck, ArrowRight } from 'lucide-react';
 import { pageGutters } from '../styles/uiTokens';
-import { PageHeader } from '../components/OwnerUI';
 import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {

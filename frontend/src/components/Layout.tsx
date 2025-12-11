@@ -33,6 +33,7 @@ import {
   Square,
   Home as HomeIcon,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TouchEvent, UIEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';

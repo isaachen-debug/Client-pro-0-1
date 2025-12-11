@@ -1,4 +1,3 @@
-import type { MouseEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -397,18 +396,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     return filtered;
   };
 
-  const statusBg: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-blue-50',
-    EM_ANDAMENTO: 'bg-amber-50',
-    CONCLUIDO: 'bg-emerald-50',
-    CANCELADO: 'bg-red-50',
-  };
-  const statusText: Record<AppointmentStatus, string> = {
-    AGENDADO: 'text-blue-700',
-    EM_ANDAMENTO: 'text-amber-700',
-    CONCLUIDO: 'text-emerald-700',
-    CANCELADO: 'text-red-700',
-  };
   const statusToneClasses: Record<AppointmentStatus | 'PENDENTE', string> = {
     AGENDADO: 'bg-blue-50 text-blue-700 border-blue-100',
     EM_ANDAMENTO: 'bg-amber-50 text-amber-700 border-amber-100',
@@ -423,29 +410,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CANCELADO: 'bg-red-500',
   };
 
-  const startHour = 0;
-  const endHour = 23;
-  const minuteHeight = 0.9; // px per minute
-  const defaultDuration = 60; // minutes
-  const dayColumnHeight = (endHour - startHour) * 60 * minuteHeight;
-
-  const parseMinutes = (time?: string | null) => {
-    if (!time) return null;
-    const [h, m] = time.split(':');
-    const hours = Number(h);
-    const minutes = Number(m);
-    if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
-    return hours * 60 + minutes;
-  };
-
-  const getEventPosition = (appointment: Appointment) => {
-    const startMinutes = parseMinutes(appointment.startTime) ?? startHour * 60;
-    const endMinutes = parseMinutes(appointment.endTime) ?? startMinutes + defaultDuration;
-    const duration = Math.max(endMinutes - startMinutes, 30);
-    const top = (startMinutes - startHour * 60) * minuteHeight;
-    const height = duration * minuteHeight;
-    return { top, height };
-  };
 
   const renderAppointmentCard = (ag: Appointment) => {
     const badgeClasses = statusToneClasses[ag.status] ?? statusToneClasses.PENDENTE;
@@ -469,40 +433,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         ) : null}
         {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
       </button>
-    );
-  };
-
-  const renderDaySection = (day: Date, options?: { label?: string; hideCreateButton?: boolean }) => {
-    const dayAppointments = getAgendamentosForDay(day);
-    const isToday = isSameDay(day, new Date());
-    const heading = options?.label ?? format(day, "EEEE',' dd 'de' MMMM", { locale: ptBR });
-
-    return (
-      <div key={day.toISOString()} className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">
-              {isToday ? 'Hoje' : format(day, 'EEE', { locale: ptBR })}
-            </p>
-            <p className="text-lg font-semibold text-slate-900">{heading}</p>
-          </div>
-          {!options?.hideCreateButton && (
-            <button
-              onClick={() => handleDayCardClick(day)}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-primary-600 text-white text-sm font-semibold shadow-sm hover:bg-primary-700 transition"
-            >
-              Novo agendamento
-            </button>
-          )}
-        </div>
-        {dayAppointments.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
-            Nenhum agendamento aqui. Que tal criar um?
-          </div>
-        ) : (
-          <div className="space-y-3">{dayAppointments.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')).map(renderAppointmentCard)}</div>
-        )}
-      </div>
     );
   };
 
@@ -658,46 +588,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         )}
       </div>
     );
-  };
-
-  const openCreateAt = (day: Date, startTotalMinutes: number) => {
-    const minStart = startHour * 60;
-    const maxStart = endHour * 60 - 15;
-    const clampedStart = Math.max(minStart, Math.min(startTotalMinutes, maxStart));
-    const endTotalMinutes = Math.min(clampedStart + 60, endHour * 60);
-
-    const startHourStr = pad(Math.floor(clampedStart / 60));
-    const startMinStr = pad(clampedStart % 60);
-    const endHourStr = pad(Math.floor(endTotalMinutes / 60));
-    const endMinStr = pad(endTotalMinutes % 60);
-
-    prepareCreateForm(day);
-    setCreateYear(day.getFullYear());
-    setCreateForm((prev) => ({
-      ...prev,
-      startTime: `${startHourStr}:${startMinStr}`,
-      endTime: `${endHourStr}:${endMinStr}`,
-    }));
-    setSelectedDay(day);
-    setSelectedDayAppointments(getAgendamentosForDay(day, false));
-    setShowDayActions(false);
-    setShowEditModal(false);
-    setDateError('');
-    setShowCreateModal(true);
-  };
-
-  const handleDesktopSlotClick = (day: Date, event: MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (target.closest('[data-event-button="true"]')) return;
-
-    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const y = event.clientY - rect.top;
-    const totalMinutesAvailable = (endHour - startHour) * 60;
-    const minuteHeightDynamic = totalMinutesAvailable > 0 ? rect.height / totalMinutesAvailable : minuteHeight;
-    const minutesFromTop = y / minuteHeightDynamic;
-    const snapped = Math.round(minutesFromTop / 15) * 15;
-    const totalMinutes = startHour * 60 + snapped;
-    openCreateAt(day, totalMinutes);
   };
 
   const pageSections = (

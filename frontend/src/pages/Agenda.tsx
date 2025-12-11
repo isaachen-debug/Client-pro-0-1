@@ -42,11 +42,6 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   }, []);
   useRegisterQuickAction('agenda:add', handleAgendaQuickCreate);
 
-  const today = new Date();
-  const weekEnd = addDays(today, 6);
-  const weekRangeLabel = `${format(today, "dd 'de' MMM", { locale: ptBR })} - ${format(weekEnd, "dd 'de' MMM", {
-    locale: ptBR,
-  })}`;
   return (
     <div className={embedded ? 'space-y-6' : `${pageGutters}`}>
       {!embedded && (
