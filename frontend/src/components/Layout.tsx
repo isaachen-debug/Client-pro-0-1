@@ -795,7 +795,16 @@ const Layout = () => {
     </div>
   );
 
-  const mobileNavItems = [
+  type NavItem = {
+    key: string;
+    label: string;
+    path: string;
+    icon: LucideIcon;
+    type: 'route';
+    dynamicSlot?: boolean;
+  };
+
+  const mobileNavItems: NavItem[] = [
     {
       key: 'home',
       label: 'Home',
@@ -845,7 +854,7 @@ const Layout = () => {
     }
   }, []);
 
-  const navItems = useMemo(
+  const navItems: NavItem[] = useMemo(
     () => [
       ...mobileNavItems,
       {

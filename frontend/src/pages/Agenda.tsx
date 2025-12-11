@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { addDays, endOfWeek, format, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon } from 'lucide-react';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
-import { PageHeader, SurfaceCard } from '../components/OwnerUI';
+import { PageHeader } from '../components/OwnerUI';
 import { pageGutters } from '../styles/uiTokens';
 import AudioQuickAdd from '../components/AudioQuickAdd';
 
@@ -37,9 +36,6 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   }, [viewMode]);
 
   const [quickCreateNonce, setQuickCreateNonce] = useState(0);
-  const handleChangeView = (mode: AgendaView) => {
-    setViewMode(mode);
-  };
   const handleAgendaQuickCreate = useCallback(() => {
     setViewMode('week');
     setQuickCreateNonce((nonce) => nonce + 1);
@@ -51,12 +47,6 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   const weekRangeLabel = `${format(today, "dd 'de' MMM", { locale: ptBR })} - ${format(weekEnd, "dd 'de' MMM", {
     locale: ptBR,
   })}`;
-  const headerSubtitle =
-    viewMode === 'week'
-      ? `Semana atual · ${weekRangeLabel}`
-      : `Calendário mensal · ${format(today, "MMMM 'de' yyyy", { locale: ptBR })}`;
-  const quickFilters = ['Todos', 'Agendado', '+ andamento', 'Concluído'];
-
   return (
     <div className={embedded ? 'space-y-6' : `${pageGutters}`}>
       {!embedded && (

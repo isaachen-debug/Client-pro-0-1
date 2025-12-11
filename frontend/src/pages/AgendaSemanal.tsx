@@ -1,6 +1,6 @@
 import type { MouseEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
@@ -36,7 +36,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   const [currentDate, setCurrentDate] = useState(new Date());
   const [agendamentos, setAgendamentos] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('todos');
+  const [filter] = useState('todos');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [helpers, setHelpers] = useState<User[]>([]);
   const [saving, setSaving] = useState(false);
@@ -67,7 +67,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     [],
   );
   const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('today');
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
     customerId: '',
@@ -661,34 +660,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     );
   };
 
-  const renderMonthSection = () => {
-    const uniqueDays = Array.from(
-      new Set(agendamentos.map((ag) => formatDateToYMD(parseDateFromInput(ag.date)))),
-    )
-      .map((ymd) => parseDateFromInput(ymd))
-      .sort((a, b) => a.getTime() - b.getTime())
-      .slice(0, 30);
-
-    if (uniqueDays.length === 0) {
-      return (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
-          Nenhum agendamento neste mês.
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {uniqueDays.map((day) =>
-          renderDaySection(day, {
-            hideCreateButton: true,
-            label: format(day, "dd 'de' MMMM", { locale: ptBR }),
-          }),
-        )}
-      </div>
-    );
-  };
-
   const openCreateAt = (day: Date, startTotalMinutes: number) => {
     const minStart = startHour * 60;
     const maxStart = endHour * 60 - 15;
@@ -728,184 +699,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     const totalMinutes = startHour * 60 + snapped;
     openCreateAt(day, totalMinutes);
   };
-
-  const mobileList = (
-    <div className="md:hidden space-y-3 px-3 owner-grid-tight">
-        {weekDays.map((day) => {
-          const dayAgendamentos = getAgendamentosForDay(day);
-          const isToday = isSameDay(day, new Date());
-          return (
-            <div
-              key={day.toISOString()}
-            className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm"
-            onClick={() => handleDayCardClick(day)}
-              role="button"
-              tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                  handleDayCardClick(day);
-                }
-              }}
-          >
-            <div className={`flex flex-col items-center justify-center w-16 rounded-xl ${isToday ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 text-gray-700'}`}>
-              <span className="text-[11px] uppercase font-semibold tracking-wide">{format(day, 'EEE', { locale: ptBR })}</span>
-              <span className="text-2xl font-bold leading-tight">{format(day, 'd')}</span>
-            </div>
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-gray-900">
-                    {isToday ? 'Hoje' : format(day, 'eeee', { locale: ptBR })}
-                </span>
-                  <span className="text-xs text-gray-500">Toque para adicionar ou editar</span>
-              </div>
-              <button
-                type="button"
-                  className="text-xs font-semibold text-primary-600 px-2 py-1 rounded-lg hover:bg-primary-50 transition"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDayCardClick(day);
-                  }}
-              >
-                + add
-              </button>
-              </div>
-
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(90px,1fr))] gap-2 owner-grid-tight">
-              {dayAgendamentos.length === 0 && (
-                <p className="col-span-2 text-sm text-gray-500">
-                  Nenhum atendimento encontrado.
-                </p>
-              )}
-              {dayAgendamentos
-                    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                    .map((ag) => {
-          const cardTone = {
-            AGENDADO: 'bg-sky-50 border-sky-100',
-            PENDENTE: 'bg-amber-50 border-amber-100',
-            EM_ANDAMENTO: 'bg-amber-50 border-amber-100',
-            CONCLUIDO: 'bg-emerald-50 border-emerald-100',
-            CANCELADO: 'bg-red-50 border-red-100',
-          }[ag.status] || 'bg-sky-50 border-sky-100';
-                      return (
-                        <button
-                          key={ag.id}
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openEditModal(ag);
-                          }}
-              className={`w-full text-left rounded-xl border px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-sm transition hover:border-primary-200 hover:bg-primary-50/40 ${cardTone}`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-semibold text-gray-900">
-                              {ag.startTime ? `${ag.startTime}${ag.endTime ? ` - ${ag.endTime}` : ''}` : 'Dia todo'}
-                            </span>
-                    </div>
-                          <p className="mt-1 text-[13px] font-semibold truncate text-gray-900">
-                            {ag.customer.name}
-                          </p>
-                    </button>
-                      );
-                    })}
-            </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  const desktopGrid = (
-    <div className="hidden md:block rounded-3xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <div className="min-w-[960px] grid grid-cols-[64px_repeat(7,minmax(0,1fr))]">
-          <div className="border-r border-gray-100 relative" style={{ height: `${dayColumnHeight}px` }}>
-            {Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index).map((hour) => (
-              <div
-                key={hour}
-                className="absolute left-0 right-0 flex items-start justify-end pr-3 text-[11px] text-gray-400"
-                style={{ top: `${(hour - startHour) * 60 * minuteHeight}px` }}
-              >
-                {hour.toString().padStart(2, '0')}:00
-              </div>
-            ))}
-          </div>
-
-          {weekDays.map((day) => {
-            const dayAgendamentos = getAgendamentosForDay(day);
-            const isToday = isSameDay(day, new Date());
-            return (
-              <div
-                key={day.toISOString()}
-                className={`relative border-l border-gray-100 bg-white ${isToday ? 'bg-primary-50/50' : ''}`}
-                style={{ height: `${dayColumnHeight}px` }}
-              >
-                <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-100 px-3 py-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs uppercase text-gray-500">{format(day, 'EEE', { locale: ptBR })}</span>
-                    <span className={`text-base font-semibold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
-                      {format(day, 'd')}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="absolute inset-0 pointer-events-none">
-                  {Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index).map((hour) => (
-                    <div
-                      key={`line-${hour}`}
-                      className="absolute left-0 right-0 border-t border-gray-100"
-                      style={{ top: `${(hour - startHour) * 60 * minuteHeight}px` }}
-                    />
-                  ))}
-                </div>
-
-                <div className="relative h-full w-full" onClick={(event) => handleDesktopSlotClick(day, event)}>
-                  {dayAgendamentos.length === 0 && (
-                    <button
-                      type="button"
-                      className="absolute inset-0 w-full text-left text-xs text-gray-400 px-3 py-2"
-                      onClick={() => handleDayCardClick(day)}
-                    >
-                      Toque para criar
-                    </button>
-                  )}
-
-                    {dayAgendamentos
-                      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                      .map((ag) => {
-                        const { top, height } = getEventPosition(ag);
-                        return (
-                          <button
-                            key={ag.id}
-                            type="button"
-                            data-event-button="true"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              openEditModal(ag);
-                            }}
-                            className={`absolute left-1 right-1 rounded-xl px-3 py-2 text-left shadow-sm border ${statusBg[ag.status]} ${statusText[ag.status]}`}
-                            style={{ top, height }}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-semibold truncate">{ag.customer.name}</div>
-                          <span className="text-[11px] font-semibold">
-                            {ag.startTime} {ag.endTime ? `· ${ag.endTime}` : ''}
-                          </span>
-                        </div>
-                            {ag.notes && <p className="text-[11px] mt-1 leading-snug opacity-80 line-clamp-2">{ag.notes}</p>}
-                      </button>
-                        );
-                      })}
-                </div>
-            </div>
-          );
-        })}
-        </div>
-      </div>
-    </div>
-  );
 
   const pageSections = (
     <>
