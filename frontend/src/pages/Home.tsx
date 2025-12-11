@@ -36,7 +36,6 @@ const Home = () => {
       <div className="bg-gradient-to-br from-primary-50 via-white to-accent-50 text-gray-900 pb-8 pt-4">
         <div className={`${pageGutters} flex items-center justify-between`}>
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] font-semibold text-slate-600">Home</p>
             <h1 className="text-3xl font-bold leading-tight text-slate-900">{greeting}</h1>
           </div>
           <div className="flex items-center gap-3">

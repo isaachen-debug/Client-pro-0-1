@@ -42,8 +42,6 @@ const monthOptions = [
   { value: '12', label: 'Dezembro' },
 ];
 
-const pad = (value: number) => value.toString().padStart(2, '0');
-
 const CreateModal = ({
   title,
   customers,
@@ -56,10 +54,6 @@ const CreateModal = ({
   currentYear,
   dateError,
 }: CreateModalProps) => {
-  const selectedMonth = Number(formData.month || '1');
-  const daysInSelectedMonth = new Date(currentYear, selectedMonth, 0).getDate();
-  const dayOptions = Array.from({ length: daysInSelectedMonth }, (_, index) => pad(index + 1));
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
@@ -146,23 +140,22 @@ const CreateModal = ({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Dia *</label>
-                <select
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  inputMode="numeric"
+                  placeholder="Digite o dia"
                   required
                   value={formData.day}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      day: e.target.value,
+                      day: e.target.value.replace(/\D/g, '').padStart(2, '0').slice(0, 2),
                     }))
                   }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                >
-                  {dayOptions.map((day) => (
-                    <option key={day} value={day}>
-                      {day}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
             <p className="text-[11px] text-gray-500">Ano sincronizado com {currentYear}.</p>

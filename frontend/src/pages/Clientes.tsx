@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, MoreVertical, Phone, MapPin, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
+import { Plus, Search, Phone, MapPin, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import {
   AccessMethod,
@@ -124,7 +124,6 @@ const Clientes = () => {
   const [statusFilter, setStatusFilter] = useState<'ALL' | CustomerStatus>('ALL');
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [statusActionId, setStatusActionId] = useState<string | null>(null);
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([]);
@@ -154,9 +153,8 @@ const Clientes = () => {
   const customersWithPortal = useMemo(() => clientes.filter((cliente) => !!cliente.email).length, [clientes]);
 
   useEffect(() => {
-    const handleOutsideClick = () => setMenuOpenId(null);
-    window.addEventListener('click', handleOutsideClick);
-    return () => window.removeEventListener('click', handleOutsideClick);
+    // legacy listener removido
+    return () => {};
   }, []);
 
   useEffect(() => {
@@ -429,7 +427,6 @@ const Clientes = () => {
       setStatusActionId(customer.id);
       const updated = await customersApi.updateStatus(customer.id, nextStatus);
       setClientes((prev) => prev.map((item) => (item.id === customer.id ? updated : item)));
-      setMenuOpenId(null);
     } catch (error) {
       console.error('Erro ao atualizar status do cliente:', error);
     } finally {
@@ -630,244 +627,98 @@ const Clientes = () => {
             )}
           </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-none shadow-none border-0 overflow-hidden">
-        <div className="hidden md:block owner-table-wrap">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tipo de Serviço
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Telefone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Endereço
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {clientes.map((cliente) => (
-                <tr key={cliente.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-medium text-primary-700">
-                          {cliente.name.substring(0, 2).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{cliente.name}</div>
-                        {cliente.email && (
-                          <div className="text-sm text-gray-500">{cliente.email}</div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{cliente.serviceType ?? '-'}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE_CLASSES[cliente.status]}`}
-                    >
-                      {STATUS_LABELS[cliente.status]}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <Phone size={16} className="mr-2 text-gray-400" />
-                      {cliente.phone || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <MapPin size={16} className="mr-2 text-gray-400 flex-shrink-0" />
-                      <span className="line-clamp-2">{cliente.address || '-'}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right relative">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(cliente);
-                      }}
-                      className="text-primary-600 hover:text-primary-800 p-2 rounded-lg hover:bg-primary-50 mr-1"
-                    >
-                      <Edit3 size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuOpenId((prev) => (prev === cliente.id ? null : cliente.id));
-                      }}
-                      className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100"
-                    >
-                      <MoreVertical size={20} />
-                    </button>
-                    {menuOpenId === cliente.id && (
-                      <div
-                        className="absolute right-4 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuOpenId(null);
-                            handleViewHistory(cliente);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          Ver histórico
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuOpenId(null);
-                            openEditModal(cliente);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          Editar
-                        </button>
-                        {cliente.status !== 'PAUSED' && (
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateStatus(cliente, 'PAUSED')}
-                            disabled={statusActionId === cliente.id}
-                            className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 disabled:opacity-60"
-                          >
-                            {statusActionId === cliente.id ? 'Atualizando...' : 'Pausar cliente'}
-                          </button>
-                        )}
-                        {cliente.status !== 'ACTIVE' && (
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateStatus(cliente, 'ACTIVE')}
-                            disabled={statusActionId === cliente.id}
-                            className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 disabled:opacity-60"
-                          >
-                            {statusActionId === cliente.id ? 'Atualizando...' : 'Reativar cliente'}
-                          </button>
-                        )}
-                        {cliente.status !== 'INACTIVE' && (
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateStatus(cliente, 'INACTIVE')}
-                            disabled={statusActionId === cliente.id}
-                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
-                          >
-                            {statusActionId === cliente.id ? 'Atualizando...' : 'Marcar como ex-cliente'}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!loading && clientes.length === 0 && (
-            <div className="text-center py-12">
-            <p className="text-gray-500">Nenhum cliente cadastrado ainda.</p>
-            <p className="text-sm text-slate-500">Clique em “Novo cliente” para começar sua base.</p>
-            </div>
-          )}
-        </div>
-        <div className="md:hidden p-4 space-y-3">
-          {clientes.map((cliente) => (
-            <div key={cliente.id} className="border border-gray-100 rounded-2xl p-4 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
+      {/* List em cards simples */}
+      <div className="space-y-3">
+        {clientes.map((cliente) => (
+          <div
+            key={cliente.id}
+            className="rounded-2xl border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-4 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 font-semibold flex items-center justify-center">
+                  {cliente.name.substring(0, 2).toUpperCase()}
+                </div>
                 <div>
-                  <p className="text-base font-semibold text-gray-900">{cliente.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {cliente.serviceType ?? 'Tipo de serviço não informado'}
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE_CLASSES[cliente.status]}`}
-                >
-                  {STATUS_LABELS[cliente.status]}
-                </span>
-              </div>
-              {cliente.email && <p className="text-sm text-gray-500">{cliente.email}</p>}
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex items-center space-x-2">
-                  <Phone size={16} className="text-gray-400" />
-                  <span>{cliente.phone || 'Sem telefone'}</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <MapPin size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                  <span>{cliente.address || 'Sem endereço cadastrado'}</span>
+                  <p className="text-base font-semibold text-slate-900">{cliente.name}</p>
+                  <p className="text-sm text-slate-600">{cliente.serviceType || 'Tipo de serviço não informado'}</p>
+                  {cliente.email ? <p className="text-xs text-slate-500">{cliente.email}</p> : null}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleViewHistory(cliente)}
-                  className="flex-1 min-w-[140px] inline-flex items-center justify-center px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Histórico
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openEditModal(cliente)}
-                  className="flex-1 min-w-[120px] inline-flex items-center justify-center px-3 py-2 text-sm font-medium border border-primary-100 text-primary-600 rounded-lg hover:bg-primary-50"
-                >
-                  Editar
-                </button>
-                {cliente.status !== 'PAUSED' && (
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateStatus(cliente, 'PAUSED')}
-                    disabled={statusActionId === cliente.id}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 rounded-lg disabled:opacity-60"
-                  >
-                    {statusActionId === cliente.id ? 'Atualizando...' : 'Pausar'}
-                  </button>
-                )}
-                {cliente.status !== 'ACTIVE' && (
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateStatus(cliente, 'ACTIVE')}
-                    disabled={statusActionId === cliente.id}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-green-50 text-green-700 rounded-lg disabled:opacity-60"
-                  >
-                    {statusActionId === cliente.id ? 'Atualizando...' : 'Reativar'}
-                  </button>
-                )}
-                {cliente.status !== 'INACTIVE' && (
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateStatus(cliente, 'INACTIVE')}
-                    disabled={statusActionId === cliente.id}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-red-50 text-red-600 rounded-lg disabled:opacity-60"
-                  >
-                    {statusActionId === cliente.id ? 'Atualizando...' : 'Ex-cliente'}
-                  </button>
-                )}
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${STATUS_BADGE_CLASSES[cliente.status]}`}
+              >
+                {STATUS_LABELS[cliente.status]}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
+              <div className="flex items-center gap-2">
+                <Phone size={16} className="text-slate-400" />
+                <span>{cliente.phone || 'Sem telefone'}</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <MapPin size={16} className="text-slate-400 mt-0.5" />
+                <span className="line-clamp-2">{cliente.address || 'Sem endereço cadastrado'}</span>
               </div>
             </div>
-          ))}
-          {!loading && clientes.length === 0 && (
-          <div className="text-center text-gray-500 py-8 space-y-2">
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleViewHistory(cliente)}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Histórico
+              </button>
+              <button
+                type="button"
+                onClick={() => openEditModal(cliente)}
+                className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-100"
+              >
+                <Edit3 size={16} />
+                Editar
+              </button>
+              {cliente.status !== 'PAUSED' && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateStatus(cliente, 'PAUSED')}
+                  disabled={statusActionId === cliente.id}
+                  className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 disabled:opacity-60"
+                >
+                  {statusActionId === cliente.id ? 'Atualizando...' : 'Pausar'}
+                </button>
+              )}
+              {cliente.status !== 'ACTIVE' && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateStatus(cliente, 'ACTIVE')}
+                  disabled={statusActionId === cliente.id}
+                  className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 disabled:opacity-60"
+                >
+                  {statusActionId === cliente.id ? 'Atualizando...' : 'Reativar'}
+                </button>
+              )}
+              {cliente.status !== 'INACTIVE' && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateStatus(cliente, 'INACTIVE')}
+                  disabled={statusActionId === cliente.id}
+                  className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60"
+                >
+                  {statusActionId === cliente.id ? 'Atualizando...' : 'Ex-cliente'}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {!loading && clientes.length === 0 && (
+          <div className="text-center text-slate-500 py-10 space-y-2">
             <p className="text-sm font-semibold text-slate-900">Nenhum cliente cadastrado ainda.</p>
             <p className="text-xs text-slate-500">Clique em “Novo cliente” para começar sua base.</p>
           </div>
-          )}
-        </div>
+        )}
       </div>
 
         </>
@@ -1243,4 +1094,3 @@ const HistoryModal = ({ customer, appointments, loading, onClose }: HistoryModal
 );
 
 export default Clientes;
-

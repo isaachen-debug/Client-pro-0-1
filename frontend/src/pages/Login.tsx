@@ -407,7 +407,7 @@ const translations: Record<Language, Translation> = {
 };
 
 const roleRedirect: Record<UserRole, string> = {
-  OWNER: '/app/dashboard',
+  OWNER: '/app/home',
   HELPER: '/helper/today',
   CLIENT: '/client/home',
 };
@@ -1068,4 +1068,3 @@ const Login = () => {
 };
 
 export default Login;
-

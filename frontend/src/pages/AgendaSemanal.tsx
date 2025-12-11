@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
@@ -66,6 +66,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     [],
   );
   const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('today');
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
     customerId: '',
@@ -409,13 +410,17 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CONCLUIDO: 'bg-emerald-500',
     CANCELADO: 'bg-red-500',
   };
-
-  const formatFirstName = (full: string) => full.split(' ')[0] || full;
+  const statusCardTone: Record<AppointmentStatus, string> = {
+    AGENDADO: 'bg-blue-50 border-blue-100 text-blue-900',
+    EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-900',
+    CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-900',
+    CANCELADO: 'bg-red-50 border-red-100 text-red-900',
+  };
 
   const renderWeekSection = () => {
     const hasAny = weekDays.some((day) => getAgendamentosForDay(day).length > 0);
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         {!hasAny && (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
             Nenhum agendamento nesta semana.
@@ -426,14 +431,18 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
             (a.startTime || '').localeCompare(b.startTime || ''),
           );
           const isToday = isSameDay(day, new Date());
+          const dayKey = day.toISOString().slice(0, 10);
+          const limit = 2;
+          const showAll = expandedDays[dayKey];
+          const displayAppointments = showAll ? dayAppointments : dayAppointments.slice(0, limit);
           return (
             <div
               key={day.toISOString()}
-              className="flex items-start gap-3 px-3 py-4 rounded-2xl border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.04)]"
+              className="flex items-start gap-4 px-2 py-4 border-b border-slate-200 last:border-b-0"
             >
-              <div className="w-20 text-right space-y-1">
-                <p className={`text-[11px] uppercase tracking-wide leading-tight ${isToday ? 'text-primary-600' : 'text-slate-500'}`}>
-                  {format(day, 'EEE', { locale: ptBR })}
+              <div className="w-16 text-right space-y-1">
+                <p className={`text-[11px] leading-tight lowercase ${isToday ? 'text-primary-600' : 'text-slate-500'}`}>
+                  {`${format(day, 'EEE', { locale: ptBR })}.`}
                 </p>
                 <p className={`text-2xl font-semibold leading-tight ${isToday ? 'text-primary-700' : 'text-slate-900'}`}>
                   {format(day, 'd')}
@@ -444,47 +453,60 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                 {dayAppointments.length === 0 ? (
                   <div className="text-sm text-slate-400">Sem agendamentos</div>
                 ) : (
-                  <div className="mt-2 flex flex-wrap gap-1.5 items-start">
-                    {dayAppointments.map((ag) => {
+                  <div className="relative pl-8 space-y-3">
+                    <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" aria-hidden />
+                    {displayAppointments.map((ag) => {
                       const start = ag.startTime || 'Dia todo';
                       const end = ag.endTime ? ` - ${ag.endTime}` : '';
-                      const tone =
-                        {
-                          AGENDADO: 'bg-blue-50 border-blue-100 text-blue-900',
-                          EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-900',
-                          CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-900',
-                          CANCELADO: 'bg-red-50 border-red-100 text-red-900',
-                        }[ag.status] || 'bg-sky-50 border-sky-100 text-slate-900';
-
                       return (
-                        <div
-                          key={ag.id}
-                          className={`w-[110px] sm:w-[120px] flex-shrink-0 rounded-lg border px-3 py-2 shadow-none ${tone}`}
-                          onClick={() => openCustomerInfo(ag)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              openCustomerInfo(ag);
-                            }
-                          }}
-                        >
-                          <p className="text-[11px] font-semibold">
-                            {start}
-                            {end}
-                          </p>
-                          <p className="text-sm font-semibold break-words">
-                            {formatFirstName(ag.customer.name)}
-                          </p>
-                          {ag.notes ? (
-                            <p className="text-[11px] mt-0.5 line-clamp-1 break-words opacity-80">
-                              {ag.notes}
+                        <div key={ag.id} className="relative flex items-start gap-3">
+                          <div className="flex flex-col items-center w-10 shrink-0 -ml-1">
+                              <span className="text-[12px] font-semibold text-slate-700 leading-tight">{start}</span>
+                              <div
+                              className={`mt-1 h-3 w-3 rounded-full border-2 bg-white ${statusDotBg[ag.status] ?? 'border-primary-500'}`}
+                            />
+                          </div>
+                          <div
+                            className={`flex-1 max-w-[380px] rounded-md border px-3 py-3 shadow-sm ${
+                              statusCardTone[ag.status] ?? 'bg-slate-50 border-slate-200 text-slate-900'
+                            }`}
+                            onClick={() => openCustomerInfo(ag)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                openCustomerInfo(ag);
+                              }
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-[12px] font-semibold leading-tight">{ag.customer.name}</p>
+                              {ag.price ? (
+                                <p className="text-[12px] font-semibold leading-tight whitespace-nowrap">
+                                  {currencyFormatter.format(ag.price)}
+                                </p>
+                              ) : null}
+                            </div>
+                            <p className="text-[12px] leading-tight mt-1">
+                              {start}
+                              {end}
                             </p>
-                          ) : null}
+                            {ag.notes ? <p className="text-[11px] text-slate-700 mt-1 leading-snug line-clamp-2">{ag.notes}</p> : null}
+                          </div>
                         </div>
                       );
                     })}
+                    {dayAppointments.length > limit && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !showAll }))}
+                        className="inline-flex items-center gap-2 text-[12px] font-semibold text-primary-700 hover:text-primary-800"
+                      >
+                        {showAll ? 'Mostrar menos' : `Ver mais (${dayAppointments.length - limit})`}
+                        <span aria-hidden>{showAll ? '▲' : '▼'}</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -745,6 +767,13 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                 >
                   Endereço (clientes)
                 </button>
+                <button
+                  type="button"
+                  onClick={openEditModalForCustomer}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm hover:bg-primary-700 transition"
+                >
+                  Horário (agendamento)
+                </button>
               </div>
             )}
 
@@ -771,26 +800,30 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                     <MapPin size={16} className="text-primary-600 mt-0.5" />
                     <div className="space-y-1">
                       {customerInfo.address && <p className="font-semibold leading-snug">{customerInfo.address}</p>}
-                      {mapLink && (
-                        <a
-                          className="text-xs font-semibold text-primary-700 hover:underline"
-                          href={mapLink}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Abrir no mapa
-                        </a>
-                      )}
-                      {wazeLink && (
-                        <a
-                          className="inline-flex items-center gap-2 rounded-full bg-[#33ccff] text-white px-3 py-1 text-[11px] font-semibold hover:brightness-110 transition"
-                          href={wazeLink}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <span className="text-[12px]">🚗</span>
-                          Waze
-                        </a>
+                      {(mapLink || wazeLink) && (
+                        <div className="flex flex-wrap items-center gap-2 justify-between">
+                          {mapLink && (
+                            <a
+                              className="text-xs font-semibold text-primary-700 hover:underline"
+                              href={mapLink}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Abrir no mapa
+                            </a>
+                          )}
+                          {wazeLink && (
+                            <a
+                              className="inline-flex items-center gap-2 rounded-full bg-[#33ccff] text-white px-3 py-1 text-[11px] font-semibold hover:brightness-110 transition ml-auto"
+                              href={wazeLink}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <Navigation size={14} />
+                              Waze
+                            </a>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -828,12 +861,16 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </div>
             )}
             <div className="flex gap-2">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
-              >
-                Go (iniciar limpeza)
-              </button>
+            <button
+              type="button"
+              onClick={() => {
+                void handleQuickStatus('CONCLUIDO');
+                setCustomerInfo(null);
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
+            >
+              Go (iniciar limpeza)
+            </button>
             </div>
           </div>
         </div>
