@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import {
@@ -58,6 +59,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   const [showEditModal, setShowEditModal] = useState(false);
   const [customerInfo, setCustomerInfo] = useState<Customer | null>(null);
   const [showEditOptions, setShowEditOptions] = useState(false);
+  const navigate = useNavigate();
   const [editForm, setEditForm] = useState({
     date: '',
     startTime: '',
