@@ -4,7 +4,6 @@ import AgendaSemanal from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader } from '../components/OwnerUI';
 import { pageGutters } from '../styles/uiTokens';
-import { useNavigate } from 'react-router-dom';
 
 type AgendaView = 'week' | 'month';
 
@@ -16,7 +15,6 @@ type AgendaPageProps = {
 };
 
 const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
-  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<AgendaView>(() => {
     if (typeof window === 'undefined') {
       return initialMode || 'week';

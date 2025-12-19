@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Menu, MoreVertical, MessageCircle, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import {
@@ -12,7 +11,6 @@ import {
   subWeeks,
   isSameDay,
   isToday,
-  getWeek,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
@@ -60,7 +58,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   const [showEditModal, setShowEditModal] = useState(false);
   const [customerInfo, setCustomerInfo] = useState<Customer | null>(null);
   const [showEditOptions, setShowEditOptions] = useState(false);
-  const navigate = useNavigate();
   const [editForm, setEditForm] = useState({
     date: '',
     startTime: '',
@@ -78,8 +75,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     [],
   );
   const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('week');
-  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
-  const [isMobile, setIsMobile] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
@@ -150,17 +145,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   useEffect(() => {
     setSelectedDay(currentDate);
   }, [currentDate]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (typeof window !== 'undefined') {
-        setIsMobile(window.innerWidth < 640);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     const loadGoogleStatus = async () => {
@@ -485,12 +469,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     EM_ANDAMENTO: 'bg-amber-500',
     CONCLUIDO: 'bg-emerald-500',
     CANCELADO: 'bg-red-500',
-  };
-  const statusCardTone: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-blue-50 border-blue-100 text-blue-900',
-    EM_ANDAMENTO: 'bg-amber-50 border-amber-100 text-amber-900',
-    CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-900',
-    CANCELADO: 'bg-red-50 border-red-100 text-red-900',
   };
   const statusSurfaces: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-blue-50 text-blue-700 border-blue-100',
