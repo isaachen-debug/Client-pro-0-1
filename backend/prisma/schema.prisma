@@ -60,6 +60,10 @@ model User {
   helperExpenses    HelperExpense[]         @relation("HelperExpenses")
   recordedExpenses  HelperExpense[]         @relation("OwnerExpenses")
   pushSubscriptions PushSubscription[]
+  googleAccessToken String?
+  googleRefreshToken String?
+  googleTokenExpiry DateTime?
+  googleCalendarId  String?
 }
 
 model Customer {
@@ -112,9 +116,11 @@ model Appointment {
   transactions             Transaction[]
   checklistItems           AppointmentChecklistItem[]
   photos                   AppointmentPhoto[]
+  googleEventId            String?
 
   @@index([recurrenceSeriesId])
   @@index([assignedHelperId])
+  @@index([googleEventId])
 }
 
 model HelperExpense {

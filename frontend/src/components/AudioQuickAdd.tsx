@@ -1,5 +1,6 @@
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Mic, Square, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { Mic, Square, CheckCircle2, AlertTriangle, Loader2, PlusCircle } from 'lucide-react';
 import { agentAudioApi } from '../services/agentAudio';
 import { agentIntentApi } from '../services/agentIntent';
 
@@ -10,9 +11,16 @@ type Banner =
 
 type AudioQuickAddProps = {
   contextHint?: string;
+  actionAboveVoice?: {
+    label: string;
+    onClick: () => void;
+    icon?: ReactNode;
+    ariaLabel?: string;
+  };
+  floatingWrapperClassName?: string;
 };
 
-const AudioQuickAdd = ({ contextHint }: AudioQuickAddProps) => {
+const AudioQuickAdd = ({ contextHint, actionAboveVoice, floatingWrapperClassName }: AudioQuickAddProps) => {
   const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [banner, setBanner] = useState<Banner | null>(null);
@@ -209,7 +217,19 @@ const AudioQuickAdd = ({ contextHint }: AudioQuickAddProps) => {
         </div>
       )}
 
-      <div className="fixed right-4 bottom-24 z-40 flex flex-col items-center gap-2">
+      <div className={`flex flex-col items-center gap-3 ${floatingWrapperClassName ?? ''}`}>
+        {actionAboveVoice && (
+          <div className="flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={actionAboveVoice.onClick}
+              className="h-14 w-14 rounded-full bg-white border border-slate-200 shadow-lg shadow-emerald-100 flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition"
+              aria-label={actionAboveVoice.ariaLabel ?? actionAboveVoice.label}
+            >
+              {actionAboveVoice.icon ?? <PlusCircle size={20} />}
+            </button>
+          </div>
+        )}
         <div className="relative">
           {recording && (
             <>
@@ -243,5 +263,3 @@ const AudioQuickAdd = ({ contextHint }: AudioQuickAddProps) => {
 };
 
 export default AudioQuickAdd;
-
-

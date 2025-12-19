@@ -27,21 +27,6 @@ type CreateModalProps = {
   dateError: string;
 };
 
-const monthOptions = [
-  { value: '01', label: 'Janeiro' },
-  { value: '02', label: 'Fevereiro' },
-  { value: '03', label: 'Março' },
-  { value: '04', label: 'Abril' },
-  { value: '05', label: 'Maio' },
-  { value: '06', label: 'Junho' },
-  { value: '07', label: 'Julho' },
-  { value: '08', label: 'Agosto' },
-  { value: '09', label: 'Setembro' },
-  { value: '10', label: 'Outubro' },
-  { value: '11', label: 'Novembro' },
-  { value: '12', label: 'Dezembro' },
-];
-
 const CreateModal = ({
   title,
   customers,
@@ -117,48 +102,27 @@ const CreateModal = ({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Mês *</label>
-                <select
-                  required
-                  value={formData.month}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      month: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                >
-                  {monthOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Dia *</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  inputMode="numeric"
-                  placeholder="Digite o dia"
-                  required
-                  value={formData.day}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      day: e.target.value.replace(/\D/g, '').padStart(2, '0').slice(0, 2),
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Data *</label>
+              <input
+                type="date"
+                required
+                value={
+                  formData.month && formData.day
+                    ? `${currentYear}-${formData.month}-${formData.day}`
+                    : ''
+                }
+                onChange={(e) => {
+                  const [, month, day] = e.target.value.split('-');
+                  setFormData((prev) => ({
+                    ...prev,
+                    month: month ?? prev.month,
+                    day: day ?? prev.day,
+                  }));
+                }}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              />
             </div>
-            <p className="text-[11px] text-gray-500">Ano sincronizado com {currentYear}.</p>
             {dateError && <p className="text-[11px] text-red-600">{dateError}</p>}
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Início *</label>

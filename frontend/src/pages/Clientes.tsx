@@ -114,6 +114,13 @@ const CONTRACT_STATUS_CLASSES: Record<ContractStatus, string> = {
   RECUSADO: 'bg-red-50 text-red-600 border border-red-100',
 };
 
+const CONTRACT_FILTER_OPTIONS: Array<{ label: string; value: 'ALL' | ContractStatus }> = [
+  { label: 'Todos', value: 'ALL' },
+  { label: 'Pendentes', value: 'PENDENTE' },
+  { label: 'Aceitos', value: 'ACEITO' },
+  { label: 'Recusados', value: 'RECUSADO' },
+];
+
 const Clientes = () => {
   const { user } = useAuth();
   const [clientes, setClientes] = useState<Customer[]>([]);
@@ -150,6 +157,14 @@ const Clientes = () => {
   const [copiedContractId, setCopiedContractId] = useState<string | null>(null);
   const [downloadingContractId, setDownloadingContractId] = useState<string | null>(null);
   const [wizardStatus, setWizardStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [contractStatusFilter, setContractStatusFilter] = useState<'ALL' | ContractStatus>('ALL');
+  const filteredContracts = useMemo(
+    () =>
+      contractStatusFilter === 'ALL'
+        ? contracts
+        : contracts.filter((contract) => contract.status === contractStatusFilter),
+    [contractStatusFilter, contracts]
+  );
   const customersWithPortal = useMemo(() => clientes.filter((cliente) => !!cliente.email).length, [clientes]);
 
   useEffect(() => {
@@ -328,7 +343,7 @@ const Clientes = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleWizardSubmit = async (blueprint: ContractBlueprint, action: 'send' | 'sign') => {
+  const handleWizardSubmit = async (blueprint: ContractBlueprint, action: 'send' | 'sign' | 'save') => {
     if (!blueprint.client.id) {
       setWizardStatus({ type: 'error', message: 'Selecione um cliente antes de gerar o contrato.' });
       return;
@@ -349,15 +364,21 @@ const Clientes = () => {
       if (action === 'sign') {
         await teamApi.updateContractStatus(created.id, 'ACEITO', 'Assinado presencialmente pelo cliente.');
       }
+      if (action === 'save') {
+        const blob = await teamApi.downloadContractPdf(created.id);
+        triggerDownload(blob, `${slugify(created.title)}.pdf`);
+      }
       const provisional = created.meta?.provisionalAccess;
       setWizardStatus({
         type: 'success',
         message:
           action === 'sign'
             ? 'Contrato assinado e arquivado no perfil do cliente.'
-            : provisional
-              ? `Contrato enviado! Criamos acesso automático para ${provisional.email} com senha ${provisional.temporaryPassword}.`
-              : 'Contrato enviado! O cliente será notificado.',
+            : action === 'save'
+              ? 'Contrato gerado. PDF baixado sem enviar notificação.'
+              : provisional
+                ? `Contrato enviado! Criamos acesso automático para ${provisional.email} com senha ${provisional.temporaryPassword}.`
+                : 'Contrato enviado! O cliente será notificado.',
       });
       fetchContracts();
     } catch (error: any) {
@@ -546,49 +567,6 @@ const Clientes = () => {
 
       {activeTab === 'list' ? (
         <>
-          {/* Stats & quick actions */}
-          <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr] owner-grid-tight">
-            <SurfaceCard className="space-y-3 bg-gradient-to-br from-primary-50 via-white to-accent-50 border-slate-100">
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
-                <span>Clientes</span>
-                <span className="text-slate-300">•</span>
-                <span>Portal + contratos</span>
-              </div>
-              <div className="flex flex-wrap items-end gap-6">
-                <div>
-                  <p className="text-sm text-slate-600">Cadastros totais</p>
-                  <p className="text-4xl font-bold text-slate-900">{clientes.length}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">Com acesso ao app</p>
-                  <p className="text-2xl font-semibold text-slate-900">{customersWithPortal}</p>
-                </div>
-              </div>
-              <p className="text-sm text-slate-600">
-                Conecte cada Client ao portal e automatize contratos e feedbacks.
-              </p>
-            </SurfaceCard>
-
-            <SurfaceCard className="space-y-3">
-              <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Ações rápidas</p>
-              <div className="flex flex-col sm:flex-row gap-2 owner-stack">
-                <button
-                  onClick={handleExportClientes}
-                  className="flex-1 owner-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Exportar CSV
-                </button>
-                <button
-                  onClick={openCreateModal}
-                  className="flex-1 owner-full inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-primary-700"
-                >
-                  <Plus size={18} />
-                  Novo cliente
-                </button>
-              </div>
-            </SurfaceCard>
-          </div>
-
       {/* Search */}
           <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-5 space-y-4">
             <div className="relative">
@@ -721,6 +699,48 @@ const Clientes = () => {
         )}
       </div>
 
+          <div className="grid gap-4 owner-grid-tight mt-4">
+            <SurfaceCard className="space-y-3 bg-gradient-to-br from-primary-50 via-white to-accent-50 border-slate-100">
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+                <span>Clientes</span>
+                <span className="text-slate-300">•</span>
+                <span>Portal + contratos</span>
+              </div>
+              <div className="flex flex-wrap items-end gap-6">
+                <div>
+                  <p className="text-sm text-slate-600">Cadastros totais</p>
+                  <p className="text-4xl font-bold text-slate-900">{clientes.length}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Com acesso ao app</p>
+                  <p className="text-2xl font-semibold text-slate-900">{customersWithPortal}</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Conecte cada Client ao portal e automatize contratos e feedbacks.
+              </p>
+            </SurfaceCard>
+          </div>
+
+          <SurfaceCard className="space-y-3 mt-4">
+            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Ações rápidas</p>
+            <div className="flex flex-col sm:flex-row gap-2 owner-stack">
+              <button
+                onClick={handleExportClientes}
+                className="flex-1 owner-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Exportar CSV
+              </button>
+              <button
+                onClick={openCreateModal}
+                className="flex-1 owner-full inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-primary-700"
+              >
+                <Plus size={18} />
+                Novo cliente
+              </button>
+            </div>
+          </SurfaceCard>
+
         </>
       ) : (
         <>
@@ -745,40 +765,59 @@ const Clientes = () => {
           />
 
           <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-primary-600 font-semibold">Contratos enviados</p>
-                <p className="text-sm text-gray-500">Histórico de acordos digitais.</p>
+                <p className="text-sm font-semibold text-gray-900">Contratos</p>
+                <p className="text-xs text-gray-500">Envios e status em um lugar.</p>
               </div>
               <button
                 type="button"
                 onClick={handleNewContractClick}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-600 text-white text-sm font-semibold shadow-sm hover:bg-primary-700"
               >
                 <FileText size={16} />
-                Criar novo contrato
+                Novo contrato
               </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {CONTRACT_FILTER_OPTIONS.map((option) => {
+                const isActive = contractStatusFilter === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setContractStatusFilter(option.value)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                      isActive ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
 
             {contractsLoading ? (
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Loader2 className="w-4 h-4 animate-spin" /> Carregando contratos...
               </div>
-            ) : contracts.length ? (
+            ) : filteredContracts.length ? (
               <div className="grid gap-4">
-                {contracts.map((contract) => {
+                {filteredContracts.map((contract) => {
                   const blueprint = (contract.placeholders?.blueprint as ContractBlueprint | undefined) || null;
                   const serviceCount = blueprint ? getServicesFromBlueprint(blueprint).length : null;
+                  const isPending = contract.status === 'PENDENTE';
+                  const isAccepted = contract.status === 'ACEITO';
                   return (
                     <div
                       key={contract.id}
                       className="border border-gray-100 rounded-2xl p-4 space-y-3 bg-white shadow-sm hover:shadow-md transition-shadow"
                     >
-                      <div className="flex flex-wrap items-center gap-2 justify-between">
+                      <div className="flex flex-wrap items-start gap-2 justify-between">
                         <div>
                           <p className="text-sm font-semibold text-gray-900">{contract.title}</p>
                           <p className="text-xs text-gray-500">
-                            {contract.client?.name || 'Cliente'} • Enviado em {formatContractDate(contract.createdAt)}
+                            {contract.client?.name || 'Cliente'} • {formatContractDate(contract.createdAt)}
                           </p>
                         </div>
                         <span
@@ -802,7 +841,7 @@ const Clientes = () => {
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                         >
                           <Download size={16} />
-                          {downloadingContractId === contract.id ? 'Gerando...' : 'Baixar PDF'}
+                          {downloadingContractId === contract.id ? 'Gerando...' : 'Baixar'}
                         </button>
                         <button
                           type="button"
@@ -810,9 +849,9 @@ const Clientes = () => {
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50"
                         >
                           <Copy size={16} />
-                          {copiedContractId === contract.id ? 'Copiado!' : 'Copiar texto'}
+                          {copiedContractId === contract.id ? 'Copiado!' : 'Copiar'}
                         </button>
-                        {contract.status === 'PENDENTE' && (
+                        {isPending && (
                           <>
                             <button
                               type="button"
@@ -821,7 +860,7 @@ const Clientes = () => {
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 disabled:opacity-60"
                             >
                               <CheckCircle size={16} />
-                              {updatingContractId === contract.id ? 'Atualizando...' : 'Marcar como aceito'}
+                              {updatingContractId === contract.id ? 'Atualizando...' : 'Aceitar'}
                             </button>
                             <button
                               type="button"
@@ -830,11 +869,11 @@ const Clientes = () => {
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-100 disabled:opacity-60"
                             >
                               <AlertTriangle size={16} />
-                              {updatingContractId === contract.id ? 'Atualizando...' : 'Arquivar'}
+                              {updatingContractId === contract.id ? 'Atualizando...' : 'Recusar'}
                             </button>
                           </>
                         )}
-                        {contract.status === 'ACEITO' && (
+                        {isAccepted && (
                           <span className="text-xs text-gray-500">Aceito em {formatContractDate(contract.acceptedAt)}</span>
                         )}
                       </div>

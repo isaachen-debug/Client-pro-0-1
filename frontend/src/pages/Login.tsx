@@ -950,20 +950,20 @@ const Login = () => {
       </section>
 
       {showLoginModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[28px] shadow-[0_34px_78px_rgba(38,28,92,0.36),0_14px_34px_rgba(16,185,129,0.28)] border border-indigo-100/80 bg-gradient-to-br from-[#e9e3ff] via-[#f3fff7] to-[#e3ecff] p-6 space-y-5 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#3b2a7a]/28 via-emerald-100/80 to-[#23345c]/20 pointer-events-none" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_25px_70px_rgba(15,23,42,0.18)] space-y-6 relative">
             <button
               type="button"
               onClick={() => {
                 setShowLoginModal(false);
                 setLoginSegment(null);
               }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
               ✕
             </button>
-            <div className="space-y-2 relative z-10">
+
+            <div className="space-y-2">
               <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide border border-emerald-100">
                 {loginSegment === 'client' ? t.modal.clientBadge : t.modal.ownerBadge}
               </p>
@@ -975,10 +975,8 @@ const Login = () => {
               </p>
             </div>
 
-            <div className="space-y-3 relative z-10">
-              <p className="text-sm font-semibold text-gray-900">
-                {t.modal.question}
-              </p>
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-gray-900">{t.modal.question}</p>
               <p className="text-xs text-gray-500">{t.modal.personaPrompt}</p>
               <div className={`grid gap-2 ${personaOptions.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 {personaOptions.map((option) => {
@@ -990,8 +988,8 @@ const Login = () => {
                       onClick={() => setPersona(option.key as LoginPersona)}
                       className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
                         active
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_10px_25px_rgba(16,185,129,0.25)]'
-                          : 'border-gray-200 text-gray-500 hover:border-emerald-300'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_10px_25px_rgba(16,185,129,0.18)]'
+                          : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-gray-900'
                       }`}
                       disabled={loginSegment === 'client'}
                     >
@@ -1000,24 +998,24 @@ const Login = () => {
                   );
                 })}
               </div>
-              <div className="mt-2 rounded-xl border border-emerald-100 bg-gradient-to-r from-[#0f172a] via-[#1b2a45] to-[#0b3b2f] px-3 py-2 text-white shadow-[0_18px_36px_rgba(12,22,54,0.35)]">
-                <p className="text-[10px] uppercase tracking-wide font-semibold text-white/90">
+              <div className="mt-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 shadow-inner">
+                <p className="text-[10px] uppercase tracking-wide font-semibold text-emerald-700">
                   {t.modal.infoBoxTitle}
                 </p>
-                <p className="text-xs font-semibold text-white">{personaDescription.title}</p>
-                <p className="text-[11px] text-white/85 mt-1 leading-relaxed">
+                <p className="text-xs font-semibold text-gray-900">{personaDescription.title}</p>
+                <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
                   {personaDescription.description}
                 </p>
               </div>
             </div>
 
-            <form className="space-y-4 relative z-10" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white/90"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white"
                   placeholder={t.form.emailPlaceholder}
                   required
                 />
@@ -1027,7 +1025,7 @@ const Login = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white/90"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white"
                   placeholder={t.form.passwordPlaceholder}
                   required
                 />
@@ -1042,20 +1040,20 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_20px_40px_rgba(16,185,129,0.35)]"
+                className="w-full flex items-center justify-center px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_18px_34px_rgba(16,185,129,0.28)]"
               >
                 {loading ? t.form.submitLoading : t.form.submitIdle}
               </button>
             </form>
 
-            <div className="text-center relative z-10">
+            <div className="text-center">
               <button type="button" className="text-emerald-600 text-sm font-semibold hover:underline">
                 {t.modal.forgotPassword}
               </button>
               <div className="h-px bg-gray-200 my-4" />
               <Link
                 to="/register"
-                className="inline-flex items-center justify-center w-full px-4 py-3 bg-gradient-to-r from-[#0f172a] via-[#1b2a45] to-[#0b3b2f] text-white font-semibold rounded-xl hover:from-[#12203a] hover:to-[#0e4638] transition-colors shadow-[0_18px_36px_rgba(12,22,54,0.35)]"
+                className="inline-flex items-center justify-center w-full px-4 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-colors shadow-[0_12px_28px_rgba(15,23,42,0.24)]"
               >
                 {t.modal.createOwner}
               </Link>

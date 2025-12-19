@@ -12,6 +12,10 @@ export const transactionsApi = {
     const { data } = await api.patch<Transaction>(`/transactions/${id}/status`, { status });
     return data;
   },
+  async resetAll() {
+    const { data } = await api.delete<{ success: boolean }>('/transactions');
+    return data;
+  },
   async exportCsv(from: string, to: string) {
     const response = await api.get('/transactions/export', {
       params: { from, to },
@@ -20,4 +24,3 @@ export const transactionsApi = {
     return response.data;
   },
 };
-

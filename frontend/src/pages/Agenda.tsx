@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { endOfWeek, format, startOfWeek } from 'date-fns';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader } from '../components/OwnerUI';
 import { pageGutters } from '../styles/uiTokens';
-import AudioQuickAdd from '../components/AudioQuickAdd';
+import { useNavigate } from 'react-router-dom';
 
 type AgendaView = 'week' | 'month';
 
@@ -17,6 +16,7 @@ type AgendaPageProps = {
 };
 
 const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<AgendaView>(() => {
     if (typeof window === 'undefined') {
       return initialMode || 'week';
@@ -53,19 +53,6 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
       )}
 
       <div>{viewMode === 'week' ? <AgendaSemanal embedded quickCreateNonce={quickCreateNonce} /> : <AgendaMensal embedded />}</div>
-      <AudioQuickAdd contextHint={(() => {
-        if (viewMode === 'week') {
-          const now = new Date();
-          const weekStart = startOfWeek(now, { weekStartsOn: 0 });
-          const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
-          return `Usuário está na visão semanal. Semana corrente: ${format(weekStart, 'yyyy-MM-dd')} até ${format(
-            weekEnd,
-            'yyyy-MM-dd',
-          )}. Se ele disser "quinta-feira" ou "terça", use esta semana. Ano é o atual.`;
-        }
-        const now = new Date();
-        return `Usuário está na visão mensal. Mês atual: ${format(now, 'MMMM yyyy')}. Se disser só um dia (ex: dia 12), use este mês e ano atual.`;
-      })()} />
     </div>
   );
 };

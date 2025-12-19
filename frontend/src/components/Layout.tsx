@@ -427,25 +427,28 @@ const Layout = () => {
     ? 'absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-gradient-to-br from-primary-500 via-emerald-500 to-[#0c1d33] text-white border border-white/15 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1 hover:brightness-110'
     : 'absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-primary-600 border border-primary-200 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1 hover:bg-primary-50';
 
-  const menuItems = [
-    { path: '/app/home', icon: HomeIcon, labelKey: 'nav.dashboard' },
+  // Desktop: grupos para organizar navegação principal e extras (sem afetar o mobile).
+  const primaryMenuItems = [
+    { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
     { path: '/app/agenda', icon: Calendar, labelKey: 'nav.agenda' },
     { path: '/app/clientes', icon: Users, labelKey: 'nav.clients' },
     { path: '/app/financeiro', icon: DollarSign, labelKey: 'nav.finance' },
     { path: '/app/start', icon: PlayCircle, labelKey: 'nav.today' },
-    { path: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-    { path: '/app/explore', icon: Grid, labelKey: 'nav.explore' },
-    ...(user?.role === 'OWNER'
-      ? [
-          { path: '/app/empresa', icon: Building2, labelKey: 'nav.company' },
-          { path: '/app/team', icon: Users, labelKey: 'nav.team' },
-          { path: '/app/settings', icon: SettingsIcon, labelKey: 'nav.settings' },
-          { path: '/app/helper-resources', icon: HelpCircle, labelKey: 'nav.helperResources' },
-          { path: '/app/apps', icon: LayoutGrid, labelKey: 'nav.apps' },
-        ]
-      : []),
+  ];
+  const workspaceMenuItems = [
+    { path: '/app/empresa', icon: Building2, labelKey: 'nav.company' },
+    { path: '/app/team', icon: Users, labelKey: 'nav.team' },
+    { path: '/app/settings', icon: SettingsIcon, labelKey: 'nav.settings' },
     { path: '/app/profile', icon: UserCircle, labelKey: 'nav.profile' },
   ];
+  const desktopExtraMenuItems =
+    user?.role === 'OWNER'
+      ? [
+          { path: '/app/explore', icon: Grid, labelKey: 'nav.explore' },
+          { path: '/app/apps', icon: LayoutGrid, labelKey: 'nav.apps' },
+          { path: '/app/helper-resources', icon: HelpCircle, labelKey: 'nav.helperResources' },
+        ]
+      : [];
 
   const workspaceLinks = useMemo(
     () => [
@@ -869,7 +872,6 @@ const Layout = () => {
   const leftNavItems = navItems.slice(0, 2);
   const rightNavItems = navItems.slice(2);
 
-
   const handleMobileNav = (item: { path: string }) => {
     navigate(item.path);
   };
@@ -917,26 +919,83 @@ const Layout = () => {
             <ProfileQuickInfo hideTip />
           </div>
 
-          <nav className="flex-1 px-5 space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
-                    isActive ? 'bg-white text-primary-700 shadow-sm border border-primary-100' : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <Icon size={18} />
-                    {t(item.labelKey)}
-                  </span>
-                  {isActive && <span className="text-xs text-primary-500">•</span>}
-                </Link>
-              );
-            })}
+          <nav className="flex-1 px-5 space-y-5">
+            <div className="space-y-2">
+              <p className="text-[11px] uppercase tracking-wide text-gray-400 px-2">Principal</p>
+              {primaryMenuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname.startsWith(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
+                      isActive
+                        ? 'bg-white text-primary-700 shadow-sm border border-primary-100'
+                        : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <Icon size={18} />
+                      {t(item.labelKey)}
+                    </span>
+                    {isActive && <span className="text-xs text-primary-500">•</span>}
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="space-y-2 border-t border-gray-100 pt-4">
+              <p className="text-[11px] uppercase tracking-wide text-gray-400 px-2">Workspace</p>
+              {workspaceMenuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname.startsWith(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
+                      isActive
+                        ? 'bg-white text-primary-700 shadow-sm border border-primary-100'
+                        : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <Icon size={18} />
+                      {t(item.labelKey)}
+                    </span>
+                    {isActive && <span className="text-xs text-primary-500">•</span>}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {desktopExtraMenuItems.length > 0 && (
+              <div className="space-y-2 border-t border-gray-100 pt-4">
+                <p className="text-[11px] uppercase tracking-wide text-gray-400 px-2">Mais</p>
+                {desktopExtraMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname.startsWith(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
+                        isActive
+                          ? 'bg-white text-primary-700 shadow-sm border border-primary-100'
+                          : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <Icon size={18} />
+                        {t(item.labelKey)}
+                      </span>
+                      {isActive && <span className="text-xs text-primary-500">•</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </nav>
 
           <div className="px-5 py-4 space-y-3 border-t border-[#eadff8]">
@@ -1797,5 +1856,3 @@ const Layout = () => {
 };
 
 export default Layout;
-
-

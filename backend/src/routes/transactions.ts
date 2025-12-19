@@ -113,6 +113,18 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.delete('/', async (req, res) => {
+  try {
+    const deleted = await prisma.transaction.deleteMany({
+      where: { userId: req.user!.id },
+    });
+    res.json({ success: true, deleted: deleted.count });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao limpar transações.' });
+  }
+});
+
 router.put('/:id', async (req, res) => {
   try {
     const {
@@ -263,4 +275,3 @@ router.get('/export', async (req, res) => {
 });
 
 export default router;
-

@@ -1,35 +1,34 @@
-import { Users, CalendarDays, DollarSign, Search, PlusCircle, ShieldCheck, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Users, CalendarDays, DollarSign, Search, PlusCircle, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { pageGutters } from '../styles/uiTokens';
 import { useAuth } from '../contexts/AuthContext';
+import { dashboardApi } from '../services/api';
+import type { DashboardOverview } from '../types';
 
 const Home = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const greeting = user?.name ? `Olá, ${user.name}` : 'Olá';
-  // Placeholder estático; depois podemos conectar na API (clientes, agenda, financeiro)
-  const metrics = [
-    {
-      label: 'Clientes ativos',
-      value: '24',
-      help: 'Base atualizada',
-      icon: Users,
-      tone: 'text-primary-600',
-    },
-    {
-      label: 'Serviços na semana',
-      value: '12',
-      help: 'Próximos 7 dias',
-      icon: CalendarDays,
-      tone: 'text-amber-500',
-    },
-  ];
+  const [metrics, setMetrics] = useState<DashboardOverview | null>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
 
-  const pendingCard = {
-    label: 'Pagamentos pendentes',
-    value: '$320',
-    help: 'Aguardando confirmação',
-    icon: DollarSign,
-    tone: 'text-emerald-600',
-  };
+  const numberFormatter = new Intl.NumberFormat('pt-BR');
+  const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  useEffect(() => {
+    const loadMetrics = async () => {
+      try {
+        const data = await dashboardApi.getMetrics();
+        setMetrics(data);
+      } catch (error) {
+        console.error('Erro ao carregar métricas do dashboard', error);
+      } finally {
+        setLoadingMetrics(false);
+      }
+    };
+    loadMetrics();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f5f9fc]">
@@ -61,13 +60,33 @@ const Home = () => {
             <p className="text-base font-semibold text-slate-900">Você tem 3 serviços hoje.</p>
             <p className="text-sm text-slate-600">Confirme horários ou crie um novo agendamento.</p>
           </div>
-          <button className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg hover:bg-emerald-600 transition">
+          <button
+            type="button"
+            onClick={() => navigate('/app/semana')}
+            className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg hover:bg-emerald-600 transition"
+            aria-label="Ir para agenda de hoje"
+          >
             <ArrowRight size={20} />
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {metrics.map((item) => {
+          {[
+            {
+              label: 'Clientes ativos',
+              value: loadingMetrics ? '...' : numberFormatter.format(metrics?.activeClientsCount ?? 0),
+              help: 'Base atualizada',
+              icon: Users,
+              tone: 'text-primary-600',
+            },
+            {
+              label: 'Serviços na semana',
+              value: loadingMetrics ? '...' : numberFormatter.format(metrics?.scheduledServicesCount ?? 0),
+              help: 'Próximos 7 dias',
+              icon: CalendarDays,
+              tone: 'text-amber-500',
+            },
+          ].map((item) => {
             const Icon = item.icon;
             return (
               <div
@@ -88,12 +107,35 @@ const Home = () => {
         <div className="grid grid-cols-1">
           <div className="rounded-3xl border border-slate-100 bg-white px-4 py-4 shadow-sm flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
-              <pendingCard.icon size={18} className={pendingCard.tone} />
-              <span>{pendingCard.label}</span>
+              <DollarSign size={18} className="text-emerald-600" />
+              <span>Pagamentos pendentes</span>
             </div>
-            <div className="text-3xl font-bold text-slate-900">{pendingCard.value}</div>
-            <p className="text-sm text-slate-500">{pendingCard.help}</p>
+            <div className="text-3xl font-bold text-slate-900">
+              {loadingMetrics ? '...' : currencyFormatter.format(metrics?.pendingPaymentsMonth ?? 0)}
+            </div>
+            <p className="text-sm text-slate-500">Aguardando confirmação</p>
           </div>
+        </div>
+
+        <div className="rounded-3xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500 text-white px-4 py-4 md:py-5 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
+              <MessageCircle size={24} />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold uppercase tracking-wide text-white/90">WhatsApp · IA</p>
+              <p className="text-lg font-semibold leading-tight">Acesse seus agendamentos direto no WhatsApp</p>
+              <p className="text-sm text-white/85">Vamos abrir um chat com IA para consultar clientes e horários.</p>
+            </div>
+          </div>
+          <a
+            href="https://wa.me/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-full bg-white text-emerald-700 px-4 py-2 font-semibold shadow hover:bg-white/90 transition"
+          >
+            Abrir WhatsApp
+          </a>
         </div>
       </div>
 

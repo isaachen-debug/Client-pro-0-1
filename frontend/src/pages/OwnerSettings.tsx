@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Bell,
   Building,
@@ -18,6 +18,7 @@ import { usePreferences } from '../contexts/PreferencesContext';
 import type { LanguageOption } from '../types';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
 import { pageGutters, labelSm } from '../styles/uiTokens';
+import { getGoogleAuthUrl, getGoogleStatus } from '../services/googleCalendar';
 
 const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string; description: string }> = [
   { value: 'pt', label: 'Português', description: 'Ideal para a equipe no Brasil' },
@@ -39,6 +40,10 @@ const OwnerSettings = () => {
   const [languageMessage, setLanguageMessage] = useState('');
   const [deleteEmail, setDeleteEmail] = useState('');
   const [deleteFeedback, setDeleteFeedback] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [googleStatus, setGoogleStatus] = useState<{ connected: boolean; reason?: string }>({ connected: false });
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleFeedback, setGoogleFeedback] = useState('');
 
   const initials =
     user?.name
@@ -63,6 +68,38 @@ const OwnerSettings = () => {
     setDeleteFeedback('Enviamos um link seguro para seu e-mail. Confirme por lá para seguir com a exclusão.');
     setDeleteEmail('');
     setTimeout(() => setDeleteFeedback(''), 5000);
+  };
+
+  useEffect(() => {
+    const loadStatus = async () => {
+      try {
+        const status = await getGoogleStatus();
+        setGoogleStatus(status);
+        if (searchParams.get('google') === 'connected') {
+          setGoogleFeedback('Google Calendar conectado com sucesso.');
+          searchParams.delete('google');
+          setSearchParams(searchParams);
+          setTimeout(() => setGoogleFeedback(''), 4000);
+        }
+      } catch (error: any) {
+        setGoogleFeedback(error?.response?.data?.error || 'Não foi possível verificar o status do Google.');
+      }
+    };
+    loadStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleGoogleConnect = async () => {
+    try {
+      setGoogleLoading(true);
+      setGoogleFeedback('');
+      const url = await getGoogleAuthUrl();
+      window.location.href = url;
+    } catch (error: any) {
+      setGoogleFeedback(error?.response?.data?.error || 'Não foi possível iniciar a conexão com o Google.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -201,15 +238,19 @@ const OwnerSettings = () => {
                 Sincronize agendas dos partners com os eventos oficiais e mantenha tudo atualizado.
                 </p>
             </div>
-            <StatusBadge tone="neutral">Em breve</StatusBadge>
+            <StatusBadge tone={googleStatus.connected ? 'success' : 'warning'}>
+              {googleStatus.connected ? 'Conectado' : 'Desconectado'}
+            </StatusBadge>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-3 text-sm font-semibold text-primary-700 hover:bg-primary-50"
+              onClick={handleGoogleConnect}
+              disabled={googleLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-3 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-60"
             >
               <Link2 size={16} />
-              Conectar Google Calendar
+              {googleLoading ? 'Redirecionando...' : googleStatus.connected ? 'Reconectar Google' : 'Conectar Google Calendar'}
             </button>
             <button
               type="button"
@@ -220,8 +261,9 @@ const OwnerSettings = () => {
             </button>
           </div>
           <p className="text-xs text-slate-500">
-            Quando liberar, você poderá aprovar acessos, definir agendas padrão e acompanhar sincronismo aqui.
+            Usamos um calendário dedicado “ClientePro” na sua conta Google. Eventos criados/alterados aqui podem ser enviados para lá.
           </p>
+          {googleFeedback && <p className="text-xs text-primary-700">{googleFeedback}</p>}
         </SurfaceCard>
 
         <SurfaceCard className="space-y-4">

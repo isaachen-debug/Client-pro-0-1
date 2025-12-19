@@ -1,5 +1,8 @@
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
 import prisma from '../db';
+import { endOfWeek, startOfWeek } from 'date-fns';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -32,8 +35,34 @@ const buildWeekRanges = (start: Date, end: Date) => {
   return ranges;
 };
 
+const DEBUG_LOG_PATH = '/Users/isaachenrik/projeto code/.cursor/debug.log';
+
+const appendDebugLog = (payload: Record<string, any>) => {
+  try {
+    const dir = path.dirname(DEBUG_LOG_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.appendFileSync(DEBUG_LOG_PATH, JSON.stringify(payload) + '\n');
+  } catch {
+    // ignore logging errors
+  }
+};
+
 router.get('/overview', async (req, res) => {
   try {
+    // #region agent log
+    appendDebugLog({
+      sessionId: 'debug-session',
+      runId: 'pre-fix',
+      hypothesisId: 'H2',
+      location: 'backend/src/routes/dashboard.ts:entry',
+      message: 'Dashboard overview hit',
+      data: { userId: req.user?.id ?? null },
+      timestamp: Date.now(),
+    });
+    // #endregion
+
     const userId = req.user!.id;
     const today = new Date();
     const month = req.query.month ? Number(req.query.month) : today.getMonth() + 1;
@@ -68,12 +97,15 @@ router.get('/overview', async (req, res) => {
       where: { userId, status: 'ACTIVE' },
     });
 
+    const weekStart = startOfWeek(today, { weekStartsOn: 0 });
+    const weekEnd = endOfWeek(today, { weekStartsOn: 0 });
+
     const scheduledServicesCount = await prisma.appointment.count({
       where: {
         userId,
         date: {
-          gte: monthStart,
-          lte: monthEnd,
+          gte: weekStart,
+          lte: weekEnd,
         },
         status: {
           not: 'CANCELADO',
@@ -111,6 +143,21 @@ router.get('/overview', async (req, res) => {
       take: 5,
     });
 
+    // #region agent log
+    appendDebugLog({
+      sessionId: 'debug-session',
+      runId: 'pre-fix',
+      hypothesisId: 'H2',
+      location: 'backend/src/routes/dashboard.ts:upcomingAppointments',
+      message: 'Upcoming appointments payload',
+      data: {
+        total: upcomingAppointments.length,
+        missingCustomer: upcomingAppointments.filter((appointment) => !appointment.customer).length,
+      },
+      timestamp: Date.now(),
+    });
+    // #endregion
+
     const recentCompletedAppointmentsRaw = await prisma.appointment.findMany({
       where: {
         userId,
@@ -130,6 +177,23 @@ router.get('/overview', async (req, res) => {
       orderBy: [{ finishedAt: 'desc' }, { date: 'desc' }],
       take: 5,
     });
+
+    // #region agent log
+    appendDebugLog({
+      sessionId: 'debug-session',
+      runId: 'pre-fix',
+      hypothesisId: 'H3',
+      location: 'backend/src/routes/dashboard.ts:recentCompletedAppointments',
+      message: 'Recent completed payload',
+      data: {
+        total: recentCompletedAppointmentsRaw.length,
+        withTransaction: recentCompletedAppointmentsRaw.filter(
+          (item) => (item.transactions?.[0]?.id ?? null) !== null,
+        ).length,
+      },
+      timestamp: Date.now(),
+    });
+    // #endregion
 
     const recentCompletedAppointments = recentCompletedAppointmentsRaw.map((appointment) => {
       const transaction = appointment.transactions[0];

@@ -1,14 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Menu, MoreVertical, MessageCircle, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  addWeeks,
+  subWeeks,
+  isSameDay,
+  isToday,
+  getWeek,
+} from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 import CreateModal, { CreateFormState } from '../components/appointments/CreateModal';
 import EditModal from '../components/appointments/EditModal';
 import AgendaMensal from './AgendaMensal';
+import AudioQuickAdd from '../components/AudioQuickAdd';
+import { getGoogleStatus, syncGoogleEvent } from '../services/googleCalendar';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
 
@@ -65,8 +77,10 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
     [],
   );
-  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('today');
+  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('week');
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+  const [isMobile, setIsMobile] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
     customerId: '',
@@ -136,6 +150,29 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   useEffect(() => {
     setSelectedDay(currentDate);
   }, [currentDate]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth < 640);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const loadGoogleStatus = async () => {
+      try {
+        const status = await getGoogleStatus();
+        setGoogleConnected(Boolean(status.connected));
+      } catch (error) {
+        setGoogleConnected(false);
+      }
+    };
+    loadGoogleStatus();
+  }, []);
 
   const fetchAgendamentos = async () => {
     try {
@@ -241,7 +278,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
           ? Number(createForm.price)
           : selectedCustomer?.defaultPrice ?? 0;
 
-      await appointmentsApi.create({
+      const created = await appointmentsApi.create({
         customerId: createForm.customerId,
         date: composedDate,
         startTime: createForm.startTime,
@@ -253,7 +290,27 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         notes: createForm.notes,
         assignedHelperId: createForm.assignedHelperId || undefined,
       });
-
+      if (googleConnected) {
+        const customerName = customers.find((c) => c.id === createForm.customerId)?.name ?? 'Agendamento';
+        const customerEmail = customers.find((c) => c.id === createForm.customerId)?.email;
+        const helperEmail =
+          helpers.find((h) => h.id === createForm.assignedHelperId)?.email ||
+          undefined;
+        const startIso = new Date(`${composedDate}T${createForm.startTime || '08:00'}:00`).toISOString();
+        const endIso = new Date(`${composedDate}T${createForm.endTime || createForm.startTime || '09:00'}:00`).toISOString();
+        try {
+          await syncGoogleEvent({
+            summary: customerName,
+            description: createForm.notes,
+            start: startIso,
+            end: endIso,
+            appointmentId: created.id,
+            attendees: [customerEmail, helperEmail].filter(Boolean) as string[],
+          });
+        } catch (err) {
+          console.error('Falha ao sincronizar com Google Calendar (create):', err);
+        }
+      }
       setShowCreateModal(false);
       setCreateForm(buildCreateForm(new Date(year, monthNumber - 1, dayNumber)));
       fetchAgendamentos();
@@ -283,6 +340,25 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         isRecurring: editForm.isRecurring && !!editForm.recurrenceRule,
         recurrenceRule: editForm.isRecurring && editForm.recurrenceRule ? editForm.recurrenceRule : undefined,
       });
+      if (googleConnected) {
+        const customerName = editingAppointment.customer?.name ?? 'Agendamento';
+        const customerEmail = editingAppointment.customer?.email;
+        const helperEmail = helpers.find((h) => h.id === editForm.assignedHelperId)?.email;
+        const startIso = new Date(`${editForm.date}T${editForm.startTime || '08:00'}:00`).toISOString();
+        const endIso = new Date(`${editForm.date}T${editForm.endTime || editForm.startTime || '09:00'}:00`).toISOString();
+        try {
+          await syncGoogleEvent({
+            summary: customerName,
+            description: editForm.notes,
+            start: startIso,
+            end: endIso,
+            appointmentId: editingAppointment.id,
+            attendees: [customerEmail, helperEmail].filter(Boolean) as string[],
+          });
+        } catch (err) {
+          console.error('Falha ao sincronizar com Google Calendar (update):', err);
+        }
+      }
       if (shouldPromptInvoice) {
         await handleStatusChange(editingAppointment, 'CONCLUIDO');
       } else {
@@ -416,103 +492,129 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CONCLUIDO: 'bg-emerald-50 border-emerald-100 text-emerald-900',
     CANCELADO: 'bg-red-50 border-red-100 text-red-900',
   };
+  const statusSurfaces: Record<AppointmentStatus, string> = {
+    AGENDADO: 'bg-blue-50 text-blue-700 border-blue-100',
+    EM_ANDAMENTO: 'bg-amber-50 text-amber-700 border-amber-100',
+    CONCLUIDO: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    CANCELADO: 'bg-red-50 text-red-700 border-red-100',
+  };
 
   const renderWeekSection = () => {
     const hasAny = weekDays.some((day) => getAgendamentosForDay(day).length > 0);
+
     return (
-      <div className="space-y-2">
+      <div className="space-y-4 px-4 md:px-5">
         {!hasAny && (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
             Nenhum agendamento nesta semana.
           </div>
         )}
-        {weekDays.map((day) => {
-          const dayAppointments = getAgendamentosForDay(day, false).sort((a, b) =>
-            (a.startTime || '').localeCompare(b.startTime || ''),
-          );
-          const isToday = isSameDay(day, new Date());
-          const dayKey = day.toISOString().slice(0, 10);
-          const limit = 2;
-          const showAll = expandedDays[dayKey];
-          const displayAppointments = showAll ? dayAppointments : dayAppointments.slice(0, limit);
-          return (
-            <div
-              key={day.toISOString()}
-              className="flex items-start gap-4 px-2 py-4 border-b border-slate-200 last:border-b-0"
-            >
-              <div className="w-16 text-right space-y-1">
-                <p className={`text-[11px] leading-tight lowercase ${isToday ? 'text-primary-600' : 'text-slate-500'}`}>
-                  {`${format(day, 'EEE', { locale: ptBR })}.`}
-                </p>
-                <p className={`text-2xl font-semibold leading-tight ${isToday ? 'text-primary-700' : 'text-slate-900'}`}>
-                  {format(day, 'd')}
-                </p>
-              </div>
 
-              <div className="flex-1">
-                {dayAppointments.length === 0 ? (
-                  <div className="text-sm text-slate-400">Sem agendamentos</div>
-                ) : (
-                  <div className="relative pl-8 space-y-3">
-                    <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" aria-hidden />
-                    {displayAppointments.map((ag) => {
-                      const start = ag.startTime || 'Dia todo';
-                      const end = ag.endTime ? ` - ${ag.endTime}` : '';
-                      return (
-                        <div key={ag.id} className="relative flex items-start gap-3">
-                          <div className="flex flex-col items-center w-10 shrink-0 -ml-1">
-                              <span className="text-[12px] font-semibold text-slate-700 leading-tight">{start}</span>
-                              <div
-                              className={`mt-1 h-3 w-3 rounded-full border-2 bg-white ${statusDotBg[ag.status] ?? 'border-primary-500'}`}
-                            />
-                          </div>
-                          <div
-                            className={`flex-1 max-w-[380px] rounded-md border px-3 py-3 shadow-sm ${
-                              statusCardTone[ag.status] ?? 'bg-slate-50 border-slate-200 text-slate-900'
-                            }`}
-                            onClick={() => openCustomerInfo(ag)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                openCustomerInfo(ag);
-                              }
-                            }}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="text-[12px] font-semibold leading-tight">{ag.customer.name}</p>
-                              {ag.price ? (
-                                <p className="text-[12px] font-semibold leading-tight whitespace-nowrap">
-                                  {currencyFormatter.format(ag.price)}
-                                </p>
-                              ) : null}
-                            </div>
-                            <p className="text-[12px] leading-tight mt-1">
-                              {start}
-                              {end}
-                            </p>
-                            {ag.notes ? <p className="text-[11px] text-slate-700 mt-1 leading-snug line-clamp-2">{ag.notes}</p> : null}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {dayAppointments.length > limit && (
-                      <button
-                        type="button"
-                        onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !showAll }))}
-                        className="inline-flex items-center gap-2 text-[12px] font-semibold text-primary-700 hover:text-primary-800"
-                      >
-                        {showAll ? 'Mostrar menos' : `Ver mais (${dayAppointments.length - limit})`}
-                        <span aria-hidden>{showAll ? '▲' : '▼'}</span>
-                      </button>
-                    )}
-                  </div>
-                )}
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Semana</p>
+            <p className="text-xl font-semibold text-slate-900 leading-tight">
+              {format(weekDays[0], 'dd MMM', { locale: ptBR })} – {format(weekDays[6], 'dd MMM', { locale: ptBR })}
+            </p>
+          </div>
+
+          {/* Grid de 7 dias */}
+          <div className="grid grid-cols-7 gap-2 rounded-2xl bg-white border border-slate-100 p-2 shadow-sm sticky top-0 z-10">
+            {weekDays.map((day, index) => {
+              const dayAppointments = getAgendamentosForDay(day, false);
+              const isSelected = isSameDay(day, selectedDay);
+              const today = isToday(day);
+              const weekdayLabels = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  onClick={() => setSelectedDay(day)}
+                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200'
+                      : today
+                        ? 'bg-primary-50 text-primary-700 border border-primary-100'
+                        : 'bg-white text-slate-800 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className={`text-[11px] font-semibold uppercase ${isSelected ? 'text-white/90' : 'text-slate-500'}`}>
+                    {weekdayLabels[index]}
+                  </span>
+                  <span className="text-lg font-semibold leading-none">{format(day, 'd')}</span>
+                  {dayAppointments.length > 0 ? (
+                    <div className="flex items-center gap-0.5">
+                      {dayAppointments.slice(0, 3).map((ag) => (
+                        <div
+                          key={ag.id}
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            statusDotBg[ag.status] ?? 'bg-slate-400'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="h-1.5" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Lista de eventos do dia selecionado */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                  {format(selectedDay, 'EEEE', { locale: ptBR })}
+                </p>
+                <p className="text-base font-semibold text-slate-900">
+                  {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => handleDayCardClick(selectedDay)}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+              >
+                + Agendar
+              </button>
             </div>
-          );
-        })}
+
+            {getAgendamentosForDay(selectedDay, false).length === 0 ? (
+              <p className="text-xs text-slate-400">Sem eventos</p>
+            ) : (
+              <div className="space-y-2">
+                {getAgendamentosForDay(selectedDay, false)
+                  .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                  .map((ag) => {
+                    const start = ag.startTime || 'Dia todo';
+                    const end = ag.endTime ? ` · ${ag.endTime}` : '';
+                    return (
+                      <button
+                        key={ag.id}
+                        type="button"
+                        onClick={() => openCustomerInfo(ag)}
+                        className={`w-full text-left rounded-xl px-3 py-2 shadow-sm border transition ${
+                          statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-slate-900 truncate">{ag.customer.name}</span>
+                          <span className="text-xs text-slate-600">{start}</span>
+                        </div>
+                        {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
+                        <p className="text-xs text-slate-500 mt-1 truncate">
+                          {start}
+                          {end}
+                        </p>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
@@ -638,12 +740,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </button>
             ))}
           </div>
-          <button
-            onClick={() => handleDayCardClick(selectedDay || new Date())}
-            className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-primary-700 transition"
-          >
-            + Novo agendamento
-          </button>
         </div>
 
       </div>
@@ -653,6 +749,18 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         {viewMode === 'week' && renderWeekSection()}
         {viewMode === 'month' && <AgendaMensal embedded />}
       </div>
+
+      <AudioQuickAdd
+        floatingWrapperClassName="fixed right-4 bottom-24 z-50 flex flex-col items-end gap-3"
+        actionAboveVoice={{
+          label: '+ Novo agendamento',
+          onClick: () => handleDayCardClick(selectedDay || new Date()),
+        }}
+        contextHint={`Usuário está na visão semanal. Semana corrente: ${format(weekStart, 'yyyy-MM-dd')} até ${format(
+          weekEnd,
+          'yyyy-MM-dd',
+        )}. Se ele disser "quinta-feira" ou "terça", use esta semana. Ano é o atual.`}
+      />
 
       {showCreateModal && (
         <CreateModal

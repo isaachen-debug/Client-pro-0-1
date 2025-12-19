@@ -29,6 +29,13 @@ import ClientLayout from './pages/client/Layout';
 import ClientSettings from './pages/client/Settings';
 import OwnerSettings from './pages/OwnerSettings';
 
+const AppIndexRedirect = () => {
+  const isMobile =
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
+  const target = isMobile ? 'home' : 'dashboard';
+  return <Navigate to={target} replace />;
+};
+
 function App() {
   return (
     <Router>
@@ -48,7 +55,7 @@ function App() {
                 </PrivateRoute>
               }
             >
-              <Route index element={<Navigate to="home" replace />} />
+              <Route index element={<AppIndexRedirect />} />
               <Route path="home" element={<Home />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="start" element={<Start />} />
@@ -108,4 +115,3 @@ function App() {
 }
 
 export default App;
-

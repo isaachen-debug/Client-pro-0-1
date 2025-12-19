@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Clock, CheckCircle } from 'lucide-react';
+import { Download, Clock, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
 import { transactionsApi } from '../services/api';
 import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
 import { pageGutters } from '../styles/uiTokens';
@@ -9,12 +9,17 @@ import { format } from 'date-fns';
 const PERIOD_OPTIONS = [
   { value: 'mesAtual', label: 'Mês atual' },
   { value: 'ultimos7dias', label: 'Últimos 7 dias' },
+  { value: 'ultimos30dias', label: 'Últimos 30 dias' },
 ] as const;
 
 const Financeiro = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodo, setPeriodo] = useState<(typeof PERIOD_OPTIONS)[number]['value']>('mesAtual');
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   const usdFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
@@ -29,6 +34,12 @@ const Financeiro = () => {
         const end = new Date(now);
         const start = new Date(now);
         start.setDate(start.getDate() - 6);
+        return { start, end };
+      }
+      case 'ultimos30dias': {
+        const end = new Date(now);
+        const start = new Date(now);
+        start.setDate(start.getDate() - 29);
         return { start, end };
       }
       case 'mesAtual':
@@ -116,6 +127,22 @@ const Financeiro = () => {
     }
   };
 
+  const handleResetFinanceiro = async () => {
+    try {
+      setResetLoading(true);
+      setResetError(null);
+      await transactionsApi.resetAll();
+      setResetConfirmText('');
+      setResetModalOpen(false);
+      await fetchFinanceiroData();
+    } catch (error) {
+      console.error('Erro ao resetar financeiro:', error);
+      setResetError('Não foi possível limpar os dados. Verifique o backend ou tente novamente.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -139,6 +166,13 @@ const Financeiro = () => {
             >
               <Download size={16} />
               Exportar CSV
+            </button>
+            <button
+              onClick={() => setResetModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-white border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50"
+            >
+              <Trash2 size={16} />
+              Resetar dados
             </button>
           </div>
         }
@@ -263,9 +297,62 @@ const Financeiro = () => {
           </div>
         )}
       </section>
+
+      {/* Modal de reset financeiro */}
+      {resetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-red-50 text-red-600 border border-red-200 flex items-center justify-center">
+                <AlertTriangle size={18} />
+              </div>
+              <div className="space-y-1 flex-1">
+                <p className="text-lg font-semibold text-slate-900">Resetar dados financeiros</p>
+                <p className="text-sm text-slate-600">
+                  Esta ação apaga todas as transações deste workspace. Não pode ser desfeita. Digite <strong>APAGAR</strong> para confirmar.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <input
+                type="text"
+                value={resetConfirmText}
+                onChange={(e) => setResetConfirmText(e.target.value)}
+                placeholder="Digite APAGAR para confirmar"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
+                disabled={resetLoading}
+              />
+              {resetError && <p className="text-sm text-red-600">{resetError}</p>}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setResetModalOpen(false);
+                  setResetConfirmText('');
+                  setResetError(null);
+                }}
+                className="px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                disabled={resetLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleResetFinanceiro}
+                disabled={resetConfirmText !== 'APAGAR' || resetLoading}
+                className="px-4 py-2 rounded-full bg-red-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed hover:bg-red-700"
+              >
+                {resetLoading ? 'Apagando...' : 'Apagar tudo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Financeiro;
-

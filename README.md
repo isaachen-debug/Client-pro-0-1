@@ -95,10 +95,16 @@ cd frontend && npm run dev   # Terminal 2
 
 ## 📚 Documentação
 
-- 📖 [Guia de Instalação Completo](INSTALACAO.md)
-- 🔌 [Documentação da API](API.md)
-- 🚀 [Guia de Deploy](DEPLOY.md)
-- ✨ [Lista de Funcionalidades](FEATURES.md)
+- 📖 [Guia de Instalação Completo](docs/instalacao/INSTALACAO.md)
+- 🔌 [Documentação da API](docs/api/API.md)
+- 🚀 [Guia de Deploy](docs/deploy/DEPLOY.md)
+- ✨ [Lista de Funcionalidades](docs/escopo/FEATURES.md)
+- 🧭 [Resumo do Projeto](docs/visao/RESUMO_DO_PROJETO.md)
+- 🗺️ [Mapa do App](docs/estrutura/MAPA_DO_APP.md)
+- 🎯 [UX por tela](docs/ux/UX.md)
+- 🧠 [Decisões](docs/decisoes/DECISOES.md)
+- 🧰 [Changelog](docs/historico/CHANGELOG.md)
+- 🤝 [Contribuição](docs/guia/CONTRIBUTING.md)
 
 ## 🎨 Capturas de Tela
 
@@ -135,37 +141,28 @@ clientepro/
 │   ├── prisma/
 │   │   ├── schema.prisma    # Modelo do banco
 │   │   └── seed.ts          # Dados de exemplo
-│   ├── src/
-│   │   ├── routes/          # Endpoints da API
-│   │   │   ├── clientes.ts
-│   │   │   ├── agendamentos.ts
-│   │   │   ├── cobrancas.ts
-│   │   │   ├── dashboard.ts
-│   │   │   └── financeiro.ts
-│   │   ├── db.ts            # Cliente Prisma
-│   │   └── server.ts        # Servidor Express
+│   ├── src/                 # Rotas, serviços, middlewares
 │   └── package.json
 ├── frontend/
 │   ├── src/
 │   │   ├── api/             # Cliente HTTP
 │   │   ├── components/      # Componentes React
-│   │   │   └── Layout.tsx
 │   │   ├── pages/           # Páginas
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── Clientes.tsx
-│   │   │   ├── AgendaMensal.tsx
-│   │   │   ├── AgendaSemanal.tsx
-│   │   │   └── Financeiro.tsx
 │   │   ├── types/           # TypeScript types
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   └── package.json
+├── docs/                    # Documentação organizada
+│   ├── visao/RESUMO_DO_PROJETO.md
+│   ├── api/API.md
+│   ├── instalacao/INSTALACAO.md
+│   ├── deploy/DEPLOY.md
+│   ├── escopo/FEATURES.md
+│   ├── historico/CHANGELOG.md
+│   └── guia/CONTRIBUTING.md
 ├── setup.sh                 # Script de instalação
 ├── README.md                # Este arquivo
-├── INSTALACAO.md            # Guia detalhado
-├── API.md                   # Documentação da API
-├── DEPLOY.md                # Guia de deploy
-└── FEATURES.md              # Funcionalidades
+└── QUICKSTART.md            # Guia rápido
 ```
 
 ## 🎯 Casos de Uso

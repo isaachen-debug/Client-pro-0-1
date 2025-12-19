@@ -104,7 +104,7 @@ export interface ContractWizardProps {
   ownerLogo?: string;
   ownerAccentColor?: string;
   saving: boolean;
-  onSubmit: (blueprint: ContractBlueprint, action: 'send' | 'sign') => Promise<void>;
+  onSubmit: (blueprint: ContractBlueprint, action: 'send' | 'sign' | 'save') => Promise<void>;
 }
 
 const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit }: ContractWizardProps) => {
@@ -112,6 +112,8 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
   const [customServiceInput, setCustomServiceInput] = useState('');
   const [addonDraft, setAddonDraft] = useState({ label: '', price: '' });
   const [blueprint, setBlueprint] = useState<ContractBlueprint>(() => defaultBlueprint(ownerLogo, ownerAccentColor));
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [localSending, setLocalSending] = useState(false);
   const [specialtyOptions, setSpecialtyOptions] = useState<Array<{ id: string; label: string; helper: string }>>([]);
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [specialtyAddonDrafts, setSpecialtyAddonDrafts] = useState<Record<string, string>>({});
@@ -145,6 +147,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
     blueprint.client.id,
     clients,
   ]);
+  const hasClientEmail = useMemo(
+    () => Boolean(selectedClient?.email?.trim() || blueprint.client.email?.trim()),
+    [selectedClient?.email, blueprint.client.email],
+  );
 
   const canProceed = useMemo(() => {
     switch (stepConfig[step].id) {
@@ -342,8 +348,26 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
     return [...list, ...blueprint.services.custom, ...addonsWithPrice];
   }, [blueprint.services]);
 
-  const handleFinish = (action: 'send' | 'sign') => {
-    onSubmit(blueprint, action);
+  const handleFinish = async (action: 'send' | 'sign' | 'save') => {
+    if (!blueprint.client.id) {
+      setLocalError('Selecione um cliente para enviar ou assinar.');
+      return;
+    }
+    setLocalError(null);
+    // No email? bloqueia apenas o "send"
+    if (action === 'send' && !hasClientEmail) {
+      setLocalError('Adicione um email do cliente para enviar notificações.');
+      return;
+    }
+    try {
+      setLocalSending(true);
+      await onSubmit(blueprint, action);
+    } catch (err) {
+      console.error('Erro ao finalizar contrato', err);
+      setLocalError('Não foi possível concluir. Tente novamente em instantes.');
+    } finally {
+      setLocalSending(false);
+    }
   };
 
   const renderBrandStep = () => (
@@ -970,21 +994,36 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
         <div className="border border-gray-200 rounded-2xl p-4 space-y-3 bg-gray-50">
           <p className="text-sm font-semibold text-gray-900">Ready to send?</p>
           <p className="text-sm text-gray-600">
-            Clique em "Send to client" para notificar dentro do app e por email ou use "Sign now" para gerar uma cópia
-            assinada na hora.
+            Use "Send to client" para notificar por app/email. Sem email? Use "Save only" para baixar o PDF agora ou
+            "Sign now" para arquivar como assinado.
           </p>
+          {!hasClientEmail && (
+            <p className="text-sm text-amber-600">
+              Cliente sem email cadastrado. Para enviar notificações, adicione um email ou use "Save only".
+            </p>
+          )}
+          {localError && <p className="text-sm text-red-600">{localError}</p>}
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              disabled={saving}
+              disabled={saving || localSending || !hasClientEmail}
               onClick={() => handleFinish('send')}
               className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 disabled:opacity-60"
             >
-              <Globe2 size={16} /> {saving ? 'Enviando...' : 'Send to client'}
+              <Globe2 size={16} />{' '}
+              {hasClientEmail ? (saving || localSending ? 'Enviando...' : 'Send to client') : 'Add email to send'}
             </button>
             <button
               type="button"
-              disabled={saving}
+              disabled={saving || localSending}
+              onClick={() => handleFinish('save')}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-60"
+            >
+              <FileSignature size={16} /> Save only (no email)
+            </button>
+            <button
+              type="button"
+              disabled={saving || localSending}
               onClick={() => handleFinish('sign')}
               className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-60"
             >
@@ -1067,4 +1106,3 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
 };
 
 export default ContractWizard;
-
