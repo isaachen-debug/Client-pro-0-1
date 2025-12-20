@@ -892,6 +892,17 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
             >
               <ChevronRight size={16} />
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date();
+                setCurrentDate(today);
+                setSelectedDay(today);
+              }}
+              className="px-3 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+            >
+              Hoje
+            </button>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700 shadow-sm">
             {['today', 'week', 'month', 'chat'].map((mode) => (
