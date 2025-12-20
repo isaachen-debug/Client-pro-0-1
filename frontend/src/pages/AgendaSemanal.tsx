@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
-import { agentIntentApi } from '../services/agentIntent';
+import { agentIntentApi, type AgentMessage } from '../services/agentIntent';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import {
   format,
