@@ -574,7 +574,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
       const history = [...chatMessages, userMessage].map((msg) => ({
         role: msg.from === 'user' ? 'user' : 'assistant',
         text: msg.text,
-      }));
+      })) as AgentMessage[];
 
       const response = await agentIntentApi.parse(text, history, {
         page: 'agenda-semanal',
