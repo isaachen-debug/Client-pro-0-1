@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Appointment, AppointmentStatus } from '../../types';
 
@@ -255,13 +256,11 @@ const EditModal = ({
               >
                 Iniciar/Concluir
               </button>
-              <button
-                type="button"
-                onClick={() => onQuickStatus('CANCELADO')}
-                className="px-3 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
-              >
-                Cancelar agendamento
-              </button>
+              <ConfirmCancelButton
+                onCancel={() => onQuickStatus('CANCELADO')}
+                canDeleteSeries={canDeleteSeries}
+                onDeleteSeries={onDeleteSeries}
+              />
             </div>
           </div>
 
@@ -281,15 +280,6 @@ const EditModal = ({
               {saving ? 'Salvando...' : 'Salvar alterações'}
             </button>
           </div>
-          {canDeleteSeries && onDeleteSeries && (
-            <button
-              type="button"
-              onClick={onDeleteSeries}
-              className="w-full px-4 py-2 mt-2 text-sm font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              Apagar série inteira
-            </button>
-          )}
         </form>
       </div>
     </div>
@@ -297,4 +287,73 @@ const EditModal = ({
 );
 
 export default EditModal;
+
+const ConfirmCancelButton = ({
+  onCancel,
+  canDeleteSeries,
+  onDeleteSeries,
+}: {
+  onCancel: () => void;
+  canDeleteSeries?: boolean;
+  onDeleteSeries?: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="px-3 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
+      >
+        Cancelar agendamento
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/40" onClick={() => setOpen(false)} />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-100 p-5 space-y-4">
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-slate-900">Cancelar ou apagar?</p>
+              <p className="text-sm text-slate-600">
+                Escolha se deseja apenas cancelar este agendamento ou apagar toda a série recorrente.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onCancel();
+                  setOpen(false);
+                }}
+                className="w-full rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-semibold hover:bg-red-700 transition"
+              >
+                Só cancelar este
+              </button>
+              {canDeleteSeries && onDeleteSeries && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onDeleteSeries();
+                    setOpen(false);
+                  }}
+                  className="w-full rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-2 text-sm font-semibold hover:bg-red-100 transition"
+                >
+                  Apagar série inteira
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="w-full rounded-lg border border-slate-200 bg-white text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50 transition"
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 

@@ -37,10 +37,13 @@ const isSameSeries = (a: Appointment, b: Appointment) => {
 
 type AgendaMensalProps = {
   embedded?: boolean;
+  externalDate?: Date;
+  onDateChange?: (date: Date) => void;
 };
 
-const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMensalProps) => {
+  const [currentDate, setCurrentDate] = useState(externalDate ?? new Date());
+  const [selectedDay, setSelectedDay] = useState<Date>(externalDate ?? new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [helpers, setHelpers] = useState<User[]>([]);
@@ -76,6 +79,13 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
     isRecurring: false,
     recurrenceRule: '',
   });
+
+  useEffect(() => {
+    if (externalDate && !isSameDay(externalDate, currentDate)) {
+      setCurrentDate(externalDate);
+      setSelectedDay(externalDate);
+    }
+  }, [externalDate, currentDate]);
 
   useEffect(() => {
     fetchData();
@@ -324,11 +334,7 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
-  const monthDays = useMemo(
-    () => eachDayOfInterval({ start: monthStart, end: monthEnd }),
-    [monthStart, monthEnd],
-  );
-  const calendarDays = useMemo(
+  const monthGridDays = useMemo(
     () => eachDayOfInterval({ start: calendarStart, end: calendarEnd }),
     [calendarStart, calendarEnd],
   );
@@ -336,167 +342,172 @@ const AgendaMensal = ({ embedded = false }: AgendaMensalProps) => {
   const getAgendamentosForDay = (day: Date) =>
     appointments.filter((ag) => isSameDay(parseDateFromInput(ag.date), day));
 
+  const handleToday = () => {
+    const today = new Date();
+    setCurrentDate(today);
+    setSelectedDay(today);
+    onDateChange?.(today);
+  };
+
   const statusSurfaces: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-blue-50 text-blue-700',
-    EM_ANDAMENTO: 'bg-amber-50 text-amber-700',
-    CONCLUIDO: 'bg-emerald-50 text-emerald-700',
-    CANCELADO: 'bg-red-50 text-red-700',
+    AGENDADO: 'text-slate-800',
+    EM_ANDAMENTO: 'text-slate-800',
+    CONCLUIDO: 'text-slate-800',
+    CANCELADO: 'text-slate-800',
+  };
+  const statusAccents: Record<AppointmentStatus, string> = {
+    AGENDADO: 'border-l-4 border-blue-300',
+    EM_ANDAMENTO: 'border-l-4 border-amber-300',
+    CONCLUIDO: 'border-l-4 border-emerald-300',
+    CANCELADO: 'border-l-4 border-red-300',
+  };
+  const statusDotBg: Record<AppointmentStatus, string> = {
+    AGENDADO: 'bg-blue-500',
+    EM_ANDAMENTO: 'bg-amber-500',
+    CONCLUIDO: 'bg-emerald-500',
+    CANCELADO: 'bg-red-500',
   };
 
   const headerAndGrid = (
     <>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-        <div className="flex items-center space-x-4">
-          <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Agenda</p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Agenda mensal</h1>
-          </div>
-          <div className="flex items-center space-x-2">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+              onClick={() => {
+                const next = subMonths(currentDate, 1);
+                setCurrentDate(next);
+                onDateChange?.(next);
+              }}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} />
             </button>
-            <span className="text-lg font-medium text-slate-800 min-w-[150px] text-center">
+            <span className="text-lg font-semibold text-slate-900">
               {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
             </span>
             <button
-              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+              onClick={() => {
+                const next = addMonths(currentDate, 1);
+                setCurrentDate(next);
+                onDateChange?.(next);
+              }}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             </button>
           </div>
+          <button
+            onClick={handleToday}
+            className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+          >
+            Hoje
+          </button>
         </div>
-        <button
-          onClick={() => {
-            resetForm(currentDate);
-            setShowCreateModal(true);
-          }}
-          className="flex items-center justify-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-full hover:bg-primary-700 transition-colors shadow-sm"
-        >
-          <Plus size={20} />
-          <span>Novo Agendamento</span>
-        </button>
-      </div>
-
-      {/* Mobile grid estilo Google Calendar */}
-      <div className="md:hidden rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="grid grid-cols-7 text-[11px] font-semibold text-gray-500 border-b border-gray-100">
-          {['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'].map((d) => (
-            <div key={d} className="px-2 py-2 text-center">
-              {d}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 border-l border-gray-100">
-          {calendarDays.map((day) => {
-            const isToday = isSameDay(day, new Date());
+        <div className="grid grid-cols-7 gap-1.5">
+          {monthGridDays.map((day) => {
             const inMonth = isSameMonth(day, currentDate);
-            const dayAppointments = getAgendamentosForDay(day);
-            const visible = dayAppointments.slice(0, 2);
-            const extra = dayAppointments.length - visible.length;
+            const isToday = isSameDay(day, new Date());
+            const isSelected = isSameDay(day, selectedDay);
+            const dayAppointments = getAgendamentosForDay(day).sort((a, b) =>
+              (a.startTime || '').localeCompare(b.startTime || ''),
+            );
+            const dots = dayAppointments.slice(0, 3);
+
             return (
-              <div
+              <button
                 key={day.getTime()}
-                className={`relative border-r border-b border-gray-100 px-1.5 py-1.5 min-h-[78px] ${
-                  inMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'
+                type="button"
+                onClick={() => {
+                  setSelectedDay(day);
+                  onDateChange?.(day);
+                }}
+                className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${
+                  isSelected
+                    ? 'text-white bg-slate-900 shadow-sm'
+                    : isToday
+                      ? 'text-primary-700 bg-primary-50'
+                      : inMonth
+                        ? 'text-slate-800 bg-white'
+                        : 'text-slate-400 bg-slate-50'
                 }`}
-                onClick={() => handleAddAppointmentForDay(day)}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-center w-full">
                   <span
-                    className={`text-xs font-semibold ${
-                      isToday
-                        ? 'text-white bg-primary-500 rounded-full w-6 h-6 flex items-center justify-center'
-                        : 'text-gray-800'
+                    className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${
+                      isSelected
+                        ? 'bg-slate-800 text-white'
+                        : isToday
+                          ? 'bg-primary-100 text-primary-700'
+                          : 'bg-transparent'
                     }`}
                   >
                     {format(day, 'd')}
                   </span>
                 </div>
-                <div className="mt-1 space-y-1">
-                  {visible.map((appointment) => (
-                    <button
-                      key={appointment.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(appointment);
-                      }}
-                      className={`w-full text-left text-[11px] px-2 py-1 rounded-md ${statusSurfaces[appointment.status]}`}
-                    >
-                      <div className="font-semibold truncate">{appointment.customer.name}</div>
-                      <div className="text-[10px]">
-                        {appointment.startTime} {appointment.endTime ? `· ${appointment.endTime}` : ''}
-                      </div>
-                    </button>
+                <div className="flex items-center justify-center gap-1 mt-1">
+                  {dots.map((appt, idx) => (
+                    <span
+                      key={idx}
+                      className={`h-1.5 w-1.5 rounded-full ${statusDotBg[appt.status] ?? 'bg-slate-400'}`}
+                    />
                   ))}
-                  {extra > 0 && (
-                    <div className="text-[10px] text-gray-500 font-semibold">+{extra} eventos</div>
+                  {dayAppointments.length > 3 && (
+                    <span className="text-[10px] font-semibold text-slate-500">+{dayAppointments.length - 3}</span>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Desktop grid anterior */}
-      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {monthDays.map((day) => {
-            const dayAppointments = getAgendamentosForDay(day);
-            const isToday = isSameDay(day, new Date());
-            return (
-              <div
-                key={day.getTime()}
-                className={`rounded-lg p-4 min-h-[150px] border ${
-                  isToday ? 'border-primary-200 bg-primary-50' : 'border-gray-200 bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-600">
-                    {format(day, 'EEE', { locale: ptBR })}
-                  </span>
-                  <span className={`text-lg font-bold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
-                    {format(day, 'd')}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {dayAppointments.length > 0 &&
-                    dayAppointments
-                      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                      .map((appointment) => (
-                        <button
-                          type="button"
-                          key={appointment.id}
-                          onClick={() => openEditModal(appointment)}
-                          className={`w-full text-left text-xs p-2 rounded-xl transition hover:-translate-y-0.5 ${statusSurfaces[appointment.status]}`}
-                        >
-                          <div className="font-semibold text-sm truncate">{appointment.customer.name}</div>
-                          <div className="text-[11px] mt-1">
-                            {appointment.startTime} {appointment.endTime ? `· ${appointment.endTime}` : ''}
-                          </div>
-                        </button>
-                      ))}
-                  <button
-                    type="button"
-                    onClick={() => handleAddAppointmentForDay(day)}
-                    className={`w-full text-xs rounded-lg transition-colors ${
-                      dayAppointments.length === 0
-                        ? 'text-gray-500 border-2 border-dashed border-gray-200 py-6 text-center hover:border-primary-400 hover:text-primary-600'
-                        : 'text-primary-600 border border-primary-100 py-2 hover:bg-primary-50'
-                    }`}
-                  >
-                    + Adicionar agendamento
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Eventos do dia</p>
+            <p className="text-lg font-semibold text-slate-900">
+              {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
+            </p>
+          </div>
+          <button
+            onClick={() => handleAddAppointmentForDay(selectedDay)}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-sm font-semibold transition"
+          >
+            <Plus size={16} />
+            Novo
+          </button>
         </div>
+
+        {getAgendamentosForDay(selectedDay).length === 0 ? (
+          <div className="text-sm text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-xl">
+            Nenhum evento
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {getAgendamentosForDay(selectedDay)
+              .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+              .map((appointment) => (
+                <button
+                  key={appointment.id}
+                  type="button"
+                  onClick={() => openEditModal(appointment)}
+                  className={`w-full text-left rounded-xl border bg-white px-4 py-3 shadow-sm ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200'} ${statusSurfaces[appointment.status] ?? 'border-slate-200'} pl-4`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</span>
+                    <span className="text-xs text-slate-700">
+                      {appointment.startTime}
+                      {appointment.endTime ? ` · ${appointment.endTime}` : ''}
+                    </span>
+                  </div>
+                  {appointment.notes ? (
+                    <p className="text-xs text-slate-600 mt-1 line-clamp-2">{appointment.notes}</p>
+                  ) : null}
+                </button>
+              ))}
+          </div>
+        )}
       </div>
     </>
   );

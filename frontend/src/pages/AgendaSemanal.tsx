@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
+import { agentIntentApi } from '../services/agentIntent';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import {
   format,
@@ -10,6 +11,10 @@ import {
   eachDayOfInterval,
   addWeeks,
   subWeeks,
+  addDays,
+  subDays,
+  addMonths,
+  subMonths,
   isSameDay,
   isToday,
 } from 'date-fns';
@@ -40,6 +45,31 @@ const isSameSeries = (a: Appointment, b: Appointment) => {
 type AgendaSemanalProps = {
   embedded?: boolean;
   quickCreateNonce?: number;
+};
+
+type ChatMessage = {
+  from: 'bot' | 'user';
+  text: string;
+};
+
+const CHAT_STORAGE_KEY = 'clientepro:agenda-chat';
+const DEFAULT_BOT_MESSAGE: ChatMessage = {
+  from: 'bot',
+  text: 'Olá! Pode me dizer o que precisa agendar? Por exemplo: "cliente amanhã às 14h" ou "visita segunda-feira 10h".',
+};
+
+const getInitialChat = (): ChatMessage[] => {
+  if (typeof window === 'undefined') return [DEFAULT_BOT_MESSAGE];
+  try {
+    const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as ChatMessage[];
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return [DEFAULT_BOT_MESSAGE];
 };
 
 const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanalProps) => {
@@ -76,8 +106,11 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
     [],
   );
-  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'chat'>('week');
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(getInitialChat);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
     customerId: '',
@@ -110,6 +143,14 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     fetchAgendamentos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatMessages));
+    } catch {
+      // ignore storage errors
+    }
+  }, [chatMessages]);
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -449,6 +490,41 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     [weekStart, weekEnd],
   );
 
+  const viewLabel =
+    viewMode === 'month'
+      ? format(currentDate, 'MMMM yyyy', { locale: ptBR })
+      : viewMode === 'today'
+        ? format(selectedDay, "d 'de' MMMM", { locale: ptBR })
+        : `${format(weekStart, 'dd MMM', { locale: ptBR })} – ${format(weekEnd, 'dd MMM', { locale: ptBR })}`;
+
+  const handlePrevRange = () => {
+    if (viewMode === 'today') {
+      setCurrentDate(subDays(currentDate, 1));
+      return;
+    }
+    if (viewMode === 'week' || viewMode === 'chat') {
+      setCurrentDate(subWeeks(currentDate, 1));
+      return;
+    }
+    if (viewMode === 'month') {
+      setCurrentDate(subMonths(currentDate, 1));
+    }
+  };
+
+  const handleNextRange = () => {
+    if (viewMode === 'today') {
+      setCurrentDate(addDays(currentDate, 1));
+      return;
+    }
+    if (viewMode === 'week' || viewMode === 'chat') {
+      setCurrentDate(addWeeks(currentDate, 1));
+      return;
+    }
+    if (viewMode === 'month') {
+      setCurrentDate(addMonths(currentDate, 1));
+    }
+  };
+
   const getAgendamentosForDay = (day: Date, applyStatusFilter = true) => {
     let filtered = agendamentos.filter((ag) => isSameDay(parseDateFromInput(ag.date), day));
 
@@ -478,6 +554,118 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     CONCLUIDO: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     CANCELADO: 'bg-red-50 text-red-700 border-red-100',
   };
+  const statusAccents: Record<AppointmentStatus, string> = {
+    AGENDADO: 'border-l-4 border-blue-300',
+    EM_ANDAMENTO: 'border-l-4 border-amber-300',
+    CONCLUIDO: 'border-l-4 border-emerald-300',
+    CANCELADO: 'border-l-4 border-red-300',
+  };
+
+  const handleSendChat = async () => {
+    const text = chatInput.trim();
+    if (!text || chatLoading) return;
+
+    const userMessage: ChatMessage = { from: 'user', text };
+    setChatMessages((prev) => [...prev, userMessage]);
+    setChatInput('');
+
+    setChatLoading(true);
+    try {
+      const history = [...chatMessages, userMessage].map((msg) => ({
+        role: msg.from === 'user' ? 'user' : 'assistant',
+        text: msg.text,
+      }));
+
+      const response = await agentIntentApi.parse(text, history, {
+        page: 'agenda-semanal',
+        currentDate: currentDate.toISOString(),
+        customerNames: customers.map((c) => c.name),
+        guidance:
+          'Se o nome do cliente estiver ambíguo ou diferente da lista, peça confirmação ou sugira o mais próximo.',
+      });
+
+      let botText = response.answer || response.summary;
+      if (!botText) {
+        if (response.error) {
+          botText = 'Não entendi bem (nome/cliente ficou incerto). Pode confirmar o nome do cliente?';
+        } else {
+          botText =
+            'Para seguir, preciso confirmar o nome do cliente e horário. Pode repetir com o nome exato ou corrigido?';
+        }
+      }
+
+      setChatMessages((prev) => [...prev, { from: 'bot', text: botText }]);
+    } catch (error) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: 'bot',
+          text: 'Não consegui falar com o agente agora. Tente novamente em instantes.',
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const renderChatView = () => (
+    <div className="flex justify-center">
+      <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-5">
+        <div className="flex flex-col gap-4 max-h-[72vh] overflow-y-auto pr-1">
+          {chatMessages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+                  msg.from === 'user'
+                    ? 'bg-slate-900 text-white rounded-br-sm'
+                    : 'bg-slate-50 text-slate-900 border border-slate-200 rounded-bl-sm'
+                }`}
+              >
+                {msg.text}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSendChat();
+              }}
+              placeholder="Ex: consulta amanhã às 14h..."
+              className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
+            />
+            <button
+              type="button"
+              onClick={handleSendChat}
+              disabled={chatLoading}
+              className={`h-10 w-10 rounded-full flex items-center justify-center transition ${
+                chatLoading
+                  ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+              }`}
+              aria-label="Enviar mensagem"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+          <p className="text-[12px] text-slate-500 text-center">
+            Dica: escreva naturalmente, como se estivesse anotando sua agenda.
+          </p>
+          {chatLoading && (
+            <p className="text-[12px] text-slate-500 text-center">O agente está escrevendo...</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   const renderWeekSection = () => {
     const hasAny = weekDays.some((day) => getAgendamentosForDay(day).length > 0);
@@ -512,7 +700,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                   onClick={() => setSelectedDay(day)}
                   className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition ${
                     isSelected
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200'
+                      ? 'bg-slate-900 text-white shadow-lg shadow-slate-300'
                       : today
                         ? 'bg-primary-50 text-primary-700 border border-primary-100'
                         : 'bg-white text-slate-800 hover:bg-slate-50'
@@ -561,6 +749,18 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </button>
             </div>
 
+            <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+                <span>Manhã</span>
+              </div>
+              <span className="h-px w-6 bg-slate-200" aria-hidden />
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
+                <span>Tarde</span>
+              </div>
+            </div>
+
             {getAgendamentosForDay(selectedDay, false).length === 0 ? (
               <p className="text-xs text-slate-400">Sem eventos</p>
             ) : (
@@ -575,9 +775,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                         key={ag.id}
                         type="button"
                         onClick={() => openCustomerInfo(ag)}
-                        className={`w-full text-left rounded-xl px-3 py-2 shadow-sm border transition ${
-                          statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'
-                        }`}
+                        className={`w-full text-left rounded-xl px-3 py-2 shadow-sm border transition ${statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'} ${statusAccents[ag.status] ?? 'border-l-4 border-slate-200'} pl-4`}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-medium text-slate-900 truncate">{ag.customer.name}</span>
@@ -637,7 +835,9 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                       <div className={`mt-1 h-3 w-3 rounded-full border-2 bg-white ${dotsColor(ag.status)}`} />
                     </div>
                     <div
-                      className="flex-1 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm"
+                      className={`flex-1 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm ${
+                        statusAccents[ag.status] ?? 'border-l-4 border-slate-200'
+                      }`}
                       onClick={() => openCustomerInfo(ag)}
                       role="button"
                       tabIndex={0}
@@ -671,52 +871,38 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   const pageSections = (
     <>
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          {!embedded && (
-          <div className="space-y-1">
-              <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Agenda</p>
-              <h1 className="text-xl md:text-3xl font-semibold text-slate-900">Agenda semanal</h1>
-              <p className="hidden md:block text-sm text-slate-600">Acompanhe os serviços desta semana em um só lugar.</p>
-          </div>
-          )}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentDate(new Date())}
-              className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              type="button"
+              onClick={handlePrevRange}
+              className="p-2 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm"
+              aria-label="Anterior"
             >
-              Hoje
+              <ChevronLeft size={16} />
             </button>
-            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm w-full sm:w-auto justify-between">
-              <button
-                onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
-                className="p-2 hover:bg-slate-100 rounded-lg transition"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <span className="text-sm font-medium text-slate-800 min-w-[140px] text-center">
-                {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(weekEnd, 'dd MMM', { locale: ptBR })}
-              </span>
-              <button
-                onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
-                className="p-2 hover:bg-slate-100 rounded-lg transition"
-              >
-                <ChevronRight size={18} />
-              </button>
+            <div className="px-3 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-800 shadow-sm">
+              {viewLabel}
             </div>
+            <button
+              type="button"
+              onClick={handleNextRange}
+              className="p-2 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm"
+              aria-label="Próximo"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
-          </div>
-
-        <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700 shadow-sm">
-            {['today', 'week', 'month'].map((mode) => (
+            {['today', 'week', 'month', 'chat'].map((mode) => (
               <button
                 key={mode}
-                onClick={() => setViewMode(mode as 'today' | 'week' | 'month')}
+                onClick={() => setViewMode(mode as 'today' | 'week' | 'month' | 'chat')}
                 className={`px-3 py-2 rounded-full transition ${
                   viewMode === mode ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'
                 }`}
               >
-                {mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : 'Mês'}
+                {mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat'}
               </button>
             ))}
           </div>
@@ -728,6 +914,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         {viewMode === 'today' && renderTodayTimeline()}
         {viewMode === 'week' && renderWeekSection()}
         {viewMode === 'month' && <AgendaMensal embedded />}
+        {viewMode === 'chat' && renderChatView()}
       </div>
 
       <AudioQuickAdd
