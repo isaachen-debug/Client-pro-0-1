@@ -4,9 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
 import Agenda from './pages/Agenda';
 import Financeiro from './pages/Financeiro';
-import Home from './pages/Home';
 import Empresa from './pages/Empresa';
-import Start from './pages/Start';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
@@ -29,12 +27,7 @@ import ClientLayout from './pages/client/Layout';
 import ClientSettings from './pages/client/Settings';
 import OwnerSettings from './pages/OwnerSettings';
 
-const AppIndexRedirect = () => {
-  const isMobile =
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
-  const target = isMobile ? 'home' : 'dashboard';
-  return <Navigate to={target} replace />;
-};
+const AppIndexRedirect = () => <Navigate to="agenda" replace />;
 
 function App() {
   return (
@@ -56,9 +49,7 @@ function App() {
               }
             >
               <Route index element={<AppIndexRedirect />} />
-              <Route path="home" element={<Home />} />
               <Route path="dashboard" element={<Dashboard />} />
-              <Route path="start" element={<Start />} />
               <Route path="explore" element={<Explore />} />
               <Route path="clientes" element={<Clientes />} />
               <Route path="agenda" element={<Agenda />} />

@@ -672,12 +672,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
 
     return (
       <div className="space-y-4 px-4 md:px-5">
-        {!hasAny && (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
-            Nenhum agendamento nesta semana.
-          </div>
-        )}
-
         <div className="space-y-4">
           <div>
             <p className="text-[11px] uppercase tracking-wide text-slate-500">Semana</p>
@@ -687,7 +681,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
           </div>
 
           {/* Grid de 7 dias */}
-          <div className="grid grid-cols-7 gap-2 rounded-2xl bg-white border border-slate-100 p-2 shadow-sm sticky top-0 z-10">
+          <div className="grid grid-cols-7 gap-3 rounded-2xl bg-white border border-slate-100 p-3 shadow-sm sticky top-0 z-10">
             {weekDays.map((day, index) => {
               const dayAppointments = getAgendamentosForDay(day, false);
               const isSelected = isSameDay(day, selectedDay);
@@ -698,24 +692,28 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                   key={day.toISOString()}
                   type="button"
                   onClick={() => setSelectedDay(day)}
-                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition ${
-                    isSelected
-                      ? 'bg-slate-900 text-white shadow-lg shadow-slate-300'
-                      : today
-                        ? 'bg-primary-50 text-primary-700 border border-primary-100'
-                        : 'bg-white text-slate-800 hover:bg-slate-50'
-                  }`}
+                  className="flex flex-col items-center gap-2 rounded-xl px-2 py-2 transition text-slate-800 hover:bg-slate-50"
                 >
                   <span className={`text-[11px] font-semibold uppercase ${isSelected ? 'text-white/90' : 'text-slate-500'}`}>
                     {weekdayLabels[index]}
                   </span>
-                  <span className="text-lg font-semibold leading-none">{format(day, 'd')}</span>
+                  <span
+                    className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-semibold ${
+                      isSelected
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
+                        : today
+                          ? 'bg-primary-50 text-primary-700 ring-2 ring-primary-200'
+                          : 'bg-white text-slate-900 border border-slate-200'
+                    }`}
+                  >
+                    {format(day, 'd')}
+                  </span>
                   {dayAppointments.length > 0 ? (
-                    <div className="flex items-center gap-0.5">
+                    <div className="flex items-center gap-1">
                       {dayAppointments.slice(0, 3).map((ag) => (
                         <div
                           key={ag.id}
-                          className={`w-1.5 h-1.5 rounded-full ${
+                          className={`w-2 h-2 rounded-full ${
                             statusDotBg[ag.status] ?? 'bg-slate-400'
                           }`}
                         />
@@ -729,7 +727,13 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
             })}
           </div>
 
-          {/* Lista de eventos do dia selecionado */}
+        </div>
+
+        {!hasAny ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
+            Nenhum agendamento nesta semana.
+          </div>
+        ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -792,7 +796,7 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -827,12 +831,15 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
             <div className="space-y-4">
               {dayAppointments.map((ag) => {
                 const start = ag.startTime || 'Dia todo';
-                const end = ag.endTime ? ` - ${ag.endTime}` : '';
+                const end = ag.endTime ? ` · ${ag.endTime}` : '';
                 return (
                   <div key={ag.id} className="relative flex gap-4">
-                    <div className="flex flex-col items-center w-10 shrink-0">
-                      <span className="text-sm font-semibold text-slate-700">{start}</span>
-                      <div className={`mt-1 h-3 w-3 rounded-full border-2 bg-white ${dotsColor(ag.status)}`} />
+                    <div className="flex flex-col items-center w-12 shrink-0 gap-1">
+                      <div className="flex items-center gap-1 text-xs text-slate-600">
+                        <span>{start}</span>
+                        {ag.endTime ? <span className="text-slate-400">{end}</span> : null}
+                      </div>
+                      <div className={`h-2 w-2 rounded-full border-2 bg-white ${dotsColor(ag.status)}`} />
                     </div>
                     <div
                       className={`flex-1 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm ${
@@ -848,15 +855,11 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
                         }
                       }}
                     >
-                      <p className="text-sm font-semibold text-slate-900">{`${ag.startTime || ''}${end}`}</p>
-                      <p className="text-base font-semibold text-slate-900">{ag.customer.name}</p>
-                      {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
-                      <div
-                        className={`mt-2 inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full ${statusToneClasses[ag.status] ?? statusToneClasses.PENDENTE}`}
-                      >
-                        <span className={`h-2 w-2 rounded-full ${statusDotBg[ag.status] ?? 'bg-slate-400'}`} aria-hidden />
-                        {ag.status}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-base font-semibold text-slate-900 truncate">{ag.customer.name}</span>
+                        <span className="text-[11px] font-semibold text-slate-500">{ag.status}</span>
                       </div>
+                      {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
                     </div>
                   </div>
                 );
@@ -871,51 +874,53 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
   const pageSections = (
     <>
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrevRange}
-              className="p-2 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm"
-              aria-label="Anterior"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <div className="px-3 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-800 shadow-sm">
-              {viewLabel}
-            </div>
-            <button
-              type="button"
-              onClick={handleNextRange}
-              className="p-2 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm"
-              aria-label="Próximo"
-            >
-              <ChevronRight size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const today = new Date();
-                setCurrentDate(today);
-                setSelectedDay(today);
-              }}
-              className="px-3 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-            >
-              Hoje
-            </button>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700 shadow-sm">
-            {['today', 'week', 'month', 'chat'].map((mode) => (
+        <div className="rounded-3xl bg-white border border-slate-100 shadow-sm p-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 rounded-full bg-white border border-slate-200 px-2 py-2 shadow-sm">
               <button
-                key={mode}
-                onClick={() => setViewMode(mode as 'today' | 'week' | 'month' | 'chat')}
-                className={`px-3 py-2 rounded-full transition ${
-                  viewMode === mode ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'
-                }`}
+                type="button"
+                onClick={handlePrevRange}
+                className="p-2 rounded-full text-slate-700 hover:bg-slate-50"
+                aria-label="Anterior"
               >
-                {mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat'}
+                <ChevronLeft size={16} />
               </button>
-            ))}
+              <div className="px-3 py-1.5 rounded-full bg-white text-sm font-semibold text-slate-800">
+                {viewLabel}
+              </div>
+              <button
+                type="button"
+                onClick={handleNextRange}
+                className="p-2 rounded-full text-slate-700 hover:bg-slate-50"
+                aria-label="Próximo"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date();
+                  setCurrentDate(today);
+                  setSelectedDay(today);
+                }}
+                className="px-3 py-1.5 rounded-full bg-primary-50 text-primary-700 text-sm font-semibold hover:bg-primary-100"
+              >
+                Hoje
+              </button>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700 shadow-sm">
+              {['today', 'week', 'month', 'chat'].map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode as 'today' | 'week' | 'month' | 'chat')}
+                  className={`px-3 py-2 rounded-full transition ${
+                    viewMode === mode ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

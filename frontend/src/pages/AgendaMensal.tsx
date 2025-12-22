@@ -396,13 +396,13 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
             >
               <ChevronRight size={18} />
             </button>
-          </div>
-          <button
+        </div>
+        <button
             onClick={handleToday}
             className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-          >
+        >
             Hoje
-          </button>
+        </button>
         </div>
         <div className="grid grid-cols-7 gap-1.5">
           {monthGridDays.map((day) => {
@@ -482,31 +482,31 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
         {getAgendamentosForDay(selectedDay).length === 0 ? (
           <div className="text-sm text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-xl">
             Nenhum evento
-          </div>
+                </div>
         ) : (
           <div className="space-y-3">
             {getAgendamentosForDay(selectedDay)
-              .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-              .map((appointment) => (
-                <button
+                      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                      .map((appointment) => (
+                        <button
                   key={appointment.id}
-                  type="button"
-                  onClick={() => openEditModal(appointment)}
+                          type="button"
+                          onClick={() => openEditModal(appointment)}
                   className={`w-full text-left rounded-xl border bg-white px-4 py-3 shadow-sm ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200'} ${statusSurfaces[appointment.status] ?? 'border-slate-200'} pl-4`}
-                >
+                        >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</span>
                     <span className="text-xs text-slate-700">
                       {appointment.startTime}
                       {appointment.endTime ? ` · ${appointment.endTime}` : ''}
                     </span>
-                  </div>
+                          </div>
                   {appointment.notes ? (
                     <p className="text-xs text-slate-600 mt-1 line-clamp-2">{appointment.notes}</p>
                   ) : null}
-                </button>
-              ))}
-          </div>
+                        </button>
+                      ))}
+                </div>
         )}
       </div>
     </>

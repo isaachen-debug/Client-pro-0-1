@@ -363,17 +363,15 @@ const translations: Record<Language, Translation> = {
     personaCopy: {
       OWNER: {
         title: 'Entrar como Owner',
-        description:
-          'Use seu acesso de Owner para controlar seu cleaning business: Clients, Partners, contratos, agenda e financeiro.',
+      description: 'Acesse sua agenda, clientes e financeiro.',
       },
       HELPER: {
         title: 'Entrar como Partner',
-        description:
-          'Use o e-mail e senha enviados pelo Owner para ver sua rota do dia, recados por SMS e checklists.',
+      description: 'Use o login enviado pelo Owner para ver sua rota.',
       },
       CLIENT: {
         title: 'Entrar como Client',
-        description: 'Use o e-mail onde você recebe confirmações para acompanhar suas limpezas, fotos e contratos.',
+      description: 'Use o e-mail das confirmações para ver suas visitas.',
       },
     },
     mismatchMessages: {
@@ -382,14 +380,14 @@ const translations: Record<Language, Translation> = {
       CLIENT: 'Este e-mail está associado ao painel interno (Owner ou Partner). Use a opção correta.',
     },
     modal: {
-      ownerBadge: 'Painel do Owner / Partner',
-      ownerSubtitle: 'Entre para controlar sua operação',
-      ownerDescription: 'Escolha Owner ou Partner para acessar agenda, SMS e portal interno.',
+      ownerBadge: 'Owner / Partner',
+      ownerSubtitle: 'Entrar no painel interno',
+      ownerDescription: 'Escolha o perfil para acessar a agenda e clientes.',
       clientBadge: 'Portal do Client',
-      clientSubtitle: 'Entre para acompanhar suas visitas',
-      clientDescription: 'Use o e-mail onde recebe confirmações. Você verá timeline, fotos e contratos.',
+      clientSubtitle: 'Acompanhe suas visitas',
+      clientDescription: 'Use o e-mail das confirmações para ver visitas e contratos.',
       question: 'Como você usa o Clean Up?',
-      personaPrompt: 'Selecione o perfil que corresponde ao seu acesso.',
+      personaPrompt: 'Escolha seu perfil para entrar.',
       infoBoxTitle: 'Precisa de ajuda?',
       forgotPassword: 'Esqueceu a senha?',
       createOwner: 'Criar conta como Owner',
@@ -407,7 +405,7 @@ const translations: Record<Language, Translation> = {
 };
 
 const roleRedirect: Record<UserRole, string> = {
-  OWNER: '/app/home',
+  OWNER: '/app/agenda',
   HELPER: '/helper/today',
   CLIENT: '/client/home',
 };
@@ -966,12 +964,6 @@ const Login = () => {
             <div className="space-y-2">
               <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide border border-emerald-100">
                 {loginSegment === 'client' ? t.modal.clientBadge : t.modal.ownerBadge}
-              </p>
-              <p className="text-xl font-semibold text-gray-900">
-                {loginSegment === 'client' ? t.modal.clientSubtitle : t.modal.ownerSubtitle}
-              </p>
-              <p className="text-sm text-gray-600">
-                {loginSegment === 'client' ? t.modal.clientDescription : t.modal.ownerDescription}
               </p>
             </div>
 

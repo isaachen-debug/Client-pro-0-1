@@ -810,13 +810,6 @@ const Layout = () => {
 
   const mobileNavItems: NavItem[] = [
     {
-      key: 'home',
-      label: 'Home',
-      path: '/app/home',
-      icon: HomeIcon,
-      type: 'route' as const,
-    },
-    {
       key: 'agenda',
       label: 'Agenda',
       path: '/app/agenda',
@@ -830,9 +823,22 @@ const Layout = () => {
       icon: Users,
       type: 'route' as const,
     },
+    {
+      key: 'financeiro',
+      label: 'Financeiro',
+      path: '/app/financeiro',
+      icon: DollarSign,
+      type: 'route' as const,
+    },
+    {
+      key: 'profile',
+      label: 'Perfil',
+      path: '/app/profile',
+      icon: UserCircle,
+      type: 'route' as const,
+    },
   ];
   const extraMenuItems = [
-    { key: 'financeiro', label: 'Financeiro', path: '/app/financeiro', icon: DollarSign },
     { key: 'dashboard', label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
     { key: 'start', label: 'Hoje', path: '/app/start', icon: PlayCircle },
     { key: 'explore', label: 'Explorar', path: '/app/explore', icon: Grid },
@@ -841,7 +847,6 @@ const Layout = () => {
     { key: 'settings', label: 'Configurações', path: '/app/settings', icon: SettingsIcon },
     { key: 'helper-resources', label: 'Helpers', path: '/app/helper-resources', icon: HelpCircle },
     { key: 'apps', label: 'Apps', path: '/app/apps', icon: LayoutGrid },
-    { key: 'profile', label: 'Perfil', path: '/app/profile', icon: UserCircle },
   ];
   const [extraSlot, setExtraSlot] = useState(() => extraMenuItems[0]);
   useEffect(() => {
@@ -858,17 +863,7 @@ const Layout = () => {
     }
   }, []);
 
-  const navItems: NavItem[] = useMemo(
-    () => [
-      ...mobileNavItems,
-      {
-        ...extraSlot,
-        type: 'route' as const,
-        dynamicSlot: true,
-      },
-    ],
-    [mobileNavItems, extraSlot],
-  );
+  const navItems: NavItem[] = useMemo(() => [...mobileNavItems], [mobileNavItems]);
   const leftNavItems = navItems.slice(0, 2);
   const rightNavItems = navItems.slice(2);
 

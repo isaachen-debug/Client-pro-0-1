@@ -178,6 +178,23 @@ const Financeiro = () => {
         }
       />
 
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'A receber', value: formatCurrency(summary.revenuePending), tone: 'text-amber-600' },
+          { label: 'Recebido (mês)', value: formatCurrency(summary.revenuePaid), tone: 'text-emerald-600' },
+          { label: 'Pendentes', value: `${summary.pendingCount}`, tone: 'text-amber-600' },
+          { label: 'Próximos', value: `${pendingTransactions.length}`, tone: 'text-primary-600' },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-3xl border border-slate-100 bg-white shadow-sm px-4 py-4 flex flex-col gap-1.5"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
+            <p className={`text-xl font-bold text-slate-900 ${item.tone}`}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {PERIOD_OPTIONS.map((option) => (
           <button

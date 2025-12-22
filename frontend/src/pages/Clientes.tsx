@@ -568,7 +568,7 @@ const Clientes = () => {
       {activeTab === 'list' ? (
         <>
       {/* Search */}
-          <div className="rounded-[28px] border border-gray-100 bg-white shadow-sm p-5 space-y-4">
+          <div className="rounded-[24px] border border-slate-100 bg-white shadow-sm p-5 space-y-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -586,10 +586,10 @@ const Clientes = () => {
                   <button
                     key={option.value}
                     onClick={() => setStatusFilter(option.value)}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition border ${
                       isActive
-                        ? 'bg-gray-900 text-white shadow'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-primary-200 hover:text-primary-700'
                     }`}
                   >
                     {option.label}
@@ -610,7 +610,7 @@ const Clientes = () => {
         {clientes.map((cliente) => (
           <div
             key={cliente.id}
-            className="rounded-2xl border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-4 space-y-3"
+            className="rounded-2xl border border-slate-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 space-y-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -787,8 +787,10 @@ const Clientes = () => {
                   <button
                     key={option.value}
                     onClick={() => setContractStatusFilter(option.value)}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                      isActive ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+                      isActive
+                        ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-primary-200 hover:text-primary-700'
                     }`}
                   >
                     {option.label}
@@ -811,7 +813,7 @@ const Clientes = () => {
                   return (
                     <div
                       key={contract.id}
-                      className="border border-gray-100 rounded-2xl p-4 space-y-3 bg-white shadow-sm hover:shadow-md transition-shadow"
+                    className="border border-slate-100 rounded-2xl p-4 space-y-3 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
                     >
                       <div className="flex flex-wrap items-start gap-2 justify-between">
                         <div>
