@@ -535,13 +535,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     return filtered;
   };
 
-  const statusToneClasses: Record<AppointmentStatus | 'PENDENTE', string> = {
-    AGENDADO: 'bg-blue-50 text-blue-700 border-blue-100',
-    EM_ANDAMENTO: 'bg-amber-50 text-amber-700 border-amber-100',
-    CONCLUIDO: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    CANCELADO: 'bg-red-50 text-red-700 border-red-100',
-    PENDENTE: 'bg-amber-50 text-amber-700 border-amber-100',
-  };
   const statusDotBg: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-blue-500',
     EM_ANDAMENTO: 'bg-amber-500',

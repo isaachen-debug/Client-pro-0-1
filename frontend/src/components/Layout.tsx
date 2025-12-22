@@ -31,7 +31,6 @@ import {
   Wallet,
   Mic,
   Square,
-  Home as HomeIcon,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
