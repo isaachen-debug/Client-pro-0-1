@@ -236,7 +236,20 @@ export const importCalendarEvents = async (userId: string, options: ImportOption
       }
 
       const summary = (event.summary || 'Evento Google').trim() || 'Evento Google';
-      const customer = await prisma.customer.findFirst({
+      const attendeeEmails = (event.attendees ?? [])
+        .map((att: any) => att?.email)
+        .filter(Boolean) as string[];
+
+      const customerByEmail = attendeeEmails.length
+        ? await prisma.customer.findFirst({
+            where: {
+              userId,
+              OR: attendeeEmails.map((email) => ({ email: { equals: email, mode: 'insensitive' } })),
+            },
+          })
+        : null;
+
+      const customerByName = await prisma.customer.findFirst({
         where: { userId, name: { equals: summary, mode: 'insensitive' } },
       });
 
@@ -253,14 +266,16 @@ export const importCalendarEvents = async (userId: string, options: ImportOption
       const startTime = isAllDay ? '09:00' : startDate.toISOString().slice(11, 16);
       const endTime = endDate && !isAllDay ? endDate.toISOString().slice(11, 16) : null;
 
-      const notes = [event.description, event.location].filter(Boolean).join(' • ') || null;
+      const notes = [event.description, event.location, attendeeEmails.join(', ')].filter(Boolean).join(' • ') || null;
 
       const targetCustomer =
-        customer ??
+        customerByEmail ??
+        customerByName ??
         (await prisma.customer.create({
           data: {
             userId,
             name: summary,
+            email: attendeeEmails[0] ?? null,
             serviceType: 'Google Calendar',
           },
         }));
