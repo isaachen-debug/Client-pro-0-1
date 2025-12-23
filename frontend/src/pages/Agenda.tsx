@@ -3,6 +3,7 @@ import AgendaMensal from './AgendaMensal';
 import AgendaSemanal from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader } from '../components/OwnerUI';
+import { usePreferences } from '../contexts/PreferencesContext';
 import { Plus } from 'lucide-react';
 import { pageGutters } from '../styles/uiTokens';
 
@@ -39,6 +40,8 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
     setQuickCreateNonce((nonce) => nonce + 1);
   }, []);
   useRegisterQuickAction('agenda:add', handleAgendaQuickCreate);
+  const { theme } = usePreferences();
+  const isDarkTheme = theme === 'dark';
 
   return (
     <div
@@ -47,7 +50,9 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
         embedded
           ? undefined
           : {
-              background: 'linear-gradient(180deg, #f3f4ff 0%, #f3f4ff 42%, #e2e8ff 100%)',
+              background: isDarkTheme
+                ? 'linear-gradient(180deg, #0b0f1a 0%, #0b0f1a 42%, #121826 100%)'
+                : 'linear-gradient(180deg, #f3f4ff 0%, #f3f4ff 42%, #e2e8ff 100%)',
               borderRadius: '24px',
             }
       }

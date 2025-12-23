@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { parseDateFromInput } from '../utils/date';
 import { useAuth } from '../contexts/AuthContext';
+import { usePreferences } from '../contexts/PreferencesContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { PageHeader, SurfaceCard } from '../components/OwnerUI';
@@ -123,6 +124,8 @@ const CONTRACT_FILTER_OPTIONS: Array<{ label: string; value: 'ALL' | ContractSta
 
 const Clientes = () => {
   const { user } = useAuth();
+  const { theme } = usePreferences();
+  const isDarkTheme = theme === 'dark';
   const [clientes, setClientes] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -539,7 +542,9 @@ const Clientes = () => {
     <div
       className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-8`}
       style={{
-        background: 'linear-gradient(180deg, #f3f4ff 0%, #eef2ff 100%)',
+        background: isDarkTheme
+          ? 'linear-gradient(180deg, #0b0f1a 0%, #111827 100%)'
+          : 'linear-gradient(180deg, #f3f4ff 0%, #eef2ff 100%)',
         backgroundRepeat: 'no-repeat',
         backgroundSize: '100% 420px',
         backgroundPosition: 'top center',

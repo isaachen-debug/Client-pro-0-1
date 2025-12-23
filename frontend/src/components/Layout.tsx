@@ -67,7 +67,7 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const { canInstall, install, dismissed, dismiss } = useInstallPrompt();
-  const { t } = usePreferences();
+  const { t, theme } = usePreferences();
   const isOwner = user?.role === 'OWNER';
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [morePanelOpen, setMorePanelOpen] = useState(false);
@@ -342,7 +342,7 @@ const Layout = () => {
       }),
     [quickCreateActions, quickCreateQuery],
   );
-  const isDarkTheme = false;
+  const isDarkTheme = theme === 'dark';
   const sidebarSurfaceClass = isDarkTheme ? 'bg-[#05070c] text-white' : 'bg-white text-gray-900';
 
   // Desktop: grupos para organizar navegação principal e extras (sem afetar o mobile).
