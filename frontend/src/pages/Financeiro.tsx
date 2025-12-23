@@ -1,59 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Clock, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, DollarSign, Download, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { transactionsApi } from '../services/api';
-import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
 import { pageGutters } from '../styles/uiTokens';
 import type { Transaction } from '../types';
 import { format } from 'date-fns';
 
-const PERIOD_OPTIONS = [
-  { value: 'mesAtual', label: 'Mês atual' },
-  { value: 'ultimos7dias', label: 'Últimos 7 dias' },
-  { value: 'ultimos30dias', label: 'Últimos 30 dias' },
-] as const;
-
 const Financeiro = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState<(typeof PERIOD_OPTIONS)[number]['value']>('mesAtual');
+  const [monthCursor, setMonthCursor] = useState(() => new Date());
+  const [statusFiltro, setStatusFiltro] = useState<'todos' | 'pago' | 'pendente' | 'atrasado'>('todos');
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [expenseError, setExpenseError] = useState<string | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
 
-  const usdFormatter = useMemo(
-    () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
+  const brlFormatter = useMemo(
+    () => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }),
     [],
   );
-  const formatCurrency = (value: number) => usdFormatter.format(value);
+  const formatCurrency = (value: number) => brlFormatter.format(value);
 
   const resolvePeriod = () => {
-    const now = new Date();
-    switch (periodo) {
-      case 'ultimos7dias': {
-        const end = new Date(now);
-        const start = new Date(now);
-        start.setDate(start.getDate() - 6);
-        return { start, end };
-      }
-      case 'ultimos30dias': {
-        const end = new Date(now);
-        const start = new Date(now);
-        start.setDate(start.getDate() - 29);
-        return { start, end };
-      }
-      case 'mesAtual':
-      default: {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        return { start, end };
-      }
-    }
+    const start = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
+    const end = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0);
+    return { start, end };
   };
 
   const period = resolvePeriod();
-  const periodLabel = `${format(period.start, 'dd MMM')} – ${format(period.end, 'dd MMM')}`;
-  const periodFullLabel = `${format(period.start, 'dd/MM/yyyy')} - ${format(period.end, 'dd/MM/yyyy')}`;
+  const monthYearRaw = period.start.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const monthYear = `${monthYearRaw.charAt(0).toUpperCase()}${monthYearRaw.slice(1)}`.replace(' de ', ' ');
 
   const fetchFinanceiroData = async () => {
     try {
@@ -72,33 +53,66 @@ const Financeiro = () => {
   useEffect(() => {
     fetchFinanceiroData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [periodo]);
+  }, [monthCursor]);
 
   const summary = useMemo(() => {
     const receipts = transactions.filter((t) => t.type === 'RECEITA');
+    const expenses = transactions.filter((t) => t.type === 'DESPESA');
     const paid = receipts.filter((t) => t.status === 'PAGO');
     const pending = receipts.filter((t) => t.status === 'PENDENTE');
 
     const revenuePaid = paid.reduce((sum, t) => sum + t.amount, 0);
     const revenuePending = pending.reduce((sum, t) => sum + t.amount, 0);
     const total = revenuePaid + revenuePending;
+    const expensesTotal = expenses.reduce((sum, t) => sum + t.amount, 0);
+    const balance = total - expensesTotal;
 
     return {
       revenuePaid,
       revenuePending,
       total,
+      expensesTotal,
+      balance,
       paidCount: paid.length,
       pendingCount: pending.length,
     };
   }, [transactions]);
 
   const pendingTransactions = useMemo(
-    () => transactions.filter((t) => t.type === 'RECEITA' && t.status === 'PENDENTE'),
+    () => transactions.filter((t) => t.status === 'PENDENTE'),
     [transactions],
   );
   const paidTransactions = useMemo(
-    () => transactions.filter((t) => t.type === 'RECEITA' && t.status === 'PAGO'),
+    () => transactions.filter((t) => t.status === 'PAGO'),
     [transactions],
+  );
+  const overdueTransactions = useMemo(
+    () =>
+      pendingTransactions.filter((t) => {
+        const due = new Date(t.dueDate);
+        return due < new Date();
+      }),
+    [pendingTransactions],
+  );
+  const filteredTransactions = useMemo(() => {
+    switch (statusFiltro) {
+      case 'pago':
+        return paidTransactions;
+      case 'pendente':
+        return pendingTransactions;
+      case 'atrasado':
+        return overdueTransactions;
+      case 'todos':
+      default:
+        return transactions;
+    }
+  }, [statusFiltro, paidTransactions, pendingTransactions, overdueTransactions, transactions]);
+  const orderedTransactions = useMemo(
+    () =>
+      [...filteredTransactions].sort(
+        (a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime(),
+      ),
+    [filteredTransactions],
   );
 
   const handleExportar = async () => {
@@ -143,6 +157,41 @@ const Financeiro = () => {
     }
   };
 
+  const handleCreateExpense = async () => {
+    const parsedAmount = Number(expenseAmount.replace(',', '.'));
+    if (!expenseDescription.trim()) {
+      setExpenseError('Informe o que é a despesa.');
+      return;
+    }
+    if (!expenseAmount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      setExpenseError('Informe um valor válido.');
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    try {
+      setExpenseLoading(true);
+      setExpenseError(null);
+      const payload = {
+        type: 'DESPESA',
+        status: 'PAGO',
+        amount: parsedAmount,
+        dueDate: today,
+        paidAt: today,
+        description: expenseDescription.trim(),
+      };
+      const created = await transactionsApi.create(payload);
+      setTransactions((prev) => [created, ...prev]);
+      setExpenseAmount('');
+      setExpenseDescription('');
+      setExpenseModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao criar despesa:', error);
+      setExpenseError('Não foi possível salvar a despesa.');
+    } finally {
+      setExpenseLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -152,170 +201,247 @@ const Financeiro = () => {
   }
 
   return (
-    <div className={`${pageGutters} max-w-4xl mx-auto space-y-6`}>
-      <PageHeader
-        label="FINANCEIRO"
-        title="Financeiro"
-        subtitle="Recebimentos e pendências em um painel simples."
-        actions={
-          <div className="flex items-center gap-2">
-            <StatusBadge tone="neutral">{periodLabel}</StatusBadge>
+    <div className={`${pageGutters} max-w-3xl mx-auto space-y-5 pb-2`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Financeiro</p>
+          <h1 className="text-xl font-semibold text-slate-900">Financeiro</h1>
+          <div className="mt-1 flex items-center gap-2 text-xs text-slate-600">
             <button
-              onClick={handleExportar}
-              className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50"
+              type="button"
+              onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+              className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+              aria-label="Mês anterior"
             >
-              <Download size={16} />
-              Exportar CSV
+              <ChevronLeft size={14} />
             </button>
+            <span className="font-semibold text-slate-700">{monthYear}</span>
             <button
-              onClick={() => setResetModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-white border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50"
+              type="button"
+              onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+              className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+              aria-label="Próximo mês"
             >
-              <Trash2 size={16} />
-              Resetar dados
+              <ChevronRight size={14} />
             </button>
           </div>
-        }
-      />
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'A receber', value: formatCurrency(summary.revenuePending), tone: 'text-amber-600' },
-          { label: 'Recebido (mês)', value: formatCurrency(summary.revenuePaid), tone: 'text-emerald-600' },
-          { label: 'Pendentes', value: `${summary.pendingCount}`, tone: 'text-amber-600' },
-          { label: 'Próximos', value: `${pendingTransactions.length}`, tone: 'text-primary-600' },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-3xl border border-slate-100 bg-white shadow-sm px-4 py-4 flex flex-col gap-1.5"
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportar}
+            className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
-            <p className={`text-xl font-bold text-slate-900 ${item.tone}`}>{item.value}</p>
-          </div>
-        ))}
+            <Download size={14} />
+            Exportar
+          </button>
+          <button
+            onClick={() => setResetModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-white border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+          >
+            <Trash2 size={14} />
+            Resetar
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {PERIOD_OPTIONS.map((option) => (
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          {
+            label: 'Receitas',
+            value: formatCurrency(summary.total),
+            tone: 'text-emerald-700 bg-emerald-50',
+            icon: TrendingUp,
+            iconTone: 'text-emerald-600 bg-emerald-100',
+          },
+          {
+            label: 'Despesas',
+            value: formatCurrency(summary.expensesTotal),
+            tone: 'text-rose-700 bg-rose-50',
+            icon: TrendingDown,
+            iconTone: 'text-rose-600 bg-rose-100',
+          },
+          {
+            label: 'Saldo',
+            value: formatCurrency(summary.balance),
+            tone: 'text-blue-700 bg-blue-50',
+            icon: Wallet,
+            iconTone: 'text-blue-600 bg-blue-100',
+          },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.label}
+              className={`rounded-[22px] border border-slate-100 px-3 py-3 shadow-[0_12px_24px_rgba(15,23,42,0.06)] ${item.tone}`}
+            >
+              <div className={`h-9 w-9 rounded-[14px] flex items-center justify-center ${item.iconTone}`}>
+                <Icon size={16} />
+              </div>
+              <p className="mt-2 text-[11px] font-semibold">{item.label}</p>
+              <p className="text-sm font-semibold">{item.value}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto">
+        {[
+          { key: 'todos', label: 'Todos' },
+          { key: 'pago', label: 'Pago' },
+          { key: 'pendente', label: 'Pendente' },
+          { key: 'atrasado', label: 'Atrasado' },
+        ].map((item) => (
           <button
-            key={option.value}
-            onClick={() => setPeriodo(option.value)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
-              periodo === option.value
-                ? 'bg-primary-600 text-white border-primary-600'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-primary-200 hover:text-primary-600'
+            key={item.key}
+            onClick={() => setStatusFiltro(item.key as typeof statusFiltro)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+              statusFiltro === item.key
+                ? 'bg-slate-900 text-white border-slate-900'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
             }`}
           >
-            {option.label}
+            {item.label}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 owner-grid-tight">
-        <SurfaceCard className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Recebido</p>
-          <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.revenuePaid)}</p>
-          <p className="text-xs text-slate-500">{summary.paidCount} pagamentos</p>
-        </SurfaceCard>
-        <SurfaceCard className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Pendente</p>
-          <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.revenuePending)}</p>
-          <p className="text-xs text-slate-500">{summary.pendingCount} aguardando</p>
-        </SurfaceCard>
-        <SurfaceCard className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Total monitorado</p>
-          <p className="text-2xl font-semibold text-slate-900">{formatCurrency(summary.total)}</p>
-          <p className="text-xs text-slate-500">{periodFullLabel}</p>
-        </SurfaceCard>
+      <button
+        type="button"
+        onClick={() => setExpenseModalOpen(true)}
+        className="rounded-2xl border border-rose-300 px-4 py-3 text-left text-white shadow-[0_12px_24px_rgba(244,63,94,0.35)]"
+        style={{ background: 'linear-gradient(90deg, #ef4444 0%, #f43f5e 45%, #ec4899 100%)' }}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
+              <DollarSign size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Adicionar Despesa</p>
+              <p className="text-xs text-white/85">Carro, Helper, e outras despesas</p>
+            </div>
+          </div>
+          <span className="text-2xl leading-none">+</span>
+        </div>
+      </button>
+
+      <div className="space-y-3">
+        {orderedTransactions.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+              <DollarSign size={20} />
+            </div>
+            <p className="text-sm font-semibold text-slate-700">Nenhum registro</p>
+            <p className="text-xs text-slate-500">Adicione receitas e despesas para acompanhar seu financeiro.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {orderedTransactions.slice(0, 8).map((transaction) => {
+              const isPaid = transaction.status === 'PAGO';
+              const isExpense = transaction.type === 'DESPESA';
+              return (
+                <div
+                  key={transaction.id}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 flex items-start justify-between gap-3"
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {isExpense
+                        ? transaction.description || 'Despesa'
+                        : transaction.appointment?.customer?.name ?? 'Receita'}
+                    </p>
+                    <p className="text-xs text-slate-500">{format(new Date(transaction.dueDate), 'dd/MM/yyyy')}</p>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        isPaid ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                      }`}
+                    >
+                      {isPaid ? 'Pago' : 'Pendente'}
+                    </span>
+                    <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                      {isExpense ? 'Despesa' : 'Receita'}
+                    </span>
+                  </div>
+                  <div className="text-right space-y-2">
+                    <p className={`text-sm font-semibold ${isExpense ? 'text-rose-700' : 'text-slate-900'}`}>
+                      {isExpense ? '-' : ''}
+                      {formatCurrency(transaction.amount)}
+                    </p>
+                    <button
+                      onClick={() => handleStatusToggle(transaction)}
+                      className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[11px] font-semibold border transition ${
+                        isPaid
+                          ? 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      {isPaid ? 'Marcar pendente' : 'Marcar pago'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Recebimentos pendentes</p>
-            <p className="text-xs text-slate-500">Marque como pago para atualizar o saldo.</p>
-          </div>
-          <StatusBadge tone="warning">{pendingTransactions.length}</StatusBadge>
-        </div>
-        {pendingTransactions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
-            Nenhuma cobrança pendente neste período.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {pendingTransactions.slice(0, 5).map((transaction) => (
-              <div
-                key={transaction.id}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 flex items-start justify-between gap-3 shadow-sm"
-              >
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {transaction.appointment?.customer?.name ?? 'Serviço'}
-                  </p>
-                  <p className="text-xs text-slate-500 flex items-center gap-2">
-                    <Clock size={14} className="text-amber-500" />
-                    Vence em {format(new Date(transaction.dueDate), 'dd/MM/yyyy')}
-                  </p>
-                </div>
-                <div className="text-right space-y-2">
-                  <p className="text-base font-semibold text-slate-900">{formatCurrency(transaction.amount)}</p>
-                  <button
-                    onClick={() => handleStatusToggle(transaction)}
-                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-primary-600 text-white text-xs font-semibold hover:bg-primary-700 transition"
-                  >
-                    Marcar como pago
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {expenseModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-slate-900">Adicionar despesa</p>
+              <p className="text-xs text-slate-600">Descrição e valor.</p>
+            </div>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Recebidos recentes</p>
-            <p className="text-xs text-slate-500">Últimos pagamentos confirmados.</p>
-          </div>
-          <StatusBadge tone="success">{paidTransactions.length}</StatusBadge>
-        </div>
-        {paidTransactions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
-            Nenhum pagamento confirmado neste período.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {paidTransactions.slice(0, 5).map((transaction) => (
-              <div
-                key={transaction.id}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 flex items-start justify-between gap-3 shadow-sm"
-              >
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {transaction.appointment?.customer?.name ?? 'Serviço'}
-                  </p>
-                  <p className="text-xs text-slate-500 flex items-center gap-2">
-                    <CheckCircle size={14} className="text-emerald-500" />
-                    Pago em {format(new Date(transaction.dueDate), 'dd/MM/yyyy')}
-                  </p>
-                </div>
-                <div className="text-right space-y-2">
-                  <p className="text-base font-semibold text-slate-900">{formatCurrency(transaction.amount)}</p>
-                  <button
-                    onClick={() => handleStatusToggle(transaction)}
-                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    Marcar como pendente
-                  </button>
-                </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Descrição</label>
+                <input
+                  type="text"
+                  value={expenseDescription}
+                  onChange={(e) => setExpenseDescription(e.target.value)}
+                  placeholder="Ex: Carro, Helper"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                />
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Valor</label>
+                <input
+                  type="text"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
+                  placeholder="0,00"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+              {expenseError && <p className="text-sm text-rose-600">{expenseError}</p>}
+            </div>
 
-      {/* Modal de reset financeiro */}
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setExpenseModalOpen(false);
+                  setExpenseError(null);
+                }}
+                className="px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                disabled={expenseLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateExpense}
+                className="px-4 py-2 rounded-full bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed hover:bg-rose-700"
+                disabled={expenseLoading}
+              >
+                {expenseLoading ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {resetModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">

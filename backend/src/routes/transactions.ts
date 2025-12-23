@@ -81,6 +81,7 @@ router.post('/', async (req, res) => {
       amount,
       dueDate,
       paidAt,
+      description,
     } = req.body;
 
     if (appointmentId) {
@@ -103,6 +104,7 @@ router.post('/', async (req, res) => {
         amount: parseFloat(amount),
         dueDate: new Date(dueDate),
         paidAt: paidAt ? new Date(paidAt) : null,
+        description: description ? String(description) : null,
       },
     });
 
@@ -134,6 +136,7 @@ router.put('/:id', async (req, res) => {
       amount,
       dueDate,
       paidAt,
+      description,
     } = req.body;
 
     if (appointmentId) {
@@ -156,6 +159,7 @@ router.put('/:id', async (req, res) => {
         amount: amount !== undefined ? parseFloat(amount) : undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         paidAt: paidAt ? new Date(paidAt) : null,
+        description: description !== undefined ? (description ? String(description) : null) : undefined,
       },
     });
 
@@ -258,6 +262,7 @@ router.get('/export', async (req, res) => {
       Tipo: transaction.type,
       Status: transaction.status,
       Cliente: transaction.appointment?.customer?.name ?? '-',
+      Descricao: transaction.description ?? '-',
       Serviço: transaction.appointment?.customer?.serviceType ?? '-',
       Valor: transaction.amount,
       PagoEm: transaction.paidAt ? transaction.paidAt.toISOString() : '-',

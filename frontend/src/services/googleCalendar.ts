@@ -27,3 +27,7 @@ export const syncGoogleEvent = async (payload: SyncEventPayload) => {
   return data as { ok: boolean; eventId?: string; calendarId?: string };
 };
 
+export const importGoogleEvents = async (from?: string, to?: string) => {
+  const { data } = await api.post('/google/import', { from, to });
+  return data as { ok: boolean; created: number; skipped: number };
+};

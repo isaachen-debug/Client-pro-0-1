@@ -390,6 +390,7 @@ export interface Transaction {
   amount: number;
   dueDate: string;
   paidAt?: string;
+  description?: string | null;
   createdAt: string;
 }
 
@@ -416,4 +417,3 @@ export interface DashboardOverview {
     transactionId: string | null;
   }>;
 }
-

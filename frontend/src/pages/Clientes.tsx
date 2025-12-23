@@ -536,7 +536,16 @@ const Clientes = () => {
   }
 
   return (
-    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-8`}>
+    <div
+      className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-8`}
+      style={{
+        background: 'linear-gradient(180deg, #f3f4ff 0%, #eef2ff 100%)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: '100% 420px',
+        backgroundPosition: 'top center',
+        borderRadius: '24px',
+      }}
+    >
       <PageHeader
         label="CLIENTES"
         title="Clients"

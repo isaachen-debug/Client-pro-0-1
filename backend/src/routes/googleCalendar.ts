@@ -8,6 +8,7 @@ import {
   saveTokensAndCalendar,
   upsertCalendarEvent,
   getUserGoogleAuth,
+  importCalendarEvents,
 } from '../services/googleCalendar';
 
 const router = Router();
@@ -80,5 +81,19 @@ router.post('/events', requireAuth, async (req, res) => {
   }
 });
 
-export default router;
+router.post('/import', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Não autenticado' });
 
+    const from = req.body?.from ? new Date(req.body.from) : new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000);
+    const to = req.body?.to ? new Date(req.body.to) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+    const result = await importCalendarEvents(userId, { timeMin: from, timeMax: to });
+    return res.json({ ok: true, ...result });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message || 'Erro ao importar eventos do Google' });
+  }
+});
+
+export default router;

@@ -11,12 +11,10 @@ import {
   LogOut,
   Building2,
   Grid,
-  Plus,
   Search,
   Send,
   UserPlus,
   UserPlus2,
-  ChevronDown,
   Bot,
   CalendarDays,
   Bell,
@@ -34,7 +32,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { TouchEvent, UIEvent } from 'react';
+import type { TouchEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
@@ -73,11 +71,8 @@ const Layout = () => {
   const isOwner = user?.role === 'OWNER';
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [morePanelOpen, setMorePanelOpen] = useState(false);
-  const [mobileWorkspaceExpanded, setMobileWorkspaceExpanded] = useState(false);
-  const [workspaceQuery, setWorkspaceQuery] = useState('');
   const [quickCreateQuery, setQuickCreateQuery] = useState('');
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
-  const [mobileHeaderCondensed, setMobileHeaderCondensed] = useState(false);
   const [createTouchStart, setCreateTouchStart] = useState<number | null>(null);
   const [createTouchDelta, setCreateTouchDelta] = useState(0);
   const [launchTouchStart, setLaunchTouchStart] = useState<number | null>(null);
@@ -115,16 +110,6 @@ const Layout = () => {
       }
     };
   }, []);
-  const handleWorkspaceNavigate = useCallback(
-    (path: string) => {
-      navigate(path);
-      setMobileWorkspaceExpanded(false);
-      setWorkspaceQuery('');
-      setWorkspaceMenuOpen(false);
-    },
-    [navigate],
-  );
-
   const handleWorkspaceMenuAction = useCallback(
     (path?: string, action?: () => void) => {
       if (path) {
@@ -134,7 +119,6 @@ const Layout = () => {
         action();
       }
       setWorkspaceMenuOpen(false);
-      setMobileWorkspaceExpanded(false);
     },
     [navigate],
   );
@@ -258,18 +242,11 @@ const Layout = () => {
   );
 
   useEffect(() => {
-    if (!mobileWorkspaceExpanded) {
-      setWorkspaceQuery('');
-    }
-  }, [mobileWorkspaceExpanded]);
-  useEffect(() => {
     if (!quickCreateOpen) {
       setQuickCreateQuery('');
     }
   }, [quickCreateOpen, setQuickCreateQuery]);
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null);
-  const contentScrollRef = useRef<HTMLDivElement | null>(null);
-  const headerSentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -281,42 +258,6 @@ const Layout = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleContentScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
-    setMobileHeaderCondensed(event.currentTarget.scrollTop > 48);
-  }, []);
-
-  useEffect(() => {
-    const handleWindowScroll = () => {
-      const target = contentScrollRef.current;
-      const scrollTop = target ? target.scrollTop : window.scrollY;
-      setMobileHeaderCondensed(scrollTop > 48);
-    };
-    handleWindowScroll();
-    window.addEventListener('scroll', handleWindowScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleWindowScroll);
-  }, []);
-
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') {
-      return;
-    }
-    const rootElement = contentScrollRef.current;
-    const sentinel = headerSentinelRef.current;
-    if (!rootElement || !sentinel) {
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setMobileHeaderCondensed(!entry.isIntersecting);
-      },
-      {
-        root: rootElement,
-        threshold: 1,
-      },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
   const quickActionGridItems = [
     {
       key: 'clientes',
@@ -402,29 +343,7 @@ const Layout = () => {
     [quickCreateActions, quickCreateQuery],
   );
   const isDarkTheme = false;
-  const mobileHeaderSpacingClass = mobileHeaderCondensed ? 'rounded-2xl px-2 py-1 space-y-1' : 'rounded-[28px] px-3 pt-3 pb-5 space-y-3';
-  const mobileHeaderPanelSurface = isDarkTheme
-    ? 'border border-white/12 bg-gradient-to-r from-[#0b1020] via-[#0f172a] to-[#0b1020] text-white shadow-[0_20px_60px_rgba(0,0,0,0.48)] backdrop-blur-2xl'
-    : 'border border-gray-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,0.08)] text-gray-900';
-  const mobileHeaderContainerClass = `md:hidden border-b sticky top-0 z-40 backdrop-blur-xl ${
-    isDarkTheme ? 'bg-[#050914]/92 text-white border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.45)]' : 'bg-white/95 text-gray-900 border-gray-200 shadow-sm'
-  }`;
-  const mobileHeaderPanelClass = `${mobileHeaderSpacingClass} ${mobileHeaderPanelSurface} transition-all duration-300 ${
-    mobileHeaderCondensed ? 'scale-[0.95]' : ''
-  }`;
-  const mobileInputWrapperClass = `rounded-2xl flex items-center gap-2 px-4 py-2.5 ${isDarkTheme ? 'bg-white/6 border border-white/12' : 'bg-gray-50 border border-gray-200'}`;
-  const mobileInputClass = `bg-transparent flex-1 text-sm placeholder:text-current/40 focus:outline-none ${isDarkTheme ? 'text-white' : 'text-gray-900'}`;
-  const mobileMutedTextClass = isDarkTheme ? 'text-white/50' : 'text-gray-500';
-  const mobileSecondaryTextClass = isDarkTheme ? 'text-white/70' : 'text-gray-600';
   const sidebarSurfaceClass = isDarkTheme ? 'bg-[#05070c] text-white' : 'bg-white text-gray-900';
-  const mobileNavSurfaceClass = isDarkTheme
-    ? 'bg-[#0c1326]/92 backdrop-blur-xl border border-white/12 shadow-[0_18px_40px_rgba(0,0,0,0.55)] text-white'
-    : 'bg-white/95 backdrop-blur-lg border border-gray-200 shadow-[0_18px_40px_rgba(15,23,42,0.12)] text-gray-900';
-  const mobileNavActiveClass = isDarkTheme ? 'text-emerald-300' : 'text-primary-600';
-  const mobileNavInactiveClass = isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-primary-500';
-  const fabButtonClass = isDarkTheme
-    ? 'absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-gradient-to-br from-primary-500 via-emerald-500 to-[#0c1d33] text-white border border-white/15 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1 hover:brightness-110'
-    : 'absolute -top-5 left-1/2 -translate-x-1/2 rounded-full w-14 h-14 bg-white text-primary-600 border border-primary-200 flex items-center justify-center animate-fab-glow transition-transform duration-300 hover:-translate-y-1 hover:bg-primary-50';
 
   // Desktop: grupos para organizar navegação principal e extras (sem afetar o mobile).
   const primaryMenuItems = [
@@ -449,33 +368,7 @@ const Layout = () => {
         ]
       : [];
 
-  const workspaceLinks = useMemo(
-    () => [
-      { key: 'dashboard', label: t('nav.dashboard'), path: '/app/dashboard', icon: LayoutDashboard },
-      { key: 'today', label: t('nav.today'), path: '/app/start', icon: PlayCircle },
-      { key: 'explore', label: t('nav.explore'), path: '/app/explore', icon: Grid },
-      { key: 'clients', label: t('nav.clients'), path: '/app/clientes', icon: Users },
-      { key: 'agenda', label: t('nav.agenda'), path: '/app/agenda', icon: Calendar },
-      { key: 'finance', label: t('nav.finance'), path: '/app/financeiro', icon: DollarSign },
-      ...(user?.role === 'OWNER'
-        ? [
-            { key: 'company', label: t('nav.company'), path: '/app/empresa', icon: Building2 },
-            { key: 'team', label: t('nav.team'), path: '/app/team', icon: Users },
-            { key: 'settings', label: t('nav.settings'), path: '/app/settings', icon: SettingsIcon },
-            { key: 'helper-resources', label: t('nav.helperResources'), path: '/app/helper-resources', icon: HelpCircle },
-            { key: 'apps', label: t('nav.apps'), path: '/app/apps', icon: LayoutGrid },
-          ]
-        : []),
-      { key: 'profile', label: t('nav.profile'), path: '/app/profile', icon: UserCircle },
-    ],
-    [t, user?.role],
-  );
 
-  const filteredWorkspaceLinks = useMemo(() => {
-    const query = workspaceQuery.trim().toLowerCase();
-    if (!query) return [];
-    return workspaceLinks.filter((link) => link.label.toLowerCase().includes(query)).slice(0, 4);
-  }, [workspaceQuery, workspaceLinks]);
 
   const initials = user?.name
     ? user.name
@@ -527,20 +420,6 @@ const Layout = () => {
     setLaunchTouchDelta(0);
   };
 
-  const currentSectionTitle = useMemo(() => {
-    const linkMatch = workspaceLinks.find((link) => location.pathname.startsWith(link.path));
-    if (linkMatch) {
-      return linkMatch.label;
-    }
-    if (location.pathname.startsWith('/app/start')) {
-      return t('nav.today');
-    }
-    return 'Workspace';
-  }, [location.pathname, workspaceLinks, t]);
-
-  const handleFabClick = () => {
-    setQuickCreateOpen(true);
-  };
 
   useEffect(() => {
     if (!agentOpen) {
@@ -863,9 +742,6 @@ const Layout = () => {
   }, []);
 
   const navItems: NavItem[] = useMemo(() => [...mobileNavItems], [mobileNavItems]);
-  const leftNavItems = navItems.slice(0, 2);
-  const rightNavItems = navItems.slice(2);
-
   const handleMobileNav = (item: { path: string }) => {
     navigate(item.path);
   };
@@ -1186,234 +1062,8 @@ const Layout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header Mobile */}
-        <header className={mobileHeaderContainerClass} style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-          <div
-            className={`px-4 transition-all duration-300 ${
-              mobileHeaderCondensed ? 'pt-1 pb-1' : mobileWorkspaceExpanded ? 'pt-3 pb-4' : 'pt-3 pb-3'
-            }`}
-          >
-            {mobileHeaderCondensed ? (
-              <div
-                className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 ${
-                  isDarkTheme
-                    ? 'bg-gradient-to-r from-[#0c1326] via-[#0c152d] to-[#091020] border-white/12 text-white shadow-[0_18px_45px_rgba(0,0,0,0.5)] backdrop-blur-2xl'
-                    : 'bg-white border-gray-200 text-gray-900 shadow-sm'
-                }`}
-              >
-                <p className="text-sm font-semibold truncate">{currentSectionTitle}</p>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                      className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200"
-                      aria-label="Abrir menu rápido"
-                    >
-                      <div className="flex items-center gap-1">
-                        <div
-                          className={`w-7 h-7 rounded-full overflow-hidden border ${
-                            isDarkTheme ? 'border-white/20 bg-white/10' : 'border-white/70 bg-white'
-                          }`}
-                        >
-                          {user?.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-[11px] font-semibold flex items-center justify-center h-full text-gray-900">
-                              {initials}
-                            </span>
-                          )}
-                        </div>
-                        <div className="w-5 h-5 rounded-full border border-gray-200 bg-white flex items-center justify-center">
-                          <img src={brandLogo} alt="Clean Up" className="w-4 h-4 object-contain" />
-                        </div>
-                      </div>
-                    </button>
-                    {workspaceMenuOpen && <WorkspaceMenu className="absolute right-0 mt-3 w-56" />}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAgentOpen}
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                      isDarkTheme
-                        ? 'bg-white/8 border border-white/12 text-white hover:bg-white/12'
-                        : 'bg-gray-100 border border-gray-200 text-gray-900'
-                    }`}
-                    aria-label="Abrir Agent"
-                  >
-                  <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
-                    <Bot size={18} />
-                  </div>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className={mobileHeaderPanelClass}>
-                <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-                        className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-gray-100 border border-gray-200 transition-all duration-200"
-                      aria-label="Abrir menu rápido"
-                    >
-                      <div className="flex items-center gap-1">
-                        <div
-                          className={`w-8 h-8 rounded-full overflow-hidden border ${
-                            isDarkTheme ? 'bg-white/20 border border-white/30' : 'bg-white border border-gray-200'
-                          }`}
-                        >
-                          {user?.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user?.name ?? 'Owner'} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className={`text-xs font-semibold flex items-center justify-center h-full ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
-                              {initials}
-                            </span>
-                          )}
-                        </div>
-                          <div className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center">
-                          <img src={brandLogo} alt="Clean Up" className="w-4 h-4 object-contain" />
-                        </div>
-                      </div>
-                    </button>
-                    {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-56" />}
-                  </div>
-                  <div className="min-w-0">
-                    <p className={`text-[11px] uppercase tracking-wide ${mobileMutedTextClass}`}>{currentSectionTitle}</p>
-                    <button
-                      type="button"
-                      onClick={() => setMobileWorkspaceExpanded((prev) => !prev)}
-                      aria-expanded={mobileWorkspaceExpanded}
-                      className={`flex items-center gap-1 text-base font-semibold ${
-                        isDarkTheme ? 'text-white' : 'text-gray-900'
-                      }`}
-                    >
-                      {(() => {
-                        const name = user?.companyName || 'Clean Up';
-                        return name.length > 7 ? `${name.slice(0, 7)}…` : name;
-                      })()}
-                      <ChevronDown
-                        size={16}
-                        className={`${mobileSecondaryTextClass} transition-transform ${
-                          mobileWorkspaceExpanded ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAgentOpen}
-                    className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${
-                      isDarkTheme
-                        ? 'bg-white/8 border-white/12 text-white hover:bg-white/12'
-                        : 'bg-white border-gray-200 text-gray-900 hover:shadow-md'
-                    }`}
-                    aria-label="Abrir Agent"
-                  >
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
-                      <Bot size={16} />
-                    </div>
-                    <span className="text-sm font-semibold hidden sm:inline">Abrir Agent</span>
-                  </button>
-                  <Link
-                    to="/app/settings"
-                    className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-2xl border text-sm font-semibold transition ${
-                      isDarkTheme
-                        ? 'bg-white/8 border-white/12 text-white hover:bg-white/12'
-                        : 'bg-white border-gray-200 text-gray-900 hover:shadow-md'
-                    }`}
-                  >
-                    <SettingsIcon size={16} />
-                  </Link>
-                  </div>
-                </div>
-                {mobileWorkspaceExpanded && (
-                  <>
-                    <div className="mt-3">
-                      <div className={mobileInputWrapperClass}>
-                        <Search size={16} className={mobileSecondaryTextClass} />
-                        <input
-                          type="text"
-                          placeholder="Buscar agenda, Clients ou contratos"
-                          value={workspaceQuery}
-                          onChange={(e) => setWorkspaceQuery(e.target.value)}
-                          className={mobileInputClass}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => navigate('/app/agenda')}
-                          className={`text-xs font-semibold ${isDarkTheme ? 'text-emerald-300' : 'text-emerald-600'}`}
-                        >
-                          Schedule
-                        </button>
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {workspaceQuery ? (
-                          filteredWorkspaceLinks.length ? (
-                            filteredWorkspaceLinks.map((link) => {
-                              const Icon = link.icon;
-                              return (
-                                <button
-                                  key={link.key}
-                                  type="button"
-                                  onClick={() => handleWorkspaceNavigate(link.path)}
-                                  className={`w-full flex items-center justify-between rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-                                    isDarkTheme ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                                  }`}
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <Icon size={16} />
-                                    {link.label}
-                                  </span>
-                                  <ChevronRight size={16} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
-                                </button>
-                              );
-                            })
-                          ) : (
-                            <p className={`${mobileSecondaryTextClass} text-xs`}>Nenhum módulo encontrado.</p>
-                          )
-                        ) : (
-                          <div className={`${mobileSecondaryTextClass} text-sm`}>
-                            <p>Veja métricas detalhadas no Dashboard.</p>
-                          </div>
-                        )}
-                        {!workspaceQuery && (
-                          <div className="grid grid-cols-2 gap-2 pt-2">
-                            <button
-                              type="button"
-                              onClick={() => navigate('/app/plans')}
-                              className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
-                                isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
-                              }`}
-                            >
-                              Plans
-                              <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => alert('Apps adicionais do ecossistema Clean Up chegam em breve.')}
-                              className={`rounded-2xl px-3 py-2 text-sm font-semibold flex items-center justify-between ${
-                                isDarkTheme ? 'bg-white/10 text-white border border-white/15' : 'bg-gray-100 text-gray-900 border border-gray-200'
-                              }`}
-                            >
-                              Apps
-                              <ChevronRight size={14} className={isDarkTheme ? 'text-white/60' : 'text-gray-500'} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </header>
-
         {/* Page Content */}
-        <main ref={contentScrollRef} onScroll={handleContentScroll} className="flex-1 overflow-auto pb-28 sm:pb-0">
-          <div ref={headerSentinelRef} aria-hidden="true" className="h-px w-full opacity-0 pointer-events-none" />
+        <main className="flex-1 overflow-auto pb-24 pt-4 sm:pb-0 sm:pt-0">
           {canInstall && !dismissed && (
             <div className="px-4 pt-4">
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
@@ -1449,68 +1099,48 @@ const Layout = () => {
       {/* Mobile bottom navigation */}
       {isOwner && (
         <>
-          <div className="md:hidden fixed inset-x-4 bottom-4 z-40">
+          <div className="md:hidden fixed inset-x-0 bottom-0 z-40">
             <div className="relative">
-              <div className={`${mobileNavSurfaceClass} rounded-[32px] px-6 py-4 flex items-center justify-between animate-nav-glow`}>
-                <div className="flex items-center gap-6">
-                  {leftNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname.startsWith(item.path ?? '');
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => handleMobileNav(item)}
-                        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-                          isActive ? mobileNavActiveClass : mobileNavInactiveClass
-                        }`}
-                      >
-                        <Icon size={20} />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center gap-6">
-                  {rightNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname.startsWith(item.path ?? '');
-                    const isDynamicSlot = item.dynamicSlot;
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => {
-                          if (isDynamicSlot) {
-                            const isOnPage = location.pathname.startsWith(item.path ?? '');
-                            if (isOnPage) {
-                              setExtraMenuOpen((prev) => !prev);
-                            } else {
-                              setExtraMenuOpen(false);
-                              handleMobileNav(item);
-                            }
+              <div className="bg-white/95 border-t border-slate-200 px-5 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] flex items-center justify-between backdrop-blur">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname.startsWith(item.path ?? '');
+                  const isDynamicSlot = item.dynamicSlot;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        if (isDynamicSlot) {
+                          const isOnPage = location.pathname.startsWith(item.path ?? '');
+                          if (isOnPage) {
+                            setExtraMenuOpen((prev) => !prev);
                           } else {
+                            setExtraMenuOpen(false);
                             handleMobileNav(item);
                           }
-                        }}
-                        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-                          isActive ? mobileNavActiveClass : mobileNavInactiveClass
-                        } ${isDynamicSlot && extraMenuOpen ? 'text-primary-600' : ''}`}
+                        } else {
+                          handleMobileNav(item);
+                        }
+                      }}
+                      className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+                        isActive ? 'text-slate-900' : 'text-slate-400'
+                      } ${isDynamicSlot && extraMenuOpen ? 'text-slate-900' : ''}`}
+                    >
+                      <div
+                        className={`h-9 w-9 rounded-full flex items-center justify-center transition ${
+                          isActive
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}
                       >
-                        <Icon size={20} />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                        <Icon size={18} />
+                      </div>
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <button
-                type="button"
-                onClick={handleFabClick}
-                className={fabButtonClass}
-              >
-                <Plus size={28} />
-              </button>
             </div>
           </div>
 

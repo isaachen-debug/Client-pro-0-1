@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Send, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { agentIntentApi, type AgentMessage } from '../services/agentIntent';
@@ -57,6 +57,19 @@ const DEFAULT_BOT_MESSAGE: ChatMessage = {
   from: 'bot',
   text: 'Olá! Pode me dizer o que precisa agendar? Por exemplo: "cliente amanhã às 14h" ou "visita segunda-feira 10h".',
 };
+
+const EmptyState = ({ title, subtitle }: { title: string; subtitle: string }) => (
+  <div className="rounded-3xl border border-purple-100 bg-white px-4 py-6 text-center shadow-sm">
+    <div className="mx-auto mb-4 h-32 w-32 rounded-[28px] bg-purple-50 flex items-center justify-center relative overflow-hidden">
+      <div className="absolute -top-5 -right-6 h-16 w-16 rounded-full bg-purple-100" />
+      <div className="absolute bottom-3 left-4 h-8 w-8 rounded-full bg-white shadow-sm border border-purple-100" />
+      <div className="absolute top-6 left-5 h-6 w-6 rounded-full bg-purple-200" />
+      <div className="h-14 w-14 rounded-full bg-white border border-purple-200 shadow-sm" />
+    </div>
+    <p className="text-sm font-semibold text-slate-700">{title}</p>
+    <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+  </div>
+);
 
 const getInitialChat = (): ChatMessage[] => {
   if (typeof window === 'undefined') return [DEFAULT_BOT_MESSAGE];
@@ -723,9 +736,10 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
         </div>
 
         {!hasAny ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
-            Nenhum agendamento nesta semana.
-          </div>
+          <EmptyState
+            title="Ainda nao ha tarefas."
+            subtitle="Toque em '+' para comecar a planejar a semana."
+          />
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -815,9 +829,10 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
     return (
       <div className="space-y-4">
         {dayAppointments.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 text-center">
-            Nenhum agendamento para hoje.
-          </div>
+          <EmptyState
+            title="Ainda nao ha tarefas."
+            subtitle="Toque em '+' para comecar a planejar o dia."
+          />
         ) : (
           <div className="relative pl-10">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-200" aria-hidden />
@@ -928,10 +943,6 @@ const AgendaSemanal = ({ embedded = false, quickCreateNonce = 0 }: AgendaSemanal
 
       <AudioQuickAdd
         floatingWrapperClassName="fixed right-4 bottom-24 z-50 flex flex-col items-end gap-3"
-        actionAboveVoice={{
-          label: '+ Novo agendamento',
-          onClick: () => handleDayCardClick(selectedDay || new Date()),
-        }}
         contextHint={`Usuário está na visão semanal. Semana corrente: ${format(weekStart, 'yyyy-MM-dd')} até ${format(
           weekEnd,
           'yyyy-MM-dd',

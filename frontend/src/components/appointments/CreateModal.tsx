@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Customer } from '../../types';
 
 export type CreateFormState = {
@@ -39,41 +40,56 @@ const CreateModal = ({
   currentYear,
   dateError,
 }: CreateModalProps) => {
+  const [customerQuery, setCustomerQuery] = useState('');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-      <div className="bg-white rounded-xl shadow-xl z-50 w-full max-w-md max-h-[90vh] overflow-y-auto border border-slate-100">
-        <div className="p-4 space-y-3">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="bg-white rounded-3xl shadow-[0_25px_60px_rgba(15,23,42,0.18)] z-50 w-full max-w-md max-h-[92vh] overflow-y-auto border border-slate-100">
+        <div className="p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-600 flex items-center justify-center"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          </div>
           <form className="space-y-3" onSubmit={onSubmit}>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Cliente *</label>
-              <select
+              <input
                 required
-                value={formData.customerId}
+                value={customerQuery}
                 onChange={(e) => {
-                  const id = e.target.value;
-                  const selected = customers.find((c) => c.id === id);
-                  setFormData((prev) => ({
-                    ...prev,
-                    customerId: id,
-                    price:
-                      prev.price && prev.price.trim() !== ''
-                        ? prev.price
-                        : selected?.defaultPrice !== undefined && selected.defaultPrice !== null
-                        ? selected.defaultPrice.toString()
-                        : '',
-                  }));
+                  const value = e.target.value;
+                  setCustomerQuery(value);
+                  const match = customers.find((c) => c.name.toLowerCase() === value.toLowerCase());
+                  if (match) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      customerId: match.id,
+                      price:
+                        prev.price && prev.price.trim() !== ''
+                          ? prev.price
+                          : match.defaultPrice !== undefined && match.defaultPrice !== null
+                          ? match.defaultPrice.toString()
+                          : '',
+                    }));
+                  }
                 }}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-              >
-                <option value="">Selecione um cliente</option>
+                list="clientepro-clientes"
+                placeholder="Digite o nome do cliente"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+              />
+              <datalist id="clientepro-clientes">
                 {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </option>
+                  <option key={customer.id} value={customer.name} />
                 ))}
-              </select>
+              </datalist>
             </div>
 
             {helpers.length > 0 && (
@@ -87,7 +103,7 @@ const CreateModal = ({
                       assignedHelperId: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
                 >
                   <option value="">Sem atribuição</option>
                   {helpers.map((helper) => (
@@ -120,7 +136,7 @@ const CreateModal = ({
                     day: day ?? prev.day,
                   }));
                 }}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
               />
             </div>
             {dateError && <p className="text-[11px] text-red-600">{dateError}</p>}
@@ -136,42 +152,26 @@ const CreateModal = ({
                     startTime: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Término</label>
-                <input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      endTime: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Valor cobrado (USD)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 150"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      price: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                />
-                <p className="text-[11px] text-gray-500 mt-1">Se vazio, usa o preço padrão do cliente (se houver).</p>
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Valor cobrado (USD)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 150"
+                value={formData.price}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    price: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">Se vazio, usa o preço padrão do cliente (se houver).</p>
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Pagamento da helper (USD)</label>
@@ -186,7 +186,7 @@ const CreateModal = ({
                     helperFee: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
               />
               <p className="text-[11px] text-gray-500 mt-1">Valor combinado para repassar à helper.</p>
             </div>
@@ -219,7 +219,7 @@ const CreateModal = ({
                       recurrenceRule: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
                 >
                   <option value="">Selecione</option>
                   <option value="FREQ=WEEKLY">Semanal</option>
@@ -241,7 +241,7 @@ const CreateModal = ({
                     notes: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
               />
             </div>
 
@@ -249,14 +249,14 @@ const CreateModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 px-3 py-2.5 border border-gray-200 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-full text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>
@@ -269,4 +269,3 @@ const CreateModal = ({
 };
 
 export default CreateModal;
-

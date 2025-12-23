@@ -177,3 +177,110 @@ export const upsertCalendarEvent = async (userId: string, input: EventInput) => 
   return { eventId, calendarId: targetCalendarId };
 };
 
+type ImportOptions = {
+  timeMin: Date;
+  timeMax: Date;
+};
+
+const listCalendarIds = async (calendar: any) => {
+  const result = await calendar.calendarList.list();
+  const items = result.data.items ?? [];
+  const ids = items.map((item) => item.id).filter(Boolean) as string[];
+  return ids.length ? ids : ['primary'];
+};
+
+const listEvents = async (calendar: any, calendarId: string, options: ImportOptions) => {
+  const events: any[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const res = await calendar.events.list({
+      calendarId,
+      timeMin: options.timeMin.toISOString(),
+      timeMax: options.timeMax.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+      showDeleted: false,
+      maxResults: 2500,
+      pageToken,
+    });
+    events.push(...(res.data.items ?? []));
+    pageToken = res.data.nextPageToken ?? undefined;
+  } while (pageToken);
+
+  return events;
+};
+
+export const importCalendarEvents = async (userId: string, options: ImportOptions) => {
+  const { client } = await getUserGoogleAuth(userId);
+  const calendar = google.calendar({ version: 'v3', auth: client });
+  const calendarIds = await listCalendarIds(calendar);
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const calendarId of calendarIds) {
+    const events = await listEvents(calendar, calendarId, options);
+    for (const event of events) {
+      if (!event?.id || event?.status === 'cancelled') {
+        continue;
+      }
+
+      const existing = await prisma.appointment.findFirst({
+        where: { userId, googleEventId: event.id },
+        select: { id: true },
+      });
+      if (existing) {
+        skipped += 1;
+        continue;
+      }
+
+      const summary = (event.summary || 'Evento Google').trim() || 'Evento Google';
+      const customer = await prisma.customer.findFirst({
+        where: { userId, name: { equals: summary, mode: 'insensitive' } },
+      });
+
+      const startRaw = event.start?.dateTime || event.start?.date;
+      const endRaw = event.end?.dateTime || event.end?.date;
+      if (!startRaw) {
+        skipped += 1;
+        continue;
+      }
+
+      const startDate = new Date(startRaw);
+      const endDate = endRaw ? new Date(endRaw) : null;
+      const isAllDay = !!event.start?.date && !event.start?.dateTime;
+      const startTime = isAllDay ? '09:00' : startDate.toISOString().slice(11, 16);
+      const endTime = endDate && !isAllDay ? endDate.toISOString().slice(11, 16) : null;
+
+      const notes = [event.description, event.location].filter(Boolean).join(' • ') || null;
+
+      const targetCustomer =
+        customer ??
+        (await prisma.customer.create({
+          data: {
+            userId,
+            name: summary,
+            serviceType: 'Google Calendar',
+          },
+        }));
+
+      await prisma.appointment.create({
+        data: {
+          userId,
+          customerId: targetCustomer.id,
+          date: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()),
+          startTime,
+          endTime: endTime || undefined,
+          price: 0,
+          status: 'AGENDADO',
+          notes,
+          googleEventId: event.id,
+        },
+      });
+      created += 1;
+    }
+  }
+
+  return { created, skipped };
+};

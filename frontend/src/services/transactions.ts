@@ -8,6 +8,18 @@ export const transactionsApi = {
     });
     return data;
   },
+  async create(payload: {
+    appointmentId?: string;
+    type: string;
+    status: TransactionStatus;
+    amount: number;
+    dueDate: string;
+    paidAt?: string | null;
+    description?: string | null;
+  }) {
+    const { data } = await api.post<Transaction>('/transactions', payload);
+    return data;
+  },
   async updateStatus(id: string, status: TransactionStatus) {
     const { data } = await api.patch<Transaction>(`/transactions/${id}/status`, { status });
     return data;

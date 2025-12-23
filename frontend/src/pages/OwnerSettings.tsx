@@ -1,93 +1,105 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bell,
-  Building,
   ChevronRight,
-  Link2,
   Languages,
+  Link2,
   LogOut,
-  Settings as SettingsIcon,
+  Moon,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   Trash2,
-  User,
+  Volume2,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import type { LanguageOption } from '../types';
-import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
-import { getGoogleAuthUrl, getGoogleStatus } from '../services/googleCalendar';
-
-const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string; description: string }> = [
-  { value: 'pt', label: 'Português', description: 'Ideal para a equipe no Brasil' },
-  { value: 'en', label: 'English', description: 'Indicada para helpers' },
-  { value: 'es', label: 'Español', description: 'Clientes latinos' },
-];
+import usePushNotifications from '../hooks/usePushNotifications';
+import { pageGutters } from '../styles/uiTokens';
+import { getGoogleAuthUrl, getGoogleStatus, importGoogleEvents } from '../services/googleCalendar';
 
 const QUICK_ACTIONS = [
-  { icon: Building, title: 'Identidade visual', subtitle: 'Logo, cores e tipografia', to: '/app/empresa' },
-  { icon: ShieldCheck, title: 'Permissões de equipe', subtitle: 'Helpers e admins', to: '/app/team' },
-  { icon: Bell, title: 'Notificações e alertas', subtitle: 'SMS, push e e-mail', to: '/app/agenda' },
-  { icon: SettingsIcon, title: 'Preferências do app cliente', subtitle: 'Cards, módulos e atalhos', to: '/app/clientes' },
+  { title: 'Identidade visual', subtitle: 'Logo, cores e tipografia', to: '/app/empresa' },
+  { title: 'Permissões de equipe', subtitle: 'Helpers e admins', to: '/app/team' },
+  { title: 'Notificações e alertas', subtitle: 'SMS, push e e-mail', to: '/app/agenda' },
+  { title: 'Preferências do app cliente', subtitle: 'Cards, módulos e atalhos', to: '/app/clientes' },
 ];
 
+const LANGUAGE_OPTIONS: Array<{ value: LanguageOption; label: string }> = [
+  { value: 'pt', label: 'Português (Brasil)' },
+  { value: 'en', label: 'English' },
+  { value: 'es', label: 'Español' },
+];
+
+const APP_VERSION = '1.0.0';
+
 const OwnerSettings = () => {
-  const { user } = useAuth();
-  const { setLanguagePreference } = usePreferences();
+  const { user, updateProfile } = useAuth();
+  const { setLanguagePreference, setThemePreference } = usePreferences();
+  const pushNotifications = usePushNotifications();
+  const [soundsEnabled, setSoundsEnabled] = useState(true);
+  const [savingTheme, setSavingTheme] = useState(false);
   const [language, setLanguage] = useState<LanguageOption>((user?.preferredLanguage as LanguageOption) ?? 'pt');
   const [languageMessage, setLanguageMessage] = useState('');
   const [deleteEmail, setDeleteEmail] = useState('');
   const [deleteFeedback, setDeleteFeedback] = useState('');
-  const [searchParams, setSearchParams] = useSearchParams();
   const [googleStatus, setGoogleStatus] = useState<{ connected: boolean; reason?: string }>({ connected: false });
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleFeedback, setGoogleFeedback] = useState('');
+  const [importingGoogle, setImportingGoogle] = useState(false);
 
-  const initials =
-    user?.name
-      ?.split(' ')
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase() ?? 'CP';
-
-  const handleLanguageChange = (value: LanguageOption) => {
-    setLanguage(value);
-    setLanguagePreference(value);
-    setLanguageMessage('Idioma atualizado. As mudanças refletem para toda a organização.');
-    setTimeout(() => setLanguageMessage(''), 3500);
-  };
-
-  const handleDeleteAccount = () => {
-    if (!user?.email) return;
-    if (deleteEmail.trim().toLowerCase() !== user.email.toLowerCase()) {
-      setDeleteFeedback('Digite seu e-mail exatamente como aparece na conta.');
-      return;
-    }
-    setDeleteFeedback('Enviamos um link seguro para seu e-mail. Confirme por lá para seguir com a exclusão.');
-    setDeleteEmail('');
-    setTimeout(() => setDeleteFeedback(''), 5000);
-  };
+  const isDark = user?.preferredTheme === 'dark';
+  const notificationsEnabled = pushNotifications.status === 'enabled';
+  const languageLabel = useMemo(
+    () => LANGUAGE_OPTIONS.find((opt) => opt.value === language)?.label ?? 'Português (Brasil)',
+    [language],
+  );
 
   useEffect(() => {
     const loadStatus = async () => {
       try {
         const status = await getGoogleStatus();
         setGoogleStatus(status);
-        if (searchParams.get('google') === 'connected') {
-          setGoogleFeedback('Google Calendar conectado com sucesso.');
-          searchParams.delete('google');
-          setSearchParams(searchParams);
-          setTimeout(() => setGoogleFeedback(''), 4000);
-        }
       } catch (error: any) {
         setGoogleFeedback(error?.response?.data?.error || 'Não foi possível verificar o status do Google.');
       }
     };
     loadStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!user) return null;
+
+  const handleToggleNotifications = async () => {
+    if (notificationsEnabled || pushNotifications.status === 'loading') return;
+    await pushNotifications.enable();
+  };
+
+  const handleToggleTheme = async () => {
+    const nextTheme = isDark ? 'light' : 'dark';
+    try {
+      setSavingTheme(true);
+      await updateProfile({ preferredTheme: nextTheme });
+      setThemePreference(nextTheme);
+    } finally {
+      setSavingTheme(false);
+    }
+  };
+
+  const handleToggleSounds = () => {
+    setSoundsEnabled((prev) => !prev);
+  };
+
+  const handleLanguageCycle = () => {
+    const currentIndex = LANGUAGE_OPTIONS.findIndex((opt) => opt.value === language);
+    const nextIndex = (currentIndex + 1) % LANGUAGE_OPTIONS.length;
+    const nextValue = LANGUAGE_OPTIONS[nextIndex].value;
+    setLanguage(nextValue);
+    setLanguagePreference(nextValue);
+    setLanguageMessage('Idioma atualizado.');
+    setTimeout(() => setLanguageMessage(''), 2500);
+  };
 
   const handleGoogleConnect = async () => {
     try {
@@ -102,221 +114,282 @@ const OwnerSettings = () => {
     }
   };
 
+  const handleGoogleImport = async () => {
+    try {
+      setImportingGoogle(true);
+      setGoogleFeedback('');
+      const result = await importGoogleEvents();
+      setGoogleFeedback(`Importados ${result.created} eventos. ${result.skipped} já existiam.`);
+    } catch (error: any) {
+      setGoogleFeedback(error?.response?.data?.error || 'Não foi possível importar eventos do Google.');
+    } finally {
+      setImportingGoogle(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (!user?.email) return;
+    if (deleteEmail.trim().toLowerCase() !== user.email.toLowerCase()) {
+      setDeleteFeedback('Digite seu e-mail exatamente como aparece na conta.');
+      return;
+    }
+    setDeleteFeedback('Enviamos um link seguro para seu e-mail. Confirme por lá para seguir com a exclusão.');
+    setDeleteEmail('');
+    setTimeout(() => setDeleteFeedback(''), 5000);
+  };
+
   return (
-    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-6`}>
-      <PageHeader
-        label="CONFIGURAÇÕES"
-        title="Settings"
-        subtitle="Configurações gerais da conta e do workspace."
-      />
-
-      <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr] owner-grid-tight">
-        <SurfaceCard className="space-y-4">
-            <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl font-semibold overflow-hidden">
-                {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user?.name ?? 'Avatar'} className="w-full h-full object-cover" />
-                ) : (
-                  initials
-                )}
-              </div>
-            <div className="space-y-1">
-              <p className={labelSm}>Conta principal</p>
-              <p className="text-lg font-semibold text-slate-900">{user?.name ?? 'Admin'}</p>
-              <p className="text-sm text-slate-500">{user?.email}</p>
-              <div className="flex gap-2 text-xs font-semibold">
-                <StatusBadge tone="primary">Plano {(user?.planStatus ?? 'trial').toUpperCase()}</StatusBadge>
-                <StatusBadge tone={user?.isActive ? 'success' : 'warning'}>
-                  {user?.isActive ? 'Ativa' : 'Inativa'}
-                </StatusBadge>
-              </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Link
-                to="/app/empresa"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                <User size={16} />
-                Ver perfil
-              </Link>
-              <Link
-                to="/app/profile"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-4 py-2 text-sm font-semibold hover:bg-primary-700 transition"
-              >
-                <SettingsIcon size={16} />
-                Editar dados da empresa
-              </Link>
-            </div>
-        </SurfaceCard>
-
-        <SurfaceCard className="space-y-3">
-          <p className={labelSm}>Atalhos rápidos</p>
-          <div className="divide-y divide-slate-100">
-              {QUICK_ACTIONS.map((action) => (
-                <Link
-                  key={action.title}
-                  to={action.to}
-                className="flex items-center gap-3 px-1 py-3 hover:bg-slate-50 rounded-xl"
-                >
-                <span className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600">
-                    <action.icon size={16} />
-                  </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">{action.title}</p>
-                  <p className="text-xs text-slate-500 truncate">{action.subtitle}</p>
-                  </div>
-                <ChevronRight size={16} className="text-slate-400" />
-                </Link>
-              ))}
-          </div>
-        </SurfaceCard>
-          </div>
-
-      <div className="grid gap-4 md:grid-cols-2 owner-grid-tight">
-        <SurfaceCard className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Languages size={18} className="text-primary-600" />
+    <div className={`${pageGutters} max-w-3xl mx-auto space-y-5 pb-6`}>
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <p className="text-sm font-semibold text-slate-900">Preferências</p>
+        </div>
+        <div className="divide-y divide-slate-100">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="h-9 w-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Bell size={16} />
+              </span>
               <div>
-              <p className="text-sm font-semibold text-slate-900">Idioma padrão</p>
-              <p className="text-xs text-slate-500">Aplica-se ao dashboard, portal e notificações.</p>
+                <p className="text-sm font-semibold text-slate-900">Notificações</p>
+                <p className="text-xs text-slate-500">Receber alertas do sistema</p>
               </div>
             </div>
-            <div className="space-y-2">
-              {LANGUAGE_OPTIONS.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm ${
-                  language === option.value ? 'border-primary-200 bg-primary-50' : 'border-slate-200'
-                  }`}
-                >
-                  <div>
-                  <p className="font-semibold text-slate-900">{option.label}</p>
-                  <p className="text-xs text-slate-500">{option.description}</p>
-                  </div>
-                  <input
-                    type="radio"
-                    name="language-owner"
-                    value={option.value}
-                    checked={language === option.value}
-                    onChange={() => handleLanguageChange(option.value)}
-                    className="w-4 h-4 accent-primary-600"
-                  />
-                </label>
-              ))}
+            <button
+              type="button"
+              onClick={handleToggleNotifications}
+              className={`w-12 h-6 rounded-full border transition ${
+                notificationsEnabled ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+              } ${pushNotifications.status === 'loading' ? 'opacity-60' : ''}`}
+              aria-pressed={notificationsEnabled}
+            >
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
+                  notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="h-9 w-9 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+                <Moon size={16} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Modo Escuro</p>
+                <p className="text-xs text-slate-500">Tema da interface</p>
+              </div>
             </div>
-            {languageMessage && <p className="text-xs text-primary-600">{languageMessage}</p>}
-        </SurfaceCard>
+            <button
+              type="button"
+              onClick={handleToggleTheme}
+              className={`w-12 h-6 rounded-full border transition ${
+                isDark ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+              } ${savingTheme ? 'opacity-60' : ''}`}
+              aria-pressed={isDark}
+            >
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
+                  isDark ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="h-9 w-9 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+                <Volume2 size={16} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Sons</p>
+                <p className="text-xs text-slate-500">Efeitos sonoros</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleSounds}
+              className={`w-12 h-6 rounded-full border transition ${
+                soundsEnabled ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+              }`}
+              aria-pressed={soundsEnabled}
+            >
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
+                  soundsEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </section>
 
-        <SurfaceCard className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Bell size={18} className="text-primary-600" />
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Notificações</p>
-              <p className="text-xs text-slate-500">Escolha como quer receber alertas.</p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Notificações instantâneas habilitadas. Você pode pausar por 24h.
-          </div>
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <p className="text-sm font-semibold text-slate-900">Conta</p>
+        </div>
+        <div className="divide-y divide-slate-100">
           <button
             type="button"
-            className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            onClick={handleLanguageCycle}
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
           >
-            Ajustar canais
-          </button>
-        </SurfaceCard>
-          </div>
-
-      <div className="grid gap-4 md:grid-cols-2 owner-grid-tight">
-        <SurfaceCard className="space-y-4">
-          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="h-9 w-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <Languages size={16} />
+              </span>
               <div>
-              <p className={labelSm}>Integrações</p>
-              <h3 className="text-lg font-semibold text-slate-900">Google Calendar e apps externos</h3>
-              <p className="text-sm text-slate-500">
-                Sincronize agendas dos partners com os eventos oficiais e mantenha tudo atualizado.
-                </p>
+                <p className="text-sm font-semibold text-slate-900">Idioma</p>
+                <p className="text-xs text-slate-500">{languageLabel}</p>
+              </div>
             </div>
-            <StatusBadge tone={googleStatus.connected ? 'success' : 'warning'}>
-              {googleStatus.connected ? 'Conectado' : 'Desconectado'}
-            </StatusBadge>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <ChevronRight size={16} className="text-slate-400" />
+          </button>
+          <button
+            type="button"
+            onClick={() => alert('Configurações de privacidade em breve.')}
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <span className="h-9 w-9 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+                <ShieldCheck size={16} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Privacidade</p>
+                <p className="text-xs text-slate-500">Gerencie seus dados</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-400" />
+          </button>
+          <button
+            type="button"
+            onClick={() => alert('Dispositivos conectados em breve.')}
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <span className="h-9 w-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <Smartphone size={16} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Dispositivos</p>
+                <p className="text-xs text-slate-500">Gerenciar dispositivos conectados</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-400" />
+          </button>
+        </div>
+        {languageMessage && <p className="px-4 pb-3 text-xs text-emerald-600">{languageMessage}</p>}
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <p className="text-sm font-semibold text-slate-900">Atalhos rápidos</p>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {QUICK_ACTIONS.map((item) => (
+            <Link key={item.title} to={item.to} className="flex items-center justify-between px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                <p className="text-xs text-slate-500">{item.subtitle}</p>
+              </div>
+              <ChevronRight size={16} className="text-slate-400" />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-900">Integrações</p>
+          <span
+            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+              googleStatus.connected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+            }`}
+          >
+            {googleStatus.connected ? 'Conectado' : 'Desconectado'}
+          </span>
+        </div>
+        <div className="px-4 py-3 space-y-3">
+          <p className="text-xs text-slate-500">
+            Sincronize eventos do Google Calendar para manter sua agenda atualizada.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <button
               type="button"
               onClick={handleGoogleConnect}
               disabled={googleLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-3 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-60"
             >
               <Link2 size={16} />
-              {googleLoading ? 'Redirecionando...' : googleStatus.connected ? 'Reconectar Google' : 'Conectar Google Calendar'}
+              {googleLoading ? 'Redirecionando...' : googleStatus.connected ? 'Reconectar' : 'Conectar Google'}
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={handleGoogleImport}
+              disabled={importingGoogle || !googleStatus.connected}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            >
+              {importingGoogle ? 'Importando...' : 'Importar eventos'}
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               <Sparkles size={16} className="text-amber-500" />
               Ver integrações
             </button>
           </div>
-          <p className="text-xs text-slate-500">
-            Usamos um calendário dedicado “ClientePro” na sua conta Google. Eventos criados/alterados aqui podem ser enviados para lá.
-          </p>
-          {googleFeedback && <p className="text-xs text-primary-700">{googleFeedback}</p>}
-        </SurfaceCard>
+          {googleFeedback && <p className="text-xs text-slate-600">{googleFeedback}</p>}
+        </div>
+      </section>
 
-        <SurfaceCard className="space-y-4">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={18} className="text-primary-600" />
-              <div>
-              <p className="text-sm font-semibold text-slate-900">Time & acesso</p>
-              <p className="text-xs text-slate-500">Upgrade rápido e convites extras.</p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              Ativa a gestão de Helpers e Admins neste plano.
-            </div>
-            <button
-              type="button"
-            className="w-full rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700"
-            >
-              Gerenciar plano
-            </button>
-        </SurfaceCard>
-      </div>
-
-      <SurfaceCard className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Trash2 size={18} className="text-red-500" />
+      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <p className="text-sm font-semibold text-slate-900">Informações</p>
+        </div>
+        <div className="px-4 py-3 space-y-2 text-sm text-slate-700">
           <div>
-            <p className="text-sm font-semibold text-slate-900">Excluir conta</p>
-            <p className="text-xs text-slate-500">
-              Digite seu e-mail para receber um link seguro de exclusão. Confirme via inbox.
-            </p>
+            <p className="text-xs text-slate-400">Usuário</p>
+            <p className="font-semibold">{user.name}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">Email</p>
+            <p className="font-semibold">{user.email}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">Versão do App</p>
+            <p className="font-semibold">{APP_VERSION}</p>
           </div>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-rose-200 bg-white p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Trash2 size={16} className="text-rose-500" />
+          <p className="text-sm font-semibold text-slate-900">Excluir conta</p>
+        </div>
+        <p className="text-xs text-slate-500">
+          Digite seu e-mail para receber um link seguro de exclusão.
+        </p>
         <input
           type="email"
           value={deleteEmail}
           onChange={(e) => setDeleteEmail(e.target.value)}
           placeholder="seuemail@exemplo.com"
-          className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-100 focus:border-red-300"
+          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-rose-100 focus:border-rose-300"
         />
         <button
           type="button"
           onClick={handleDeleteAccount}
           disabled={!deleteEmail}
-          className="inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
           <LogOut size={16} />
-          Enviar confirmação por e-mail
+          Enviar confirmação
         </button>
-        {deleteFeedback && <p className="text-xs text-red-600">{deleteFeedback}</p>}
-      </SurfaceCard>
+        {deleteFeedback && <p className="text-xs text-rose-600">{deleteFeedback}</p>}
+      </section>
     </div>
   );
 };
 
 export default OwnerSettings;
-

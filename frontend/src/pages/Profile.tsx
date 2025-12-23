@@ -1,80 +1,26 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
-import { differenceInCalendarDays, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { BellRing } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, LogOut, Moon, Settings, HelpCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
-import type { LanguageOption, ThemeOption } from '../types';
 import usePushNotifications from '../hooks/usePushNotifications';
-import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
-import { pageGutters, labelSm } from '../styles/uiTokens';
+import { pageGutters } from '../styles/uiTokens';
+import OwnerSettings from './OwnerSettings';
 
-type ProfileFormState = {
-  name: string;
-  email: string;
-  companyName: string;
-  primaryColor: string;
-  avatarUrl: string;
-  preferredTheme: ThemeOption;
-  preferredLanguage: LanguageOption;
-  whatsappNumber: string;
-  contactPhone: string;
-};
+const APP_VERSION = '1.0.0';
 
 const Profile = () => {
-  const { user, updateProfile, updatePassword } = useAuth();
-  const { setThemePreference, setLanguagePreference } = usePreferences();
+  const { user, logout, updateProfile } = useAuth();
+  const { setThemePreference } = usePreferences();
   const pushNotifications = usePushNotifications();
+  const [savingTheme, setSavingTheme] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
-  const [profileForm, setProfileForm] = useState<ProfileFormState>(() => ({
-    name: user?.name ?? '',
-    email: user?.email ?? '',
-    companyName: user?.companyName ?? '',
-    primaryColor: user?.primaryColor ?? '#22c55e',
-    avatarUrl: user?.avatarUrl ?? '',
-    preferredTheme: 'light' as ThemeOption,
-    preferredLanguage: (user?.preferredLanguage ?? 'pt') as LanguageOption,
-    whatsappNumber: user?.whatsappNumber ?? '',
-    contactPhone: user?.contactPhone ?? '',
-  }));
-  const [profileStatus, setProfileStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  if (!user) return null;
 
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [showHeroDetails, setShowHeroDetails] = useState(false);
-
-  const trialInfo = useMemo(() => {
-    if (!user?.trialEnd) return null;
-    const end = new Date(user.trialEnd);
-    const daysLeft = differenceInCalendarDays(end, new Date());
-    return {
-      end,
-      daysLeft,
-    };
-  }, [user?.trialEnd]);
-
-  useEffect(() => {
-    if (user) {
-      setProfileForm({
-        name: user.name ?? '',
-        email: user.email ?? '',
-        companyName: user.companyName ?? '',
-        primaryColor: user.primaryColor ?? '#22c55e',
-        avatarUrl: user.avatarUrl ?? '',
-      preferredTheme: 'light' as ThemeOption,
-        preferredLanguage: (user.preferredLanguage ?? 'pt') as LanguageOption,
-        whatsappNumber: user.whatsappNumber ?? '',
-        contactPhone: user.contactPhone ?? '',
-      });
-    }
-  }, [user]);
   const initials =
-    profileForm.name.trim() !== ''
-      ? profileForm.name
+    user.name?.trim()
+      ? user.name
           .split(' ')
           .map((word) => word[0])
           .join('')
@@ -82,457 +28,263 @@ const Profile = () => {
           .toUpperCase()
       : 'CP';
 
-  const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setProfileStatus({ type: 'error', message: 'A imagem deve ter no máximo 2MB.' });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setProfileForm((prev) => ({ ...prev, avatarUrl: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-  };
+  const roleLabel =
+    user.role === 'OWNER' ? 'Administrador' : user.role === 'HELPER' ? 'Helper' : 'Cliente';
 
-  if (!user) {
-    return null;
-  }
+  const isDark = user.preferredTheme === 'dark';
+  const notificationsEnabled = pushNotifications.status === 'enabled';
 
-  const handleProfileSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setProfileStatus(null);
-
-    const trimmedWhatsapp = profileForm.whatsappNumber.trim();
-    const trimmedPhone = profileForm.contactPhone.trim();
-
-    const payload = {
-      name: profileForm.name,
-      email: profileForm.email,
-      companyName: profileForm.companyName,
-      primaryColor: profileForm.primaryColor,
-      avatarUrl: profileForm.avatarUrl,
-      preferredTheme: profileForm.preferredTheme,
-      preferredLanguage: profileForm.preferredLanguage,
-      whatsappNumber: trimmedWhatsapp || null,
-      contactPhone: trimmedPhone || null,
-    };
-
+  const handleToggleTheme = async () => {
+    const nextTheme = isDark ? 'light' : 'dark';
     try {
-      await updateProfile(payload);
-      setThemePreference(profileForm.preferredTheme);
-      setLanguagePreference(profileForm.preferredLanguage);
-      setProfileStatus({ type: 'success', message: 'Perfil atualizado com sucesso!' });
-    } catch (err: any) {
-      const message = err?.response?.data?.error || 'Não foi possível atualizar o perfil.';
-      setProfileStatus({ type: 'error', message });
+      setSavingTheme(true);
+      await updateProfile({ preferredTheme: nextTheme });
+      setThemePreference(nextTheme);
+    } finally {
+      setSavingTheme(false);
     }
   };
 
-  const handlePasswordSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setPasswordStatus(null);
-
-    if (passwordForm.newPassword.length < 6) {
-      setPasswordStatus({ type: 'error', message: 'A nova senha deve ter pelo menos 6 caracteres.' });
-      return;
-    }
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordStatus({ type: 'error', message: 'As novas senhas não coincidem.' });
-      return;
-    }
-
-    try {
-      await updatePassword({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-      });
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setPasswordStatus({ type: 'success', message: 'Senha atualizada com sucesso!' });
-    } catch (err: any) {
-      const message = err?.response?.data?.error || 'Não foi possível atualizar a senha.';
-      setPasswordStatus({ type: 'error', message });
-    }
+  const handleToggleNotifications = async () => {
+    if (notificationsEnabled || pushNotifications.status === 'loading') return;
+    await pushNotifications.enable();
   };
-
-  const themeOptions: { value: ThemeOption; label: string }[] = [{ value: 'light', label: 'Claro' }];
-
-  const languageOptions: { value: LanguageOption; label: string }[] = [
-    { value: 'pt', label: 'Português' },
-    { value: 'en', label: 'English' },
-    { value: 'es', label: 'Español' },
-  ];
 
   return (
-    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-6`}>
-      <PageHeader
-        label="MEU PERFIL"
-        title="Meu perfil"
-        subtitle="Dados pessoais e preferências da sua conta."
-      />
+    <div className={`${pageGutters} max-w-3xl mx-auto space-y-5 pb-3`}>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-slate-900">Perfil</h1>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-600 flex items-center justify-center"
+            aria-label="Configurações"
+          >
+            <Settings size={16} />
+          </button>
+          <button
+            type="button"
+            className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-600 flex items-center justify-center"
+            aria-label="Ajuda"
+            onClick={() => setSupportOpen(true)}
+          >
+            <HelpCircle size={16} />
+          </button>
+        </div>
+      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr] owner-grid-tight">
-        <SurfaceCard className="space-y-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-[28px] border border-slate-200 bg-slate-50 flex items-center justify-center text-2xl font-semibold text-slate-900 overflow-hidden">
-                {profileForm.avatarUrl ? (
-                  <img src={profileForm.avatarUrl} alt={profileForm.name} className="h-full w-full object-cover rounded-[24px]" />
-                ) : (
-                  initials
-                )}
-              </div>
-              <div className="space-y-2">
-                <p className={labelSm}>Perfil principal</p>
-                <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">
-                  {profileForm.companyName || profileForm.name || 'Atualize seu perfil'}
-                </h1>
-                <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                  <StatusBadge tone="primary">Plano: {(user.planStatus ?? 'TRIAL').toUpperCase()}</StatusBadge>
-                  {trialInfo && (
-                    <StatusBadge tone="warning">
-                      {trialInfo.daysLeft >= 0 ? `${trialInfo.daysLeft} dia(s) restantes` : 'Período de testes encerrado'}
-                    </StatusBadge>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full lg:w-auto min-w-[260px]">
-              <SurfaceCard className="space-y-1 bg-slate-50 border-slate-100">
-                <p className="text-xs text-slate-600 uppercase tracking-wide">Conta criada</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {user.createdAt ? format(new Date(user.createdAt), "dd MMM yyyy", { locale: ptBR }) : '—'}
-                </p>
-                <p className="text-xs text-slate-500">{user.isActive ? 'Status: ativa' : 'Status: inativa'}</p>
-              </SurfaceCard>
-              <SurfaceCard className="space-y-2">
-                <p className="text-xs text-slate-600 uppercase tracking-wide flex items-center gap-2">
-                  <BellRing size={14} />
-                  Push notifications
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {pushNotifications.status === 'enabled' ? 'Ativas neste dispositivo' : 'Ative alertas antes das rotas'}
-                </p>
-                {pushNotifications.status !== 'enabled' && (
-                  <button
-                    type="button"
-                    onClick={pushNotifications.enable}
-                    disabled={pushNotifications.status === 'loading'}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
-                  >
-                    {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar push'}
-                  </button>
-                )}
-              </SurfaceCard>
-            </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex items-center gap-3">
+          <div className="h-14 w-14 rounded-full bg-slate-900 text-white flex items-center justify-center text-lg font-semibold overflow-hidden">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user.name ?? 'Perfil'} className="h-full w-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Personalize identidade e canais para helpers e clients.</p>
-              {showHeroDetails && (
-                <p className="text-xs text-slate-600">
-                  Atualize cores, contatos e preferências para manter o app consistente em todos os portais.
-                </p>
-              )}
+          <div className="min-w-0">
+            <p className="text-base font-semibold text-slate-900 truncate">
+              {user.name || 'Seu nome'}
+            </p>
+            <p className="text-xs text-slate-500 truncate">{user.email}</p>
+            <span className="inline-flex mt-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+              {roleLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <p className="text-sm font-semibold text-slate-900">Configurações</p>
+        </div>
+        <div className="divide-y divide-slate-100">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Bell size={16} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Notificações</p>
+                <p className="text-xs text-slate-500">Receber alertas</p>
+              </div>
             </div>
             <button
               type="button"
-              onClick={() => setShowHeroDetails((prev) => !prev)}
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-700 border border-primary-100 rounded-full px-3 py-1 hover:bg-primary-50 transition"
+              onClick={handleToggleNotifications}
+              className={`w-12 h-6 rounded-full border transition ${
+                notificationsEnabled ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+              } ${pushNotifications.status === 'loading' ? 'opacity-60' : ''}`}
+              aria-pressed={notificationsEnabled}
             >
-              {showHeroDetails ? 'Ocultar detalhes' : 'Ver detalhes'}
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
+                  notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
             </button>
           </div>
-        </SurfaceCard>
 
-        <SurfaceCard className="space-y-3">
-          <p className={labelSm}>Resumo rápido</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <SurfaceCard className="bg-slate-50 border-slate-100">
-              <p className="text-xs text-slate-600 uppercase tracking-wide">Email</p>
-              <p className="text-sm font-semibold text-slate-900 break-all">{profileForm.email || user.email}</p>
-            </SurfaceCard>
-            <SurfaceCard className="bg-slate-50 border-slate-100">
-              <p className="text-xs text-slate-600 uppercase tracking-wide">Telefone</p>
-              <p className="text-sm font-semibold text-slate-900 break-all">{profileForm.contactPhone || '—'}</p>
-            </SurfaceCard>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+                <Moon size={16} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Modo Escuro</p>
+                <p className="text-xs text-slate-500">Aparência do app</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleTheme}
+              className={`w-12 h-6 rounded-full border transition ${
+                isDark ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+              } ${savingTheme ? 'opacity-60' : ''}`}
+              aria-pressed={isDark}
+            >
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
+                  isDark ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <SurfaceCard className="bg-slate-50 border-slate-100">
-              <p className="text-xs text-slate-600 uppercase tracking-wide">WhatsApp</p>
-              <p className="text-sm font-semibold text-slate-900 break-all">{profileForm.whatsappNumber || '—'}</p>
-            </SurfaceCard>
-            <SurfaceCard className="bg-slate-50 border-slate-100">
-              <p className="text-xs text-slate-600 uppercase tracking-wide">Idioma</p>
-              <p className="text-sm font-semibold text-slate-900 break-all">
-                {profileForm.preferredLanguage.toUpperCase()}
-              </p>
-            </SurfaceCard>
-          </div>
-        </SurfaceCard>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 owner-grid-tight">
-        <SurfaceCard className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={labelSm}>Informações básicas</p>
-              <h3 className="text-lg font-semibold text-slate-900">Nome, e-mail e idioma</h3>
-            </div>
-            <StatusBadge tone="success">
-              {profileForm.whatsappNumber || profileForm.contactPhone ? 'Atualizado' : 'Pendentes'}
-            </StatusBadge>
-          </div>
-          <div className="space-y-3 text-sm text-slate-600">
-            <div className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-2">
-              <span className="font-semibold">WhatsApp</span>
-              <span className="text-slate-500">{profileForm.whatsappNumber || 'Adicionar número'}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-2">
-              <span className="font-semibold">Telefone</span>
-              <span className="text-slate-500">{profileForm.contactPhone || 'Adicionar contato'}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-2">
-              <span className="font-semibold">E-mail</span>
-              <span className="text-slate-500">{profileForm.email || user.email}</span>
-            </div>
-          </div>
-        </SurfaceCard>
-
-        <SurfaceCard className="space-y-4">
-          <div className="space-y-1">
-            <p className={labelSm}>Preferências rápidas</p>
-            <h3 className="text-lg font-semibold text-slate-900">Tema, idioma e cores do app</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <SurfaceCard className="border-slate-100">
-              <p className="text-xs text-slate-500 uppercase tracking-wide">Tema</p>
-              <p className="text-sm font-semibold text-slate-900">Claro</p>
-            </SurfaceCard>
-            <SurfaceCard className="border-slate-100">
-              <p className="text-xs text-slate-500 uppercase tracking-wide">Idioma</p>
-              <p className="text-sm font-semibold text-slate-900">
-                {languageOptions.find((item) => item.value === profileForm.preferredLanguage)?.label ?? 'Português'}
-              </p>
-            </SurfaceCard>
-          </div>
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide">Cor principal</label>
-            <input
-              type="color"
-              value={profileForm.primaryColor}
-              onChange={(event) => setProfileForm((prev) => ({ ...prev, primaryColor: event.target.value }))}
-              className="w-full h-12 rounded-2xl border border-slate-200 bg-white px-3 py-2"
-            />
-          </div>
-        </SurfaceCard>
+      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <p className="text-sm font-semibold text-slate-900">Sobre</p>
+        </div>
+        <div className="px-4 py-3">
+          <p className="text-sm text-slate-700">Sistema de Gestão</p>
+          <p className="text-xs text-slate-500">Versão {APP_VERSION}</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 owner-grid-tight">
-        <SurfaceCard className="space-y-4">
-          <div className="space-y-1">
-            <p className={labelSm}>Informações básicas</p>
-            <h3 className="text-lg font-semibold text-slate-900">Atualize foto, contato e idioma</h3>
+      <button
+        type="button"
+        onClick={logout}
+        className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-600 flex items-center justify-center gap-2"
+      >
+        <LogOut size={16} />
+        Sair da Conta
+      </button>
+
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+          <div className="absolute inset-0 overflow-auto">
+            <div className="min-h-full bg-white">
+              <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+                <p className="text-sm font-semibold text-slate-900">Configurações</p>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(false)}
+                  className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-600 flex items-center justify-center"
+                  aria-label="Fechar configurações"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="px-4 py-4">
+                <OwnerSettings />
+              </div>
+            </div>
           </div>
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Nome completo</label>
-                <input
-                  type="text"
-                  value={profileForm.name}
-                  onChange={(event) => setProfileForm((prev) => ({ ...prev, name: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                  required
-                />
+        </div>
+      )}
+
+      {supportOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+          <div className="absolute inset-0 overflow-auto">
+            <div className="min-h-full bg-slate-50">
+              <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+                <p className="text-sm font-semibold text-slate-900">Suporte</p>
+                <button
+                  type="button"
+                  onClick={() => setSupportOpen(false)}
+                  className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-600 flex items-center justify-center"
+                  aria-label="Fechar suporte"
+                >
+                  ✕
+                </button>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Email</label>
-                <input
-                  type="email"
-                  value={profileForm.email}
-                  onChange={(event) => setProfileForm((prev) => ({ ...prev, email: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                  required
-                />
-              </div>
-            </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Empresa</label>
-                <input
-                  type="text"
-                  value={profileForm.companyName}
-                  onChange={(event) => setProfileForm((prev) => ({ ...prev, companyName: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Cor principal</label>
-                <input
-                  type="color"
-                  value={profileForm.primaryColor}
-                  onChange={(event) => setProfileForm((prev) => ({ ...prev, primaryColor: event.target.value }))}
-                  className="w-full h-10 rounded-2xl border border-slate-200 bg-white px-3 py-2"
-                />
-              </div>
-            </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">WhatsApp</label>
-                <input
-                  type="text"
-                  value={profileForm.whatsappNumber}
-                  onChange={(event) => setProfileForm((prev) => ({ ...prev, whatsappNumber: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                  placeholder="+55 11 99999-9999"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Telefone</label>
-                <input
-                  type="text"
-                  value={profileForm.contactPhone}
-                  onChange={(event) => setProfileForm((prev) => ({ ...prev, contactPhone: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                  placeholder="+55 11 99999-9999"
-                />
-              </div>
-            </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Link do avatar (URL)</label>
-                <input
-                  type="url"
-                  value={profileForm.avatarUrl}
-                  onChange={(event) => setProfileForm((prev) => ({ ...prev, avatarUrl: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                  placeholder="https://..."
-                />
-                <div className="text-xs text-slate-500">
-                  ou envie um arquivo:
-                  <input type="file" accept="image/*" onChange={handleAvatarChange} className="mt-1 block w-full text-xs text-slate-600" />
+
+              <div className="px-4 py-4 space-y-4">
+                <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-4 text-white">
+                  <p className="text-base font-semibold">Como podemos ajudar?</p>
+                  <p className="text-xs text-white/85">Estamos aqui para resolver suas duvidas e problemas.</p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-semibold text-slate-900">Formas de Contato</p>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {[
+                      { title: 'Email', value: 'suporte@exemplo.com' },
+                      { title: 'Telefone', value: '(11) 99999-9999' },
+                      { title: 'Chat ao Vivo', value: 'Seg-Sex, 9h as 18h' },
+                    ].map((item) => (
+                      <div key={item.title} className="flex items-center justify-between px-4 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                          <p className="text-xs text-slate-500">{item.value}</p>
+                        </div>
+                        <span className="text-slate-400">↗</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-semibold text-slate-900">Perguntas Frequentes</p>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {[
+                      {
+                        title: 'Como adicionar um novo evento?',
+                        text: 'Vá para a pagina Agenda e clique no botao "+".',
+                      },
+                      {
+                        title: 'Como gerenciar clientes?',
+                        text: 'Acesse a aba Clientes no menu inferior e use o botao "+".',
+                      },
+                      {
+                        title: 'Como controlar o financeiro?',
+                        text: 'Use a pagina Financeiro para registrar receitas e despesas.',
+                      },
+                    ].map((item) => (
+                      <div key={item.title} className="px-4 py-3">
+                        <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                        <p className="text-xs text-slate-500 mt-1">{item.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-semibold text-slate-900">Documentacao</p>
+                  </div>
+                  <div className="px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Guia do Usuario</p>
+                      <p className="text-xs text-slate-500">Manual completo de uso do sistema</p>
+                    </div>
+                    <span className="text-slate-400">↗</span>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Preferências de tema</label>
-                <select
-                  value={profileForm.preferredTheme}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({ ...prev, preferredTheme: event.target.value as ThemeOption }))
-                  }
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                >
-                  {themeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Idioma preferido</label>
-                <select
-                  value={profileForm.preferredLanguage}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({ ...prev, preferredLanguage: event.target.value as LanguageOption }))
-                  }
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                >
-                  {languageOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {profileStatus && (
-              <div
-                className={`rounded-2xl border px-3 py-2 text-sm ${
-                  profileStatus.type === 'success'
-                    ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
-                    : 'bg-red-50 border-red-100 text-red-700'
-                }`}
-              >
-                {profileStatus.message}
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={pushNotifications.status === 'loading'}
-              className="inline-flex items-center justify-center rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
-            >
-              Salvar perfil
-            </button>
-          </form>
-        </SurfaceCard>
-
-        <SurfaceCard className="space-y-4">
-          <div className="space-y-1">
-            <p className={labelSm}>Segurança</p>
-            <h3 className="text-lg font-semibold text-slate-900">Mantenha o acesso seguro</h3>
           </div>
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs text-slate-600 font-semibold">Senha atual</label>
-              <input
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(event) => setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 owner-grid-tight">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Nova senha</label>
-                <input
-                  type="password"
-                  value={passwordForm.newPassword}
-                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-semibold">Confirmar nova senha</label>
-                <input
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-100"
-                  required
-                />
-              </div>
-            </div>
-            {passwordStatus && (
-              <div
-                className={`rounded-2xl border px-3 py-2 text-sm ${
-                  passwordStatus.type === 'success'
-                    ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
-                    : 'bg-red-50 border-red-100 text-red-700'
-                }`}
-              >
-                {passwordStatus.message}
-              </div>
-            )}
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-            >
-              Atualizar senha
-            </button>
-          </form>
-        </SurfaceCard>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Profile;
-
