@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Customer } from '../../types';
 
 export type CreateFormState = {
@@ -41,6 +41,12 @@ const CreateModal = ({
   dateError,
 }: CreateModalProps) => {
   const [customerQuery, setCustomerQuery] = useState('');
+  const [customerMenuOpen, setCustomerMenuOpen] = useState(false);
+  const filteredCustomers = useMemo(() => {
+    const q = customerQuery.trim().toLowerCase();
+    if (!q) return customers.slice(0, 8);
+    return customers.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 8);
+  }, [customerQuery, customers]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -61,35 +67,72 @@ const CreateModal = ({
           <form className="space-y-3" onSubmit={onSubmit}>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Cliente *</label>
-              <input
-                required
-                value={customerQuery}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setCustomerQuery(value);
-                  const match = customers.find((c) => c.name.toLowerCase() === value.toLowerCase());
-                  if (match) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      customerId: match.id,
-                      price:
-                        prev.price && prev.price.trim() !== ''
-                          ? prev.price
-                          : match.defaultPrice !== undefined && match.defaultPrice !== null
-                          ? match.defaultPrice.toString()
-                          : '',
-                    }));
-                  }
-                }}
-                list="clientepro-clientes"
-                placeholder="Digite o nome do cliente"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
-              />
-              <datalist id="clientepro-clientes">
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.name} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <input
+                  required
+                  value={customerQuery}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCustomerQuery(value);
+                    setCustomerMenuOpen(true);
+                    const match = customers.find((c) => c.name.toLowerCase() === value.toLowerCase());
+                    if (match) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        customerId: match.id,
+                        price:
+                          prev.price && prev.price.trim() !== ''
+                            ? prev.price
+                            : match.defaultPrice !== undefined && match.defaultPrice !== null
+                            ? match.defaultPrice.toString()
+                            : '',
+                      }));
+                    } else {
+                      setFormData((prev) => ({ ...prev, customerId: '' }));
+                    }
+                  }}
+                  onFocus={() => setCustomerMenuOpen(true)}
+                  onBlur={() => setTimeout(() => setCustomerMenuOpen(false), 120)}
+                  placeholder="Digite o nome do cliente"
+                  className="w-full px-9 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCustomerMenuOpen((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full text-slate-500 hover:bg-slate-100 flex items-center justify-center"
+                  aria-label="Mostrar clientes"
+                >
+                  <span className="text-xs">▾</span>
+                </button>
+                {customerMenuOpen && filteredCustomers.length > 0 && (
+                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-slate-200 bg-white shadow-lg">
+                    {filteredCustomers.map((customer) => (
+                      <button
+                        key={customer.id}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setCustomerQuery(customer.name);
+                          setCustomerMenuOpen(false);
+                          setFormData((prev) => ({
+                            ...prev,
+                            customerId: customer.id,
+                            price:
+                              prev.price && prev.price.trim() !== ''
+                                ? prev.price
+                                : customer.defaultPrice !== undefined && customer.defaultPrice !== null
+                                ? customer.defaultPrice.toString()
+                                : '',
+                          }));
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        {customer.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {helpers.length > 0 && (
