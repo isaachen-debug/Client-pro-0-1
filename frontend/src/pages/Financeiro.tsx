@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight, DollarSign, Download, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { transactionsApi } from '../services/api';
 import { pageGutters } from '../styles/uiTokens';
-import type { Transaction } from '../types';
+import type { Transaction, TransactionStatus } from '../types';
 import { format } from 'date-fns';
 
 const Financeiro = () => {
@@ -173,7 +173,7 @@ const Financeiro = () => {
       setExpenseError(null);
       const payload = {
         type: 'DESPESA',
-        status: 'PAGO',
+        status: 'PAGO' as TransactionStatus,
         amount: parsedAmount,
         dueDate: today,
         paidAt: today,

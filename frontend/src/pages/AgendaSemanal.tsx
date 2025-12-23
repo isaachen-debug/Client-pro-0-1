@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Send, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Navigation, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { agentIntentApi, type AgentMessage } from '../services/agentIntent';
