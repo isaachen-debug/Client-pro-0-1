@@ -45,6 +45,18 @@ html[data-theme='dark'] .bg-white {
   background-color: #242526;
 }
 
+html[data-theme='dark'] .bg-slate-900 {
+  background-color: #1e1f21;
+}
+
+html[data-theme='dark'] .bg-slate-800 {
+  background-color: #232527;
+}
+
+html[data-theme='dark'] .bg-slate-700 {
+  background-color: #2f3133;
+}
+
 html[data-theme='dark'] .border-slate-200,
 html[data-theme='dark'] .border-gray-200,
 html[data-theme='dark'] .border-slate-100 {
@@ -75,6 +87,11 @@ html[data-theme='dark'] .text-gray-300 {
   color: #d0d2d6;
 }
 
+html[data-theme='dark'] .text-slate-800,
+html[data-theme='dark'] .text-gray-800 {
+  color: #e4e6eb;
+}
+
 html[data-theme='dark'] .bg-gray-100,
 html[data-theme='dark'] .bg-slate-100 {
   background-color: #2a2b2e;
@@ -88,6 +105,14 @@ html[data-theme='dark'] .bg-slate-200 {
 html[data-theme='dark'] .bg-gray-50,
 html[data-theme='dark'] .bg-slate-50 {
   background-color: #1f2022;
+}
+
+html[data-theme='dark'] .bg-primary-600 {
+  background-color: #3b82f6;
+}
+
+html[data-theme='dark'] .text-primary-700 {
+  color: #93c5fd;
 }
 
 html[data-theme='dark'] .shadow-sm,
