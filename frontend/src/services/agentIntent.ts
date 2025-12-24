@@ -19,6 +19,8 @@ type Intent =
   | 'clients_with_future'
   | 'unknown';
 
+export type AgentIntent = Intent;
+
 export type AgentMessage = {
   role: 'user' | 'assistant';
   text: string;

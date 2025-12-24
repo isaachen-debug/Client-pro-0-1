@@ -38,7 +38,7 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
 import brandLogo from '../assets/brand-logo.png';
 import { QuickActionProvider, QuickActionKey } from '../contexts/QuickActionContext';
-import { agentIntentApi, type AgentMessage } from '../services/agentIntent';
+import { agentIntentApi, type AgentIntent, type AgentMessage } from '../services/agentIntent';
 import { dashboardApi } from '../services/api';
 import { faqsApi } from '../services/faqs';
 import { templatesApi } from '../services/templates';
@@ -99,7 +99,7 @@ const Layout = () => {
   const [recordingAudio, setRecordingAudio] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [pendingIntent, setPendingIntent] = useState<{
-    intent: 'create_client' | 'create_appointment' | 'count_today' | 'count_tomorrow' | 'unknown';
+    intent: AgentIntent;
     summary?: string;
     payload?: any;
   } | null>(null);

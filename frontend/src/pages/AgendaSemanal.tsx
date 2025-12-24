@@ -217,14 +217,6 @@ const AgendaSemanal = ({
   }, [currentDate]);
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatMessages));
-    } catch {
-      // ignore storage errors
-    }
-  }, [chatMessages]);
-
-  useEffect(() => {
     const loadCustomers = async () => {
       try {
         const data = await customersApi.list();
@@ -993,7 +985,7 @@ const AgendaSemanal = ({
               />
               <button
                 type="button"
-                onClick={handleSendChat}
+                onClick={() => handleSendChat()}
                 disabled={chatLoading}
                 className={`h-10 w-10 rounded-full flex items-center justify-center transition ${
                   chatLoading
