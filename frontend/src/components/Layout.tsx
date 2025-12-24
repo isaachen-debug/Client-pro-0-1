@@ -1111,7 +1111,7 @@ const Layout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Page Content */}
-        <main className="flex-1 overflow-auto pb-24 pt-4 sm:pb-0 sm:pt-0">
+        <main className="flex-1 overflow-auto pb-24 pt-0 sm:pb-0 sm:pt-0">
           {canInstall && !dismissed && (
             <div className="px-4 pt-4">
               <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">

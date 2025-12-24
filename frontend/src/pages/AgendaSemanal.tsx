@@ -42,7 +42,6 @@ import { formatDateToYMD, parseDateFromInput } from '../utils/date';
 import CreateModal, { CreateFormState } from '../components/appointments/CreateModal';
 import EditModal from '../components/appointments/EditModal';
 import AgendaMensal from './AgendaMensal';
-import AudioQuickAdd from '../components/AudioQuickAdd';
 import { getGoogleStatus, syncGoogleEvent } from '../services/googleCalendar';
 
 const pad = (value: number) => value.toString().padStart(2, '0');
@@ -1034,7 +1033,7 @@ const AgendaSemanal = ({
 
           {/* Grid de 7 dias */}
           <div
-            className={`grid grid-cols-7 gap-3 rounded-2xl bg-white border border-slate-100 p-3 shadow-sm sticky top-0 z-10 ${
+            className={`grid grid-cols-7 gap-2 rounded-xl bg-white border border-slate-200 px-2 py-3 sticky top-0 z-10 ${
               weekSwipeDirection === 'left'
                 ? 'animate-week-swipe-left'
                 : weekSwipeDirection === 'right'
@@ -1074,15 +1073,17 @@ const AgendaSemanal = ({
                   key={day.toISOString()}
                   type="button"
                   onClick={() => setSelectedDay(day)}
-                  className="flex flex-col items-center gap-2 rounded-xl px-2 py-2 transition text-slate-800 hover:bg-slate-50"
+                  className={`flex flex-col items-center gap-1.5 rounded-xl px-2 py-2 transition ${
+                    isSelected ? 'bg-primary-50' : 'hover:bg-slate-50'
+                  }`}
                 >
-                  <span className={`text-[11px] font-semibold uppercase ${isSelected ? 'text-white/90' : 'text-slate-500'}`}>
+                  <span className={`text-[10px] font-semibold uppercase ${isSelected ? 'text-primary-700' : 'text-slate-500'}`}>
                     {weekdayLabels[index]}
                   </span>
                   <span
-                    className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-semibold ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
                       isSelected
-                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
+                        ? 'bg-primary-600 text-white shadow-sm'
                         : today
                           ? 'bg-primary-50 text-primary-700 ring-2 ring-primary-200'
                           : 'bg-white text-slate-900 border border-slate-200'
@@ -1102,7 +1103,7 @@ const AgendaSemanal = ({
                       ))}
                     </div>
                   ) : (
-                    <div className="h-1.5" />
+                    <div className="h-2" />
                   )}
                 </button>
               );
@@ -1140,12 +1141,12 @@ const AgendaSemanal = ({
             <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
-                <span>Manhã</span>
+                <span>A confirmar</span>
               </div>
               <span className="h-px w-6 bg-slate-200" aria-hidden />
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
-                <span>Tarde</span>
+                <span>Agendado</span>
               </div>
             </div>
 
@@ -1268,24 +1269,24 @@ const AgendaSemanal = ({
   const pageSections = (
     <>
       <div className="space-y-4">
-        <div className="rounded-3xl bg-white border border-slate-100 shadow-sm p-3 space-y-3">
+        <div className="-mx-3 sm:-mx-4 md:-mx-8 -mt-3 bg-white border-b border-slate-200 px-3 sm:px-4 md:px-8 pt-2 pb-3">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full bg-white border border-slate-200 px-2 py-2 shadow-sm">
+            <div className="flex items-center gap-2 rounded-full bg-slate-50 border border-slate-200 px-2 py-2">
               <button
                 type="button"
                 onClick={handlePrevRange}
-                className="p-2 rounded-full text-slate-700 hover:bg-slate-50"
+                className="p-2 rounded-full text-slate-700 hover:bg-white"
                 aria-label="Anterior"
               >
                 <ChevronLeft size={16} />
               </button>
-              <div className="px-3 py-1.5 rounded-full bg-white text-sm font-semibold text-slate-800">
+              <div className="px-3 py-1.5 rounded-full bg-white text-sm font-semibold text-slate-900">
                 {viewLabel}
               </div>
               <button
                 type="button"
                 onClick={handleNextRange}
-                className="p-2 rounded-full text-slate-700 hover:bg-slate-50"
+                className="p-2 rounded-full text-slate-700 hover:bg-white"
                 aria-label="Próximo"
               >
                 <ChevronRight size={16} />
@@ -1297,18 +1298,18 @@ const AgendaSemanal = ({
                   setCurrentDate(today);
                   setSelectedDay(today);
                 }}
-                className="px-3 py-1.5 rounded-full bg-primary-50 text-primary-700 text-sm font-semibold hover:bg-primary-100"
+                className="px-3 py-1.5 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700"
               >
                 Hoje
               </button>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700 shadow-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-sm font-semibold text-slate-700">
               {['today', 'week', 'month', 'chat'].map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode as 'today' | 'week' | 'month' | 'chat')}
                   className={`px-3 py-2 rounded-full transition ${
-                    viewMode === mode ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'
+                    viewMode === mode ? 'bg-primary-600 text-white' : 'bg-white text-slate-700'
                   }`}
                 >
                   {mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat'}
@@ -1317,14 +1318,6 @@ const AgendaSemanal = ({
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowEmptyActions(true)}
-          className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition"
-        >
-          + Novo agendamento
-        </button>
-
       </div>
 
       <div className="space-y-6">
@@ -1335,13 +1328,13 @@ const AgendaSemanal = ({
       </div>
 
       {viewMode !== 'chat' && viewMode !== 'month' && (
-        <AudioQuickAdd
-          floatingWrapperClassName="fixed right-4 bottom-24 z-50 flex flex-col items-end gap-3"
-          contextHint={`Usuário está na visão semanal. Semana corrente: ${format(weekStart, 'yyyy-MM-dd')} até ${format(
-            weekEnd,
-            'yyyy-MM-dd',
-          )}. Se ele disser "quinta-feira" ou "terça", use esta semana. Ano é o atual.`}
-        />
+        <button
+          type="button"
+          onClick={() => setShowEmptyActions(true)}
+          className="fixed right-4 bottom-24 z-50 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-slate-800 transition"
+        >
+          + Agendar
+        </button>
       )}
 
       {showCreateModal && (

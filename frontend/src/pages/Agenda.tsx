@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal, { type WeekDetails, type WeekSummary } from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
-import { PageHeader } from '../components/OwnerUI';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { heroInner, heroOuter } from '../styles/uiTokens';
 import { pageGutters } from '../styles/uiTokens';
@@ -72,21 +71,13 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
               ? undefined
               : {
                   background: isDarkTheme
-                    ? 'linear-gradient(180deg, #0b0f1a 0%, #0b0f1a 42%, #121826 100%)'
-                    : 'linear-gradient(180deg, #f3f4ff 0%, #f3f4ff 42%, #e2e8ff 100%)',
+                    ? '#0b0f1a'
+                    : '#eef2ff',
                   borderRadius: '24px',
                 }
           }
           className={embedded ? undefined : `pt-3 ${heroInner}`}
         >
-          {!embedded && (
-            <PageHeader
-              title="Schedule"
-              subtitle="Planeje sua semana e organize a rota da equipe."
-              subtitleHiddenOnMobile
-            />
-          )}
-
           <div>
             {viewMode === 'week' ? (
               <AgendaSemanal

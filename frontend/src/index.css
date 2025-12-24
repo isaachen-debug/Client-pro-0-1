@@ -27,13 +27,13 @@ html {
 
 html[data-theme='dark'] {
   color-scheme: dark;
-  --app-bg: #030308;
-  --text-primary: #f9fafb;
-  --text-secondary: #9aa4b2;
-  --card-bg: #0b0f16;
-  --card-border: #1a2230;
-  --surface-muted: #070b12;
-  --accent: #8b5cf6;
+  --app-bg: #18191a;
+  --text-primary: #f1f2f5;
+  --text-secondary: #b0b3b8;
+  --card-bg: #242526;
+  --card-border: #3a3b3c;
+  --surface-muted: #1f2022;
+  --accent: #3b82f6;
 }
 
 html[data-theme='dark'] body {
@@ -42,65 +42,65 @@ html[data-theme='dark'] body {
 }
 
 html[data-theme='dark'] .bg-white {
-  background-color: #0b0f16;
+  background-color: #242526;
 }
 
 html[data-theme='dark'] .border-slate-200,
 html[data-theme='dark'] .border-gray-200,
 html[data-theme='dark'] .border-slate-100 {
-  border-color: #1a2230;
+  border-color: #3a3b3c;
 }
 
 html[data-theme='dark'] .text-slate-900,
 html[data-theme='dark'] .text-gray-900 {
-  color: #f8fafc;
+  color: #f1f2f5;
 }
 
 html[data-theme='dark'] .text-slate-600,
 html[data-theme='dark'] .text-gray-600,
 html[data-theme='dark'] .text-slate-700,
 html[data-theme='dark'] .text-gray-700 {
-  color: #b6c2d2;
+  color: #b0b3b8;
 }
 
 html[data-theme='dark'] .text-slate-400,
 html[data-theme='dark'] .text-gray-400,
 html[data-theme='dark'] .text-slate-500,
 html[data-theme='dark'] .text-gray-500 {
-  color: #9aa7bd;
+  color: #8a8d91;
 }
 
 html[data-theme='dark'] .text-slate-300,
 html[data-theme='dark'] .text-gray-300 {
-  color: #cbd5e1;
+  color: #d0d2d6;
 }
 
 html[data-theme='dark'] .bg-gray-100,
 html[data-theme='dark'] .bg-slate-100 {
-  background-color: #111827;
+  background-color: #2a2b2e;
 }
 
 html[data-theme='dark'] .bg-gray-200,
 html[data-theme='dark'] .bg-slate-200 {
-  background-color: #1a2230;
+  background-color: #3a3b3c;
 }
 
 html[data-theme='dark'] .bg-gray-50,
 html[data-theme='dark'] .bg-slate-50 {
-  background-color: #0a0e15;
+  background-color: #1f2022;
 }
 
 html[data-theme='dark'] .shadow-sm,
 html[data-theme='dark'] .shadow-lg {
-  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.7);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 html[data-theme='dark'] input,
 html[data-theme='dark'] select,
 html[data-theme='dark'] textarea {
-  background-color: #0b0f16;
-  color: #e5e7eb;
-  border-color: #1a2230;
+  background-color: #242526;
+  color: #f1f2f5;
+  border-color: #3a3b3c;
 }
 
 body {

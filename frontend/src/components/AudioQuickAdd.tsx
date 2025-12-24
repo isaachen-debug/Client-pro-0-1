@@ -18,9 +18,19 @@ type AudioQuickAddProps = {
     ariaLabel?: string;
   };
   floatingWrapperClassName?: string;
+  variant?: 'floating' | 'inline';
+  inlineLabel?: string;
+  inlineClassName?: string;
 };
 
-const AudioQuickAdd = ({ contextHint, actionAboveVoice, floatingWrapperClassName }: AudioQuickAddProps) => {
+const AudioQuickAdd = ({
+  contextHint,
+  actionAboveVoice,
+  floatingWrapperClassName,
+  variant = 'floating',
+  inlineLabel,
+  inlineClassName,
+}: AudioQuickAddProps) => {
   const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [banner, setBanner] = useState<Banner | null>(null);
@@ -217,7 +227,21 @@ const AudioQuickAdd = ({ contextHint, actionAboveVoice, floatingWrapperClassName
         </div>
       )}
 
-      <div className={`flex flex-col items-center gap-3 ${floatingWrapperClassName ?? ''}`}>
+      {variant === 'inline' ? (
+        <button
+          type="button"
+          onClick={handleToggleRecording}
+          disabled={uploading}
+          className={`w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition flex items-center justify-center gap-2 ${
+            recording ? 'bg-red-600 hover:bg-red-700' : ''
+          } ${inlineClassName ?? ''}`}
+          aria-label={recording ? 'Parar gravação' : inlineLabel ?? 'Agendar por voz'}
+        >
+          {recording ? <Square size={16} /> : <Mic size={16} />}
+          <span>{recording ? 'Gravando...' : inlineLabel ?? 'Agendar por voz'}</span>
+        </button>
+      ) : (
+        <div className={`flex flex-col items-center gap-3 ${floatingWrapperClassName ?? ''}`}>
         {actionAboveVoice && (
           <div className="flex flex-col items-center gap-1">
             <button
@@ -258,6 +282,7 @@ const AudioQuickAdd = ({ contextHint, actionAboveVoice, floatingWrapperClassName
           {recording ? 'Gravando...' : 'Agende por voz'}
         </div>
       </div>
+      )}
     </>
   );
 };
