@@ -20,6 +20,7 @@ import faqsRouter from './routes/faqs';
 import templatesRouter from './routes/templates';
 import agentAudioRouter from './routes/agentAudio';
 import googleCalendarRouter from './routes/googleCalendar';
+import geoRouter from './routes/geo';
 import { initDailyReminderJob } from './jobs/dailyReminders';
 
 dotenv.config();
@@ -87,6 +88,7 @@ app.use('/api/agent/audio', agentAudioRouter);
 app.use('/api/faqs', faqsRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api/google', googleCalendarRouter);
+app.use('/api/geo', geoRouter);
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
@@ -104,4 +106,3 @@ app.listen(PORT, () => {
   });
   // #endregion
 });
-

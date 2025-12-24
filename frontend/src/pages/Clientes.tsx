@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Search, Phone, MapPin, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
+import { geoApi, type AddressSuggestion } from '../services/geo';
 import { useSearchParams } from 'react-router-dom';
 import {
   AccessMethod,
@@ -153,6 +154,9 @@ const Clientes = () => {
   };
 
   const [formData, setFormData] = useState<CustomerFormState>(initialFormState);
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const addressRequestRef = useRef(0);
   const [activeTab, setActiveTab] = useState<'list' | 'contracts'>('list');
 
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -192,6 +196,41 @@ const Clientes = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const query = formData.address.trim();
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      setAddressLoading(false);
+      return;
+    }
+    const requestId = ++addressRequestRef.current;
+    setAddressLoading(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const results = await geoApi.autocomplete(query);
+        if (requestId !== addressRequestRef.current) return;
+        setAddressSuggestions(results);
+      } catch (error) {
+        console.error('Erro ao buscar enderecos:', error);
+        if (requestId !== addressRequestRef.current) return;
+        setAddressSuggestions([]);
+      } finally {
+        if (requestId === addressRequestRef.current) {
+          setAddressLoading(false);
+        }
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [formData.address, showModal]);
+
+  useEffect(() => {
+    if (!showModal) {
+      setAddressSuggestions([]);
+      setAddressLoading(false);
+    }
+  }, [showModal]);
 
   useEffect(() => {
     const customerId = searchParams.get('customerId');
@@ -974,12 +1013,46 @@ const Clientes = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Endereço
                   </label>
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      onBlur={() => {
+                        window.setTimeout(() => setAddressSuggestions([]), 120);
+                      }}
+                      onFocus={() => {
+                        if (formData.address.trim().length >= 3 && addressSuggestions.length === 0) {
+                          setAddressSuggestions([]);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Digite o endereço"
+                    />
+                    {addressLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        Buscando...
+                      </div>
+                    )}
+                    {addressSuggestions.length > 0 && (
+                      <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-48 overflow-y-auto">
+                        {addressSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion.value}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setFormData({ ...formData, address: suggestion.value });
+                              setAddressSuggestions([]);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            {suggestion.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
