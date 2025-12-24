@@ -209,6 +209,64 @@ button {
   animation: sheetSlideDown 0.35s ease forwards;
 }
 
+@keyframes weekSwipeLeft {
+  0% {
+    opacity: 0.4;
+    transform: translateX(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes weekSwipeRight {
+  0% {
+    opacity: 0.4;
+    transform: translateX(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-week-swipe-left {
+  animation: weekSwipeLeft 0.24s ease;
+}
+
+.animate-week-swipe-right {
+  animation: weekSwipeRight 0.24s ease;
+}
+
+@keyframes sheetFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes sheetRiseIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-sheet-fade {
+  animation: sheetFadeIn 0.2s ease forwards;
+}
+
+.animate-sheet-rise {
+  animation: sheetRiseIn 0.24s ease forwards;
+}
+
 .owner-table-wrap {
   width: 100%;
   overflow-x: auto;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, Phone, MapPin, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
+import { useSearchParams } from 'react-router-dom';
 import {
   AccessMethod,
   Appointment,
@@ -123,6 +124,7 @@ const CONTRACT_FILTER_OPTIONS: Array<{ label: string; value: 'ALL' | ContractSta
 ];
 
 const Clientes = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { theme } = usePreferences();
   const isDarkTheme = theme === 'dark';
@@ -161,6 +163,7 @@ const Clientes = () => {
   const [downloadingContractId, setDownloadingContractId] = useState<string | null>(null);
   const [wizardStatus, setWizardStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [contractStatusFilter, setContractStatusFilter] = useState<'ALL' | ContractStatus>('ALL');
+  const [openedFromQuery, setOpenedFromQuery] = useState(false);
   const filteredContracts = useMemo(
     () =>
       contractStatusFilter === 'ALL'
@@ -189,6 +192,21 @@ const Clientes = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  useEffect(() => {
+    const customerId = searchParams.get('customerId');
+    if (!customerId || openedFromQuery) return;
+    if (!clientes.length) return;
+    const found = clientes.find((cliente) => cliente.id === customerId);
+    if (found) {
+      setActiveTab('list');
+      openEditModal(found);
+      setOpenedFromQuery(true);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('customerId');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [clientes, openedFromQuery, searchParams, setSearchParams]);
 
   const fetchClientes = async (query = '', statusValue: 'ALL' | CustomerStatus = statusFilter) => {
     try {
@@ -1072,16 +1090,16 @@ type HistoryModalProps = {
 };
 
 const appointmentStatusLabels: Record<AppointmentStatus, string> = {
-  AGENDADO: 'Agendado',
-  EM_ANDAMENTO: 'Em andamento',
-  CONCLUIDO: 'Concluído',
+  AGENDADO: 'A confirmar',
+  EM_ANDAMENTO: 'Agendado',
+  CONCLUIDO: 'Agendado',
   CANCELADO: 'Cancelado',
 };
 
 const appointmentStatusClasses: Record<AppointmentStatus, string> = {
-  AGENDADO: 'bg-blue-100 text-blue-700',
-  EM_ANDAMENTO: 'bg-indigo-100 text-indigo-700',
-  CONCLUIDO: 'bg-green-100 text-green-700',
+  AGENDADO: 'bg-amber-100 text-amber-700',
+  EM_ANDAMENTO: 'bg-blue-100 text-blue-700',
+  CONCLUIDO: 'bg-blue-100 text-blue-700',
   CANCELADO: 'bg-red-100 text-red-700',
 };
 

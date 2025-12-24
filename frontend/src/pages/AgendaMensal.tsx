@@ -221,7 +221,6 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
   const handleStatusUpdate = async (
     appointment: Appointment,
     status: AppointmentStatus,
-    promptInvoice: boolean,
   ) => {
     if (status === 'CANCELADO') {
       const removed = await deleteSeriesAndRefresh(appointment);
@@ -229,24 +228,7 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
         return;
       }
     }
-
-    let sendInvoice = false;
-    if (promptInvoice) {
-      sendInvoice = window.confirm('Deseja enviar a cobrança por e-mail/copiar o link da fatura agora?');
-    }
-    const updated = await appointmentsApi.changeStatus(
-      appointment.id,
-      status,
-      sendInvoice ? { sendInvoice: true } : undefined,
-    );
-    if (sendInvoice && updated.invoiceUrl) {
-      try {
-        await navigator.clipboard.writeText(updated.invoiceUrl);
-        alert('Link da fatura copiado para a área de transferência.');
-      } catch {
-        alert(`Link da fatura: ${updated.invoiceUrl}`);
-      }
-    }
+    await appointmentsApi.changeStatus(appointment.id, status);
   };
 
   const handleAddAppointmentForDay = (day: Date) => {
@@ -279,8 +261,7 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
     if (!editingAppointment) return;
     try {
       setSaving(true);
-      const shouldPromptInvoice =
-        editingAppointment.status !== 'CONCLUIDO' && editForm.status === 'CONCLUIDO';
+      const nextStatus = editForm.status === 'CONCLUIDO' ? 'EM_ANDAMENTO' : editForm.status;
       await appointmentsApi.update(editingAppointment.id, {
         date: editForm.date,
         startTime: editForm.startTime,
@@ -288,12 +269,9 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
         price: parseFloat(editForm.price),
         helperFee: editForm.helperFee === '' ? undefined : Number(editForm.helperFee),
         notes: editForm.notes,
-        status: editForm.status,
+        status: nextStatus,
         assignedHelperId: editForm.assignedHelperId === '' ? null : editForm.assignedHelperId,
       });
-      if (shouldPromptInvoice) {
-        await handleStatusUpdate(editingAppointment, 'CONCLUIDO', true);
-      }
       setShowEditModal(false);
       setEditingAppointment(null);
       fetchData();
@@ -308,7 +286,7 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
     if (!editingAppointment) return;
     try {
       setSaving(true);
-      await handleStatusUpdate(editingAppointment, status, status === 'CONCLUIDO');
+      await handleStatusUpdate(editingAppointment, status);
       setShowEditModal(false);
       setEditingAppointment(null);
       fetchData();
@@ -356,15 +334,15 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
     CANCELADO: 'text-slate-800',
   };
   const statusAccents: Record<AppointmentStatus, string> = {
-    AGENDADO: 'border-l-4 border-blue-300',
-    EM_ANDAMENTO: 'border-l-4 border-amber-300',
-    CONCLUIDO: 'border-l-4 border-emerald-300',
+    AGENDADO: 'border-l-4 border-amber-300',
+    EM_ANDAMENTO: 'border-l-4 border-blue-300',
+    CONCLUIDO: 'border-l-4 border-blue-300',
     CANCELADO: 'border-l-4 border-red-300',
   };
   const statusDotBg: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-blue-500',
-    EM_ANDAMENTO: 'bg-amber-500',
-    CONCLUIDO: 'bg-emerald-500',
+    AGENDADO: 'bg-amber-400',
+    EM_ANDAMENTO: 'bg-blue-500',
+    CONCLUIDO: 'bg-blue-500',
     CANCELADO: 'bg-red-500',
   };
 

@@ -3,8 +3,20 @@ import { api } from './http';
 type Intent =
   | 'create_client'
   | 'create_appointment'
+  | 'create_appointments_batch'
+  | 'update_appointment'
+  | 'cancel_appointment'
   | 'count_today'
   | 'count_tomorrow'
+  | 'count_clients'
+  | 'charges_status'
+  | 'appointments_today'
+  | 'appointments_tomorrow'
+  | 'appointments_week'
+  | 'appointments_month'
+  | 'appointments_pending_today'
+  | 'clients_recent'
+  | 'clients_with_future'
   | 'unknown';
 
 export type AgentMessage = {
@@ -34,4 +46,3 @@ export const agentIntentApi = {
     return data;
   },
 };
-

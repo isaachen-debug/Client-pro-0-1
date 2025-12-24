@@ -452,7 +452,7 @@ router.post('/', async (req, res) => {
         endTime,
         price: parsedPrice,
         helperFee: helperFeeValue,
-        status: status || 'AGENDADO',
+        status: status || 'EM_ANDAMENTO',
         isRecurring: isRecurring ?? false,
         recurrenceRule,
         recurrenceSeriesId,
@@ -827,4 +827,3 @@ const ensureRevenueTransaction = async (
 };
 
 export default router;
-

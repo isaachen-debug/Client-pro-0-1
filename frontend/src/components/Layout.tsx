@@ -44,6 +44,7 @@ import { faqsApi } from '../services/faqs';
 import { templatesApi } from '../services/templates';
 import { StatusBadge } from './OwnerUI';
 import { agentAudioApi } from '../services/agentAudio';
+import { emitAgentChatSync, loadAgentChatMessages, saveAgentChatMessages } from '../utils/agentChat';
 
 const LogoMark = () => (
   <div className="w-12 h-12 rounded-3xl bg-white border border-gray-100 shadow-lg shadow-emerald-300/30 flex items-center justify-center overflow-hidden">
@@ -82,7 +83,9 @@ const Layout = () => {
   const [agentOpen, setAgentOpen] = useState(false);
   const [agentQuery, setAgentQuery] = useState('');
   const [agentLoading, setAgentLoading] = useState(false);
-  const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
+  const [agentMessages, setAgentMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>(() =>
+    loadAgentChatMessages(),
+  );
   const [agentError, setAgentError] = useState<string | null>(null);
   const [agentContextData, setAgentContextData] = useState<{
     metrics?: any;
@@ -100,6 +103,8 @@ const Layout = () => {
     summary?: string;
     payload?: any;
   } | null>(null);
+  const agentSyncRef = useRef('');
+  const agentSyncSource = 'layout-agent';
   const quickActionHandlersRef = useRef(new Map<QuickActionKey, () => void>());
   const registerQuickAction = useCallback((key: QuickActionKey, handler: () => void) => {
     quickActionHandlersRef.current.set(key, handler);
@@ -448,6 +453,30 @@ const Layout = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const payload = JSON.stringify(agentMessages);
+    if (payload === agentSyncRef.current) {
+      saveAgentChatMessages(agentMessages);
+      return;
+    }
+    saveAgentChatMessages(agentMessages);
+    emitAgentChatSync(agentMessages, agentSyncSource);
+    agentSyncRef.current = payload;
+  }, [agentMessages, agentSyncSource]);
+
+  useEffect(() => {
+    const handleSync = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { messages?: AgentMessage[]; source?: string };
+      if (!detail?.messages || detail.source === agentSyncSource) return;
+      const payload = JSON.stringify(detail.messages);
+      agentSyncRef.current = payload;
+      setAgentMessages(detail.messages);
+      saveAgentChatMessages(detail.messages);
+    };
+    window.addEventListener('agent-chat-sync', handleSync as EventListener);
+    return () => window.removeEventListener('agent-chat-sync', handleSync as EventListener);
+  }, [agentSyncSource]);
+
   const ensureAgentContext = useCallback(async () => {
     if (agentContextData && Date.now() - (agentContextData.fetchedAt ?? 0) < 60_000) {
       return agentContextData;
@@ -581,6 +610,16 @@ const Layout = () => {
 
       if (parsed.error) {
         setAgentError(parsed.error);
+      } else if (
+        parsed.intent === 'create_appointment' &&
+        !parsed.requiresConfirmation &&
+        parsed.payload
+      ) {
+        const result = await agentIntentApi.execute(parsed.intent, parsed.payload);
+        if (result.answer) {
+          setAgentMessages((prev) => [...prev, { role: 'assistant', text: result.answer! }]);
+          window.dispatchEvent(new CustomEvent('agent-appointments-updated'));
+        }
       } else if (parsed.answer && !parsed.requiresConfirmation) {
         // Intent de leitura executada direto (contagens)
         setAgentMessages((prev) => [...prev, { role: 'assistant', text: parsed.answer! }]);
@@ -612,6 +651,14 @@ const Layout = () => {
     }
   };
 
+  const agentQuickPrompts = [
+    '@Vito amanhã 10h limpeza',
+    'Editar @Vito para amanhã 15h',
+    'Cancelar @Vito dia 12 às 10h',
+    'Quantos agendamentos hoje?',
+    'Clientes com agendamentos futuros',
+  ];
+
   const handleAgentConfirm = async () => {
     if (!pendingIntent) return;
     setAgentLoading(true);
@@ -623,6 +670,7 @@ const Layout = () => {
       } else if (result.answer) {
         setAgentMessages((prev) => [...prev, { role: 'assistant', text: result.answer! }]);
         setPendingIntent(null);
+        window.dispatchEvent(new CustomEvent('agent-appointments-updated'));
       }
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Falha ao executar ação.';
@@ -1307,119 +1355,89 @@ const Layout = () => {
       )}
       {agentOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
-          <div className="h-px" onClick={() => setAgentOpen(false)} />
-          <div className="rounded-t-[24px] bg-white animate-sheet-up max-h-[90vh] sm:max-h-[92vh] h-[90vh] sm:h-[92vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200 overflow-hidden">
+          <div className="fixed inset-0" onClick={() => setAgentOpen(false)} />
+          <div className="relative rounded-t-[24px] bg-white animate-sheet-up max-h-[90vh] sm:max-h-[92vh] h-[90vh] sm:h-[92vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200 overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-accent-700 text-white flex items-center justify-center shadow-lg shadow-emerald-300/30">
-                  <Bot size={20} />
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">
-                    Clean Up Agent
-                  </p>
-                  <p className="text-base font-semibold text-slate-900">
-                    Pergunte sobre clientes, agenda e financeiro
-                  </p>
-                </div>
-              </div>
+              <p className="text-base font-semibold text-slate-900">Chat</p>
               <button
                 type="button"
                 onClick={() => setAgentOpen(false)}
                 className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
-                aria-label="Fechar agent"
+                aria-label="Fechar chat"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="px-5 pt-4 pb-3">
-              <div className="rounded-2xl bg-gradient-to-br from-primary-500 via-emerald-500 to-[#1b0f29] px-4 py-4 text-white flex items-center gap-3 shadow-[0_18px_50px_rgba(34,197,94,0.32)]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-lg font-semibold">
-                  {user?.companyName?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'C'}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold truncate">
-                    {user?.companyName || user?.name || 'Workspace'}
-                  </span>
-                  <span className="text-xs text-white/80">Assistente focado no seu negócio</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
-      {agentMessages.length === 0 && !agentError && !agentLoading && (
-                <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 mb-2">
-                    Sugestões
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+              {!agentLoading && agentMessages.length === 0 && !agentError && (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <p className="text-sm font-semibold text-slate-900">Sugestões rápidas</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Dica: use @ para clientes. Ex: @Vito amanhã 10h.
                   </p>
-                  <div className="grid gap-2">
-                    {[
-                      'Quais clientes têm agendamentos esta semana?',
-                      'Criar um agendamento amanhã às 10h',
-                      'Qual status das cobranças deste mês?',
-                      'Mostrar agendamentos pendentes para hoje',
-                    ].map((item) => (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {agentQuickPrompts.map((prompt) => (
                       <button
-                        key={item}
+                        key={prompt}
                         type="button"
-                        onClick={() => handleAgentSubmit(item)}
-                        className="w-full text-left px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold text-slate-700 flex items-center gap-2"
+                        onClick={() => handleAgentSubmit(prompt)}
+                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100"
                       >
-                        <span className="text-slate-300 text-lg leading-none">→</span>
-                        <span className="truncate">{item}</span>
+                        {prompt}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
-
-              <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/60 p-3 min-h-[150px]">
-                {agentMessages.map((msg, idx) => (
+              {agentMessages.map((msg, idx) => (
+                <div
+                  key={`${msg.role}-${idx}`}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   <div
-                    key={`${msg.role}-${idx}`}
-                    className={`rounded-2xl px-3 py-2 text-sm ${
+                    className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                       msg.role === 'user'
-                        ? 'bg-white text-slate-900 border border-emerald-100 shadow-sm'
-                        : 'bg-gradient-to-r from-primary-50 via-white to-accent-50 text-slate-900 border border-slate-100 shadow-sm'
+                        ? 'bg-slate-900 text-white rounded-br-sm'
+                        : 'bg-slate-50 text-slate-900 border border-slate-200 rounded-bl-sm'
                     }`}
                   >
                     {msg.text}
                   </div>
-                ))}
-                {agentLoading && <div className="text-sm text-slate-500 px-1">Pensando…</div>}
-                {agentError && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {agentError}
+                </div>
+              ))}
+              {agentLoading && <div className="text-sm text-slate-500">Pensando…</div>}
+              {agentError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {agentError}
+                </div>
+              )}
+              {pendingIntent && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 space-y-2">
+                  <div>{pendingIntent.summary || 'Confirmar esta ação?'}</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAgentConfirm}
+                      className="px-3 py-1.5 rounded-full bg-emerald-600 text-white text-sm font-semibold disabled:opacity-60"
+                      disabled={agentLoading}
+                    >
+                      Confirmar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingIntent(null)}
+                      className="px-3 py-1.5 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                      disabled={agentLoading}
+                    >
+                      Cancelar
+                    </button>
                   </div>
-                )}
-                {pendingIntent && (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 space-y-2">
-                    <div>{pendingIntent.summary || 'Confirmar esta ação?'}</div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleAgentConfirm}
-                        className="px-3 py-1.5 rounded-full bg-emerald-600 text-white text-sm font-semibold disabled:opacity-60"
-                        disabled={agentLoading}
-                      >
-                        Confirmar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPendingIntent(null)}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                        disabled={agentLoading}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {!agentLoading && agentMessages.length === 0 && !agentError && (
-                  <div className="text-sm text-slate-500">Digite ou escolha uma sugestão para começar.</div>
-                )}
-              </div>
+                </div>
+              )}
+              {!agentLoading && agentMessages.length === 0 && !agentError && (
+                <div className="text-sm text-slate-500">Digite sua mensagem para começar.</div>
+              )}
             </div>
 
             <div className="mt-auto px-5 pt-3 pb-5 border-t border-slate-100 bg-white">
@@ -1445,7 +1463,7 @@ const Layout = () => {
                 </button>
                 <input
                   type="text"
-                  placeholder="Pergunte algo para o Clean Up Agent"
+                  placeholder="Ex: @Vito amanhã 10h limpeza"
                   value={agentQuery}
                   onChange={(e) => setAgentQuery(e.target.value)}
                   onKeyDown={(e) => {

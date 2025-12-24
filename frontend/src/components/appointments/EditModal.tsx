@@ -68,6 +68,7 @@ const EditModal = ({
         </div>
 
         <form className="space-y-3" onSubmit={onSubmit}>
+          {/** Normaliza status legado para manter UI simples */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Data</label>
@@ -99,37 +100,21 @@ const EditModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Término</label>
-              <input
-                type="time"
-                value={formData.endTime}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    endTime: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Valor cobrado (USD)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Ex: 150,00"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    price: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Valor cobrado (USD)</label>
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Ex: 150,00"
+              value={formData.price}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  price: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
           </div>
 
           <div>
@@ -153,7 +138,7 @@ const EditModal = ({
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Status</label>
             <select
-              value={formData.status}
+              value={formData.status === 'CONCLUIDO' ? 'EM_ANDAMENTO' : formData.status}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
@@ -162,9 +147,8 @@ const EditModal = ({
               }
               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             >
-              <option value="AGENDADO">Agendado</option>
-              <option value="EM_ANDAMENTO">Em andamento</option>
-              <option value="CONCLUIDO">Concluído</option>
+              <option value="AGENDADO">A confirmar</option>
+              <option value="EM_ANDAMENTO">Agendado</option>
               <option value="CANCELADO">Cancelado</option>
             </select>
           </div>
@@ -251,10 +235,10 @@ const EditModal = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => onQuickStatus('CONCLUIDO')}
-                className="px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-semibold hover:bg-emerald-100 transition-colors"
+                onClick={() => onQuickStatus('EM_ANDAMENTO')}
+                className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-100 transition-colors"
               >
-                Iniciar/Concluir
+                Marcar como agendado
               </button>
               <ConfirmCancelButton
                 onCancel={() => onQuickStatus('CANCELADO')}
@@ -356,4 +340,3 @@ const ConfirmCancelButton = ({
     </>
   );
 };
-

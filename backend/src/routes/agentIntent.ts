@@ -11,6 +11,8 @@ type Intent =
   | 'create_client'
   | 'create_appointment'
   | 'create_appointments_batch'
+  | 'update_appointment'
+  | 'cancel_appointment'
   | 'count_today'
   | 'count_tomorrow'
   | 'count_clients'
@@ -35,10 +37,13 @@ type ParsedIntent = {
 const systemPrompt = `
 Você é um orquestrador de intents para o app Clean Up. Extraia uma intent e os parâmetros.
 NUNCA use ações destrutivas. PROIBIDO deletar contas ou dados. Se pedido para deletar massa, responda intent "unknown" com reason.
+Você pode conversar sobre assuntos gerais, mas só pode executar: visualizações (consultas) e agendamentos (criar/editar/cancelar).
 Intents permitidas:
 - create_client: cria cliente. Campos: name (obrigatório), phone?, email?, address?
 - create_appointment: cria agendamento. Campos: customerName (obrigatório), date (YYYY-MM-DD), startTime (HH:mm), endTime?, price?, notes?
 - create_appointments_batch: cria vários agendamentos. payload: { appointments: [{ customerName, date, startTime, endTime?, price?, notes? }] }. Se mais de 1 item, marcar requiresConfirmation=true.
+- update_appointment: editar agendamento. Campos: customerName (obrigatório), date (YYYY-MM-DD), startTime (HH:mm) e pelo menos um dos campos novos: newDate?, newStartTime?, newEndTime?, newPrice?, newNotes?.
+- cancel_appointment: cancelar agendamento. Campos: customerName (obrigatório), date (YYYY-MM-DD), startTime (HH:mm).
 - count_today: responder quantos agendamentos hoje.
 - count_tomorrow: responder quantos agendamentos amanhã.
 - count_clients: responder quantos clientes cadastrados.
@@ -51,6 +56,7 @@ Intents permitidas:
 - clients_recent: listar últimos clientes criados (5 mais recentes).
 - clients_with_future: listar clientes com agendamentos futuros (próximos).
 Se faltar info crítica, marcar requiresConfirmation=true e summary explicando.
+Se o cliente vier com "@", remova o "@" e use apenas o nome.
 Responda em JSON: { "intent": "...", "requiresConfirmation": bool, "summary": "...", "payload": { ... }, "reason": "..." }
 `;
 
@@ -128,6 +134,36 @@ Regras adicionais:
         parsed.requiresConfirmation = false;
       }
     }
+    if (parsed.intent === 'update_appointment' || parsed.intent === 'cancel_appointment') {
+      parsed.requiresConfirmation = true;
+    }
+
+    if (parsed.requiresConfirmation && !parsed.summary) {
+      const payload = parsed.payload || {};
+      if (parsed.intent === 'create_client') {
+        parsed.summary = payload.name
+          ? `Posso criar o cliente "${payload.name}". Confirma?`
+          : 'Posso criar este cliente. Confirma?';
+      }
+      if (parsed.intent === 'create_appointment') {
+        const who = payload.customerName ? ` para ${payload.customerName}` : '';
+        const when = payload.date && payload.startTime ? ` em ${payload.date} ${payload.startTime}` : '';
+        parsed.summary = `Posso criar o agendamento${who}${when}. Confirma?`;
+      }
+      if (parsed.intent === 'create_appointments_batch') {
+        parsed.summary = 'Posso criar vários agendamentos. Confirma?';
+      }
+      if (parsed.intent === 'update_appointment') {
+        const who = payload.customerName ? ` de ${payload.customerName}` : '';
+        const when = payload.date && payload.startTime ? ` em ${payload.date} ${payload.startTime}` : '';
+        parsed.summary = `Posso editar o agendamento${who}${when}. Confirma?`;
+      }
+      if (parsed.intent === 'cancel_appointment') {
+        const who = payload.customerName ? ` de ${payload.customerName}` : '';
+        const when = payload.date && payload.startTime ? ` em ${payload.date} ${payload.startTime}` : '';
+        parsed.summary = `Posso cancelar o agendamento${who}${when}. Confirma?`;
+      }
+    }
 
     // Salvaguardas
     if (['delete', 'remove', 'drop'].some((w) => message.toLowerCase().includes(w))) {
@@ -155,6 +191,7 @@ Regras adicionais:
 Você é o Assistente IA do app CleanUp (ClientPro). Ajuda empresas de limpeza com agenda, clientes, finanças e comunicações,
 e pode responder perguntas gerais de forma segura e concisa.
 Tom: simples, profissional, direto, educado. Nunca invente dados ou faça ações destrutivas.
+Nunca diga que criou/alterou/cancelou algo sem passar pelo fluxo de confirmação do app.
 Funções:
 - Explicar passos do app (adicionar cliente, marcar serviço, ver ganhos).
 - Responder dúvidas de dados do app (ganhos, clientes, custos, ticket médio). Formato breve tipo: 📊 Resumo: Ganhos $X; Clientes Y; Custos $Z; Lucro $W. Se faltar dados, peça para cadastrar/autorizar.
@@ -457,6 +494,11 @@ router.post('/execute', async (req: Request, res: Response) => {
       .toLowerCase()
       .trim() ?? '';
 
+  const sanitizeCustomerName = (value: string) => {
+    if (!value) return value;
+    return String(value).replace(/^@+/, '').trim();
+  };
+
   const levenshtein = (a: string, b: string) => {
     if (a === b) return 0;
     if (!a.length) return b.length;
@@ -476,12 +518,13 @@ router.post('/execute', async (req: Request, res: Response) => {
   };
 
   const findBestCustomer = async (name: string) => {
-    const normalized = normalizeText(name);
+    const cleanName = sanitizeCustomerName(name);
+    const normalized = normalizeText(cleanName);
     if (!normalized) return null;
 
     // tentativa exata
     const exact = await prisma.customer.findFirst({
-      where: { userId: req.user!.id, name: { equals: name, mode: 'insensitive' } },
+      where: { userId: req.user!.id, name: { equals: cleanName, mode: 'insensitive' } },
     });
     if (exact) return exact;
 
@@ -506,6 +549,47 @@ router.post('/execute', async (req: Request, res: Response) => {
       return best.item;
     }
     return null;
+  };
+
+  const findAppointmentByDetails = async (params: {
+    appointmentId?: string;
+    customerName?: string;
+    date?: string;
+    startTime?: string;
+  }) => {
+    if (params.appointmentId) {
+      return prisma.appointment.findFirst({
+        where: { id: params.appointmentId, userId: req.user!.id },
+      });
+    }
+
+    if (!params.customerName || !params.date) return null;
+
+    const customer = await findBestCustomer(params.customerName);
+    if (!customer?.id) return null;
+
+    const normalizedDate = normalizeDate(params.date);
+    if (!normalizedDate) return null;
+
+    const start = startOfDay(normalizedDate);
+    const end = endOfDay(normalizedDate);
+
+    const candidates = await prisma.appointment.findMany({
+      where: {
+        userId: req.user!.id,
+        customerId: customer.id,
+        date: { gte: start, lte: end },
+      },
+      orderBy: [{ startTime: 'asc' }],
+      take: 5,
+    });
+
+    if (!candidates.length) return null;
+    if (params.startTime) {
+      const exact = candidates.find((item) => item.startTime === params.startTime);
+      return exact ?? candidates[0];
+    }
+    return candidates[0];
   };
 
   try {
@@ -541,7 +625,7 @@ router.post('/execute', async (req: Request, res: Response) => {
         customer = await prisma.customer.create({
           data: {
             userId: req.user!.id,
-            name: customerName,
+            name: sanitizeCustomerName(customerName),
           },
         });
       }
@@ -556,11 +640,104 @@ router.post('/execute', async (req: Request, res: Response) => {
           startTime,
           endTime: endTime || null,
           price: priceNumber,
-          status: 'AGENDADO',
+          status: 'EM_ANDAMENTO',
           notes: notes || null,
         },
       });
       return res.json({ ok: true, answer: `Agendamento criado para ${customer.name} em ${date} ${startTime}.` });
+    }
+
+    if (intent === 'update_appointment') {
+      const {
+        appointmentId,
+        customerName,
+        date,
+        startTime,
+        newDate,
+        newStartTime,
+        newEndTime,
+        newPrice,
+        newNotes,
+      } = payload || {};
+
+      if (!appointmentId && (!customerName || !date || !startTime)) {
+        return res.status(400).json({
+          error: 'Para editar, informe cliente, data e horário do agendamento.',
+        });
+      }
+
+      const appointment = await findAppointmentByDetails({
+        appointmentId,
+        customerName,
+        date,
+        startTime,
+      });
+
+      if (!appointment) {
+        return res.status(404).json({ error: 'Agendamento não encontrado para editar.' });
+      }
+
+      const updates: any = {};
+      if (newDate) {
+        const normalizedNewDate = normalizeDate(newDate);
+        if (!normalizedNewDate) {
+          return res.status(400).json({ error: 'Nova data inválida.' });
+        }
+        updates.date = normalizedNewDate;
+      }
+      if (newStartTime) updates.startTime = newStartTime;
+      if (newEndTime !== undefined) updates.endTime = newEndTime || null;
+      if (newPrice !== undefined && newPrice !== '') updates.price = Number(newPrice);
+      if (newNotes !== undefined) updates.notes = newNotes || null;
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'Nenhuma alteração informada para editar.' });
+      }
+
+      await prisma.appointment.update({
+        where: { id: appointment.id },
+        data: updates,
+      });
+
+      return res.json({
+        ok: true,
+        answer: 'Agendamento atualizado com sucesso.',
+      });
+    }
+
+    if (intent === 'cancel_appointment') {
+      const { appointmentId, customerName, date, startTime } = payload || {};
+
+      if (!appointmentId && (!customerName || !date || !startTime)) {
+        return res.status(400).json({
+          error: 'Para cancelar, informe cliente, data e horário do agendamento.',
+        });
+      }
+
+      const appointment = await findAppointmentByDetails({
+        appointmentId,
+        customerName,
+        date,
+        startTime,
+      });
+
+      if (!appointment) {
+        return res.status(404).json({ error: 'Agendamento não encontrado para cancelar.' });
+      }
+
+      await prisma.appointment.update({
+        where: { id: appointment.id },
+        data: { status: 'CANCELADO' },
+      });
+
+      await prisma.transaction.deleteMany({
+        where: { appointmentId: appointment.id, status: 'PENDENTE' },
+      });
+
+      return res.json({
+        ok: true,
+        answer: 'Agendamento cancelado com sucesso.',
+      });
     }
 
     if (intent === 'create_appointments_batch') {
@@ -597,7 +774,7 @@ router.post('/execute', async (req: Request, res: Response) => {
             customer = await prisma.customer.create({
               data: {
                 userId: req.user!.id,
-                name: customerName,
+                name: sanitizeCustomerName(customerName),
               },
             });
           }
@@ -612,7 +789,7 @@ router.post('/execute', async (req: Request, res: Response) => {
               startTime,
               endTime: endTime || null,
               price: priceNumber,
-              status: 'AGENDADO',
+              status: 'EM_ANDAMENTO',
               notes: notes || null,
             },
           });
@@ -650,4 +827,3 @@ router.post('/execute', async (req: Request, res: Response) => {
 });
 
 export default router;
-
