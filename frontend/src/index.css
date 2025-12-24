@@ -115,6 +115,45 @@ html[data-theme='dark'] .text-primary-700 {
   color: #93c5fd;
 }
 
+html[data-theme='dark'] .bg-amber-50 {
+  background-color: #2b2516;
+}
+
+html[data-theme='dark'] .bg-blue-50 {
+  background-color: #1c2533;
+}
+
+html[data-theme='dark'] .bg-red-50 {
+  background-color: #2b1a1a;
+}
+
+html[data-theme='dark'] .text-amber-700 {
+  color: #f6d365;
+}
+
+html[data-theme='dark'] .text-blue-700 {
+  color: #93c5fd;
+}
+
+html[data-theme='dark'] .text-red-700 {
+  color: #fca5a5;
+}
+
+html[data-theme='dark'] .border-amber-100,
+html[data-theme='dark'] .border-amber-300 {
+  border-color: #5b4a1b;
+}
+
+html[data-theme='dark'] .border-blue-100,
+html[data-theme='dark'] .border-blue-300 {
+  border-color: #2b3b55;
+}
+
+html[data-theme='dark'] .border-red-100,
+html[data-theme='dark'] .border-red-300 {
+  border-color: #5a2626;
+}
+
 html[data-theme='dark'] .shadow-sm,
 html[data-theme='dark'] .shadow-lg {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
