@@ -1,8 +1,9 @@
 import { Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, type MotionProps } from 'framer-motion';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type PrimaryButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type PrimaryButtonProps = MotionProps &
+  ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
   loadingText?: string;
   toneClassName?: string;

@@ -113,6 +113,7 @@ export interface Customer {
   latitude?: number | null;
   longitude?: number | null;
   serviceType?: string;
+  frequency?: ServiceFrequency | null;
   status: CustomerStatus;
   notes?: string;
   defaultPrice?: number;

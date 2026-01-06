@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Search, Phone, MapPin, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
+import { Plus, Search, Phone, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { geoApi, type AddressSuggestion } from '../services/geo';
 import { useSearchParams } from 'react-router-dom';
@@ -19,10 +19,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { parseDateFromInput } from '../utils/date';
 import { useAuth } from '../contexts/AuthContext';
-import { usePreferences } from '../contexts/PreferencesContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
-import { PageHeader, SurfaceCard } from '../components/OwnerUI';
+import { SurfaceCard } from '../components/OwnerUI';
 import AudioQuickAdd from '../components/AudioQuickAdd';
 import { pageGutters } from '../styles/uiTokens';
 
@@ -90,12 +89,6 @@ const STATUS_LABELS: Record<CustomerStatus, string> = {
   INACTIVE: 'Ex-cliente',
 };
 
-const STATUS_BADGE_CLASSES: Record<CustomerStatus, string> = {
-  ACTIVE: 'bg-green-100 text-green-700',
-  PAUSED: 'bg-amber-100 text-amber-700',
-  INACTIVE: 'bg-gray-100 text-gray-600',
-};
-
 const statusFilterOptions: Array<{ label: string; value: 'ALL' | CustomerStatus }> = [
   { label: 'Todos', value: 'ALL' },
   { label: 'Ativos', value: 'ACTIVE' },
@@ -127,8 +120,6 @@ const CONTRACT_FILTER_OPTIONS: Array<{ label: string; value: 'ALL' | ContractSta
 const Clientes = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { theme } = usePreferences();
-  const isDarkTheme = theme === 'dark';
   const [clientes, setClientes] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);

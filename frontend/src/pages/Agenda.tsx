@@ -29,6 +29,13 @@ const toneStyles: Record<
 };
 
 type AgendaView = 'week' | 'month';
+type ToneKey = keyof typeof toneStyles;
+type SummaryCard = {
+  label: string;
+  value: number;
+  tone: ToneKey;
+  icon: typeof AlertTriangle;
+};
 
 const STORAGE_KEY = 'clientepro:agenda-view-mode';
 
@@ -60,12 +67,12 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   const [weekDetails, setWeekDetails] = useState<WeekDetails | null>(null);
   const [weekSummaryOpen, setWeekSummaryOpen] = useState(false);
   const [weekBannerDismissed, setWeekBannerDismissed] = useState(false);
-  const summaryCards = useMemo(() => {
+  const summaryCards = useMemo<SummaryCard[]>(() => {
     if (!weekSummary) return [];
     return [
-      { label: 'A confirmar', value: weekSummary.confirmCount, tone: 'amber', icon: AlertTriangle as const },
-      { label: 'Agendado', value: weekSummary.scheduledCount, tone: 'blue', icon: CheckCircle2 as const },
-      { label: 'Cancelado', value: weekSummary.canceledCount, tone: 'red', icon: XCircle as const },
+      { label: 'A confirmar', value: weekSummary.confirmCount, tone: 'amber', icon: AlertTriangle },
+      { label: 'Agendado', value: weekSummary.scheduledCount, tone: 'blue', icon: CheckCircle2 },
+      { label: 'Cancelado', value: weekSummary.canceledCount, tone: 'red', icon: XCircle },
     ];
   }, [weekSummary]);
   const weekRevenue = useMemo(() => {
