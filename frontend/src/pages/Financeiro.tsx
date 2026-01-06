@@ -1,5 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ChevronLeft, ChevronRight, DollarSign, Download, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Download,
+  Eye,
+  EyeOff,
+  Filter,
+  Calendar,
+  Trash2,
+} from 'lucide-react';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { transactionsApi } from '../services/api';
 import { pageGutters } from '../styles/uiTokens';
 import type { Transaction, TransactionStatus } from '../types';
@@ -10,6 +24,7 @@ const Financeiro = () => {
   const [loading, setLoading] = useState(true);
   const [monthCursor, setMonthCursor] = useState(() => new Date());
   const [statusFiltro, setStatusFiltro] = useState<'todos' | 'pago' | 'pendente' | 'atrasado'>('todos');
+  const [typeFiltro, setTypeFiltro] = useState<'TODOS' | 'RECEITA' | 'DESPESA'>('TODOS');
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseDescription, setExpenseDescription] = useState('');
@@ -19,6 +34,10 @@ const Financeiro = () => {
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
+  const [showBalance, setShowBalance] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [goalOpen, setGoalOpen] = useState(false);
+  const [goalValue, setGoalValue] = useState<string>('');
 
   const brlFormatter = useMemo(
     () => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }),
@@ -78,13 +97,19 @@ const Financeiro = () => {
     };
   }, [transactions]);
 
+  const typeFilteredTransactions = useMemo(() => {
+    if (typeFiltro === 'RECEITA') return transactions.filter((t) => t.type === 'RECEITA');
+    if (typeFiltro === 'DESPESA') return transactions.filter((t) => t.type === 'DESPESA');
+    return transactions;
+  }, [transactions, typeFiltro]);
+
   const pendingTransactions = useMemo(
-    () => transactions.filter((t) => t.status === 'PENDENTE'),
-    [transactions],
+    () => typeFilteredTransactions.filter((t) => t.status === 'PENDENTE'),
+    [typeFilteredTransactions],
   );
   const paidTransactions = useMemo(
-    () => transactions.filter((t) => t.status === 'PAGO'),
-    [transactions],
+    () => typeFilteredTransactions.filter((t) => t.status === 'PAGO'),
+    [typeFilteredTransactions],
   );
   const overdueTransactions = useMemo(
     () =>
@@ -104,9 +129,9 @@ const Financeiro = () => {
         return overdueTransactions;
       case 'todos':
       default:
-        return transactions;
+        return typeFilteredTransactions;
     }
-  }, [statusFiltro, paidTransactions, pendingTransactions, overdueTransactions, transactions]);
+  }, [statusFiltro, paidTransactions, pendingTransactions, overdueTransactions, typeFilteredTransactions]);
   const orderedTransactions = useMemo(
     () =>
       [...filteredTransactions].sort(
@@ -114,6 +139,43 @@ const Financeiro = () => {
       ),
     [filteredTransactions],
   );
+
+  const fallbackChartData = [
+    { date: '05', balance: 1200 },
+    { date: '10', balance: 1800 },
+    { date: '15', balance: 2600 },
+    { date: '20', balance: 2200 },
+    { date: '25', balance: 3200 },
+    { date: '30', balance: 3000 },
+  ];
+
+  const chartData = useMemo(() => {
+    const source = transactions.length ? transactions : [];
+    if (!source.length) {
+      return fallbackChartData.map((item, idx) => ({
+        ...item,
+        expenses: Math.max(0, item.balance * 0.4 - idx * 50),
+      }));
+    }
+
+    let balance = 0;
+    let expenses = 0;
+    return [...source]
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .map((t) => {
+        if (t.type === 'DESPESA') {
+          expenses += t.amount;
+          balance -= t.amount;
+        } else {
+          balance += t.amount;
+        }
+        return {
+          date: format(new Date(t.dueDate), 'dd/MM'),
+          balance: Number(balance.toFixed(2)),
+          expenses: Number(expenses.toFixed(2)),
+        };
+      });
+  }, [transactions]);
 
   const handleExportar = async () => {
     try {
@@ -201,90 +263,126 @@ const Financeiro = () => {
   }
 
   return (
-    <div className={`${pageGutters} max-w-3xl mx-auto space-y-5 pb-2`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Financeiro</p>
-          <h1 className="text-xl font-semibold text-slate-900">Financeiro</h1>
-          <div className="mt-1 flex items-center gap-2 text-xs text-slate-600">
-            <button
-              type="button"
-              onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-              className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
-              aria-label="Mês anterior"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className="font-semibold text-slate-700">{monthYear}</span>
-            <button
-              type="button"
-              onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-              className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
-              aria-label="Próximo mês"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleExportar}
-            className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            <Download size={14} />
-            Exportar
-          </button>
-          <button
-            onClick={() => setResetModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full bg-white border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-          >
-            <Trash2 size={14} />
-            Resetar
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          {
-            label: 'Receitas',
-            value: formatCurrency(summary.total),
-            tone: 'text-emerald-700 bg-emerald-50',
-            icon: TrendingUp,
-            iconTone: 'text-emerald-600 bg-emerald-100',
-          },
-          {
-            label: 'Despesas',
-            value: formatCurrency(summary.expensesTotal),
-            tone: 'text-rose-700 bg-rose-50',
-            icon: TrendingDown,
-            iconTone: 'text-rose-600 bg-rose-100',
-          },
-          {
-            label: 'Saldo',
-            value: formatCurrency(summary.balance),
-            tone: 'text-blue-700 bg-blue-50',
-            icon: Wallet,
-            iconTone: 'text-blue-600 bg-blue-100',
-          },
-        ].map((item) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={item.label}
-              className={`rounded-[22px] border border-slate-100 px-3 py-3 shadow-[0_12px_24px_rgba(15,23,42,0.06)] ${item.tone}`}
-            >
-              <div className={`h-9 w-9 rounded-[14px] flex items-center justify-center ${item.iconTone}`}>
-                <Icon size={16} />
+    <>
+      <div className="bg-slate-50/70">
+        <div className={`${pageGutters} max-w-3xl mx-auto space-y-6 pb-10`}>
+          <div className="flex items-center justify-between pt-3">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center">
+                <Calendar size={16} />
               </div>
-              <p className="mt-2 text-[11px] font-semibold">{item.label}</p>
-              <p className="text-sm font-semibold">{item.value}</p>
+              <button
+                type="button"
+                onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                className="h-9 w-9 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-50"
+                aria-label="Mês anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="text-sm font-semibold text-slate-900">{monthYear}</span>
+              <button
+                type="button"
+                onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                className="h-9 w-9 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-50"
+                aria-label="Próximo mês"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
-          );
-        })}
+            <div className="flex-1 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setGoalOpen(true)}
+                className="h-10 px-3 rounded-full bg-white text-slate-700 shadow-sm border border-slate-100 text-xs font-semibold hover:bg-slate-50 flex items-center gap-2"
+              >
+                Meta
+                {goalValue && (
+                  <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[11px] font-bold">
+                    R$ {goalValue || '0'}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFilters((prev) => !prev)}
+                className="h-10 w-10 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-50"
+                aria-label="Filtros"
+              >
+                <Filter size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[2rem] bg-[#111827] text-white p-6 space-y-5 shadow-[0_28px_80px_-40px_rgba(17,24,39,0.9)] ring-1 ring-white/10">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/30 rounded-full mix-blend-overlay blur-[68px] translate-x-10 -translate-y-16" />
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-sky-500/25 rounded-full mix-blend-overlay blur-[60px] -translate-x-8 translate-y-10" />
+            <div className="relative flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/60">Saldo total</p>
+                <p className="text-4xl font-bold tracking-tight">
+                  {showBalance ? formatCurrency(summary.balance) : '•••••'}
+                </p>
+                <p className="text-sm text-white/60">
+                  Receitas {formatCurrency(summary.total)} • Despesas {formatCurrency(summary.expensesTotal)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBalance((prev) => !prev)}
+                className="h-10 w-10 rounded-full bg-white/10 backdrop-blur text-white flex items-center justify-center hover:bg-white/15 transition"
+                aria-label="Alternar visibilidade do saldo"
+              >
+                {showBalance ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+          <button
+                type="button"
+                onClick={() => setTypeFiltro('RECEITA')}
+                className={`flex items-center justify-between rounded-2xl px-4 py-4 shadow-sm transition ${
+                  typeFiltro === 'RECEITA'
+                    ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-200'
+                    : 'bg-white/10 text-emerald-200 hover:bg-white/15'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="h-10 w-10 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center">
+                    <ArrowUpRight size={18} />
+                  </span>
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-wide">Nova Receita</p>
+                    <p className="text-sm font-semibold">{formatCurrency(summary.total)}</p>
+                  </div>
+                </div>
+          </button>
+          <button
+                type="button"
+                onClick={() => {
+                  setTypeFiltro('DESPESA');
+                  setExpenseModalOpen(true);
+                }}
+                className={`flex items-center justify-between rounded-2xl px-4 py-4 shadow-sm transition ${
+                  typeFiltro === 'DESPESA'
+                    ? 'bg-rose-100 text-rose-800 ring-2 ring-rose-200'
+                    : 'bg-white/10 text-rose-200 hover:bg-white/15'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="h-10 w-10 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center">
+                    <ArrowDownRight size={18} />
+                  </span>
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-wide">Nova Despesa</p>
+                    <p className="text-sm font-semibold">{formatCurrency(summary.expensesTotal)}</p>
+                  </div>
+                </div>
+          </button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto">
+          {showFilters && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {[
           { key: 'todos', label: 'Todos' },
           { key: 'pago', label: 'Pago' },
@@ -296,7 +394,7 @@ const Financeiro = () => {
             onClick={() => setStatusFiltro(item.key as typeof statusFiltro)}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
               statusFiltro === item.key
-                ? 'bg-slate-900 text-white border-slate-900'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
                 : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
             }`}
           >
@@ -304,30 +402,116 @@ const Financeiro = () => {
           </button>
         ))}
       </div>
+          )}
 
+          <div className="rounded-3xl bg-white p-5 shadow-sm border border-white">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Fluxo de caixa</p>
+                <p className="text-xs text-slate-500">Saldo acumulado</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportar}
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-slate-800"
+                >
+                  <Download size={14} />
+                  Exportar
+                </button>
       <button
-        type="button"
-        onClick={() => setExpenseModalOpen(true)}
-        className="rounded-2xl border border-rose-300 px-4 py-3 text-left text-white shadow-[0_12px_24px_rgba(244,63,94,0.35)]"
-        style={{ background: 'linear-gradient(90deg, #ef4444 0%, #f43f5e 45%, #ec4899 100%)' }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
-              <DollarSign size={18} />
+                  onClick={() => setResetModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-white border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 size={14} />
+                  Resetar
+                </button>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold">Adicionar Despesa</p>
-              <p className="text-xs text-white/85">Carro, Helper, e outras despesas</p>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.04} />
+                    </linearGradient>
+                    <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="#eef2f6" strokeDasharray="6 6" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                    dy={8}
+                  />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 14,
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 8px 24px rgba(15,23,42,0.08)',
+                      fontSize: 12,
+                    }}
+                    formatter={(value: number) => formatCurrency(value)}
+                    labelFormatter={(label) => `Data: ${label}`}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#10b981"
+                    strokeWidth={3}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#10b981' }}
+                    fillOpacity={1}
+                    fill="url(#balanceGradient)"
+                    animationDuration={2000}
+                    animationEasing="ease-in-out"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="expenses"
+                    stroke="#f43f5e"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    dot={false}
+                    activeDot={{ r: 3.5, fill: '#f43f5e' }}
+                    fillOpacity={1}
+                    fill="url(#expenseGradient)"
+                    animationDuration={2000}
+                    animationEasing="ease-in-out"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
-          <span className="text-2xl leading-none">+</span>
-        </div>
-      </button>
 
       <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Transações</p>
+                <p className="text-xs text-slate-500">
+                  {orderedTransactions.length ? `${orderedTransactions.length} movimentações` : 'Nenhum registro'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpenseModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-slate-800"
+              >
+                <DollarSign size={14} />
+                Registrar despesa
+              </button>
+            </div>
+
         {orderedTransactions.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center">
+              <div className="rounded-3xl bg-white px-6 py-10 text-center shadow-sm border border-white">
             <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
               <DollarSign size={20} />
             </div>
@@ -339,43 +523,44 @@ const Financeiro = () => {
             {orderedTransactions.slice(0, 8).map((transaction) => {
               const isPaid = transaction.status === 'PAGO';
               const isExpense = transaction.type === 'DESPESA';
+                  const iconTone = isExpense
+                    ? 'bg-rose-100 text-rose-600'
+                    : 'bg-emerald-100 text-emerald-700';
+                  const Icon = isExpense ? ArrowDownRight : ArrowUpRight;
+                  const title = isExpense
+                    ? transaction.description || 'Despesa'
+                    : transaction.appointment?.customer?.name ?? 'Receita';
+                  const subtitle =
+                    transaction.description && !isExpense
+                      ? transaction.description
+                      : format(new Date(transaction.dueDate), 'dd/MM/yyyy');
+
               return (
                 <div
                   key={transaction.id}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 flex items-start justify-between gap-3"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-slate-900">
-                      {isExpense
-                        ? transaction.description || 'Despesa'
-                        : transaction.appointment?.customer?.name ?? 'Receita'}
-                    </p>
-                    <p className="text-xs text-slate-500">{format(new Date(transaction.dueDate), 'dd/MM/yyyy')}</p>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        isPaid ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                      }`}
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm border border-white"
                     >
-                      {isPaid ? 'Pago' : 'Pendente'}
+                      <div className="flex items-center gap-3">
+                        <span className={`h-11 w-11 rounded-full flex items-center justify-center ${iconTone}`}>
+                          <Icon size={18} />
                     </span>
-                    <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                      {isExpense ? 'Despesa' : 'Receita'}
-                    </span>
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-semibold text-slate-900">{title}</p>
+                          <p className="text-xs text-slate-500">
+                            {isExpense ? 'Despesa' : 'Receita'} • {subtitle}
+                          </p>
+                        </div>
                   </div>
-                  <div className="text-right space-y-2">
-                    <p className={`text-sm font-semibold ${isExpense ? 'text-rose-700' : 'text-slate-900'}`}>
-                      {isExpense ? '-' : ''}
+                      <div className="text-right space-y-1">
+                        <p className={`text-sm font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-700'}`}>
+                          {isExpense ? '-' : '+'}
                       {formatCurrency(transaction.amount)}
                     </p>
                     <button
                       onClick={() => handleStatusToggle(transaction)}
-                      className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[11px] font-semibold border transition ${
-                        isPaid
-                          ? 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                          : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
-                      }`}
-                    >
-                      {isPaid ? 'Marcar pendente' : 'Marcar pago'}
+                          className="text-[11px] font-semibold text-slate-500 hover:text-slate-800"
+                        >
+                          {isPaid ? 'Pago' : 'Marcar pago'}
                     </button>
                   </div>
                 </div>
@@ -383,6 +568,8 @@ const Financeiro = () => {
             })}
           </div>
         )}
+          </div>
+        </div>
       </div>
 
       {expenseModalOpen && (
@@ -494,7 +681,48 @@ const Financeiro = () => {
           </div>
         </div>
       )}
-    </div>
+
+      {goalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-slate-900">Meta mensal</p>
+              <p className="text-xs text-slate-600">Defina a meta de saldo para acompanhar no mês.</p>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Valor (R$)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={goalValue}
+                  onChange={(e) => setGoalValue(e.target.value)}
+                  placeholder="Ex: 5000"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setGoalOpen(false)}
+                className="px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={() => setGoalOpen(false)}
+                className="px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-semibold shadow-sm hover:bg-slate-800"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

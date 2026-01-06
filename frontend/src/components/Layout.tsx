@@ -1171,20 +1171,28 @@ const Layout = () => {
                           handleMobileNav(item);
                         }
                       }}
-                      className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+                      className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-all duration-200 active:scale-95 ${
                         isActive ? 'text-slate-900' : 'text-slate-400'
                       } ${isDynamicSlot && extraMenuOpen ? 'text-slate-900' : ''}`}
                     >
                       <div
-                        className={`h-9 w-9 rounded-full flex items-center justify-center transition ${
-                          isActive
-                            ? 'bg-slate-900 text-white shadow-sm'
+                        className={`h-9 w-9 rounded-full flex items-center justify-center transform transition-all duration-200 ${
+                          isActive || (isDynamicSlot && extraMenuOpen)
+                            ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 -translate-y-1'
                             : 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         <Icon size={18} />
                       </div>
-                      <span>{item.label}</span>
+                      <span
+                        className={`transition-all duration-200 ${
+                          isActive || (isDynamicSlot && extraMenuOpen)
+                            ? 'opacity-100 translate-y-0'
+                            : 'opacity-70 translate-y-0.5'
+                        }`}
+                      >
+                        {item.label}
+                      </span>
                     </button>
                   );
                 })}

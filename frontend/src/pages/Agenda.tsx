@@ -1,10 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ArrowRight, CalendarRange, CheckCircle2, TrendingUp, Users, XCircle } from 'lucide-react';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal, { type WeekDetails, type WeekSummary } from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { heroInner, heroOuter } from '../styles/uiTokens';
 import { pageGutters } from '../styles/uiTokens';
+
+const toneStyles: Record<
+  'amber' | 'blue' | 'red',
+  { lightBorder: string; lightIcon: string; darkIcon: string }
+> = {
+  amber: {
+    lightBorder: 'border-amber-100',
+    lightIcon: 'bg-amber-100 text-amber-800',
+    darkIcon: 'bg-amber-500/25 text-amber-50',
+  },
+  blue: {
+    lightBorder: 'border-blue-100',
+    lightIcon: 'bg-blue-100 text-blue-800',
+    darkIcon: 'bg-blue-500/25 text-blue-50',
+  },
+  red: {
+    lightBorder: 'border-red-100',
+    lightIcon: 'bg-red-100 text-red-800',
+    darkIcon: 'bg-red-500/25 text-red-50',
+  },
+};
 
 type AgendaView = 'week' | 'month';
 
@@ -41,9 +63,9 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   const summaryCards = useMemo(() => {
     if (!weekSummary) return [];
     return [
-      { label: 'A confirmar', value: weekSummary.confirmCount, badge: 'bg-amber-100 text-amber-700' },
-      { label: 'Agendado', value: weekSummary.scheduledCount, badge: 'bg-blue-100 text-blue-700' },
-      { label: 'Cancelado', value: weekSummary.canceledCount, badge: 'bg-red-100 text-red-700' },
+      { label: 'A confirmar', value: weekSummary.confirmCount, tone: 'amber', icon: AlertTriangle as const },
+      { label: 'Agendado', value: weekSummary.scheduledCount, tone: 'blue', icon: CheckCircle2 as const },
+      { label: 'Cancelado', value: weekSummary.canceledCount, tone: 'red', icon: XCircle as const },
     ];
   }, [weekSummary]);
   const weekRevenue = useMemo(() => {
@@ -94,33 +116,71 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
       </div>
 
       {!embedded && viewMode === 'week' && weekSummary && !weekBannerDismissed && (
-        <div className="rounded-[28px] border border-slate-200 bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-400 px-4 py-4 shadow-[0_16px_40px_rgba(59,130,246,0.25)] text-white overflow-hidden relative">
-          <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-white/20" />
-          <div className="absolute -right-2 -bottom-10 h-24 w-24 rounded-full bg-white/15" />
-          <div className="relative flex items-start justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => setWeekSummaryOpen(true)}
-              className="flex-1 text-left"
-            >
-              <p className="text-xs uppercase tracking-[0.32em] text-white/80 font-semibold">Resumo da semana</p>
-              <p className="text-lg font-semibold text-white mt-1">{weekSummary.rangeLabel}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
-                <span className="rounded-full bg-white/20 px-3 py-1">A confirmar: {weekSummary.confirmCount}</span>
-                <span className="rounded-full bg-white/20 px-3 py-1">Agendado: {weekSummary.scheduledCount}</span>
+        <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 px-5 py-5 shadow-[0_16px_40px_-26px_rgba(15,23,42,0.45)] backdrop-blur">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-indigo-50 via-emerald-50 to-white" />
+          <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-emerald-200/40 blur-2xl" />
+          <div className="pointer-events-none absolute -left-10 -bottom-12 h-36 w-36 rounded-full bg-indigo-200/40 blur-2xl" />
+          <div className="relative flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-800">
+                  <CalendarRange size={14} />
+                  Resumo da semana
+                </span>
+                <p className="text-lg font-bold text-slate-900 leading-tight">{weekSummary.rangeLabel}</p>
+                <p className="text-sm text-slate-600">
+                  Acompanhe confirmações, agendas e cancelamentos desta semana.
+                </p>
               </div>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white text-slate-900 px-4 py-1.5 text-xs font-semibold shadow-sm">
-                Abrir resumo
+              <button
+                type="button"
+                onClick={() => setWeekBannerDismissed(true)}
+                className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:border-slate-300 transition shadow-sm"
+                aria-label="Fechar banner"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              {summaryCards.map((item) => {
+                const Icon = item.icon;
+                const tone = toneStyles[item.tone];
+                return (
+                  <div
+                    key={item.label}
+                    className={`flex items-center gap-3 rounded-2xl border bg-white/90 px-3 py-3 shadow-sm ${tone.lightBorder}`}
+                  >
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone.lightIcon}`}>
+                      <Icon size={18} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] uppercase tracking-wide text-slate-500">{item.label}</p>
+                      <p className="text-lg font-semibold text-slate-900 leading-tight">{item.value}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setWeekSummaryOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.5)] hover:bg-slate-800 transition"
+              >
+                Ver detalhes
+                <ArrowRight size={16} />
+              </button>
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                <Users size={14} />
+                {weekSummary.uniqueCustomers} clientes únicos
               </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setWeekBannerDismissed(true)}
-              className="h-9 w-9 rounded-full border border-white/40 text-white/90 hover:text-white hover:border-white transition"
-              aria-label="Fechar banner"
-            >
-              ✕
-            </button>
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                <TrendingUp size={14} />
+                Total da semana: {weekSummary.totalCount}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -133,179 +193,260 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
           />
           <div className="relative bg-white rounded-t-[28px] animate-sheet-up max-h-[92vh] flex flex-col">
             <div className="px-5 pt-5">
-              <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.28em] text-slate-400 font-semibold">
-                      Resumo da semana
-                    </p>
-                    <p className="text-2xl font-semibold text-slate-900">{weekSummary.rangeLabel}</p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Priorize quem precisa confirmar o dia com o cliente.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setWeekSummaryOpen(false)}
-                    className="h-11 w-11 rounded-full border border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300 transition"
-                    aria-label="Fechar resumo"
-                  >
-                    ✕
-                  </button>
+              <div className="flex items-start justify-between gap-4 rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-700">
+                    <CalendarRange size={14} />
+                    Resumo da semana
+                  </span>
+                  <p className="text-2xl font-bold text-slate-900 leading-tight">{weekSummary.rangeLabel}</p>
+                  <p className="text-sm text-slate-500">
+                    Priorize quem precisa confirmar o dia com o cliente.
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setWeekSummaryOpen(false)}
+                  className="h-11 w-11 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:border-slate-300 transition shadow-sm"
+                  aria-label="Fechar resumo"
+                >
+                  ✕
+                </button>
               </div>
             </div>
 
             <div className="px-5 pb-10 pt-5 space-y-6 overflow-y-auto">
-              <div className="rounded-[28px] border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.25)]">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">Visão geral</p>
-                  <span className="text-xs text-white/70">Clientes únicos: {weekSummary.uniqueCustomers}</span>
+              <div className="rounded-[28px] border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-5 text-white shadow-[0_18px_40px_rgba(15,23,42,0.25)]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-white/80">Visão geral</p>
+                    <p className="text-xs text-white/70">Panorama rápido da sua semana.</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+                      <Users size={14} />
+                      {weekSummary.uniqueCustomers} clientes únicos
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/90 px-3 py-1 text-white shadow">
+                      <TrendingUp size={14} />
+                      Total: {weekSummary.totalCount}
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-white/90">
+                      <TrendingUp size={14} />
+                      {currencyFormatter.format(weekRevenue)}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {summaryCards.map((item) => (
-                    <div key={item.label} className="rounded-2xl bg-white/10 px-3 py-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-white/80">
-                          {item.label}
-                        </span>
-                        <span className="text-lg font-semibold text-white">{item.value}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm text-white/80">
-                  <span>Total da semana</span>
-                  <strong className="text-white">{weekSummary.totalCount}</strong>
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-amber-100 bg-amber-50/70 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-amber-900">A confirmar</p>
-                  <span className="text-xs text-amber-700">
-                    {weekDetails.confirm.length} cliente(s)
-                  </span>
-                </div>
-                <p className="text-xs text-amber-700 mt-1">
-                  Confirme o dia com o cliente para garantir o atendimento.
-                </p>
-                <div className="mt-3 space-y-2">
-                  {weekDetails.confirm.length === 0 && (
-                    <p className="text-xs text-amber-700">Nenhum cliente aguardando confirmação.</p>
-                  )}
-                  {weekDetails.confirm.map((item) => (
-                    <div key={item.id} className="rounded-2xl bg-white border border-amber-100 px-3 py-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
-                          <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {summaryCards.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.label} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${toneStyles[item.tone].darkIcon}`}
+                          >
+                            <Icon size={18} />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] uppercase tracking-wide text-white/70">{item.label}</p>
+                            <p className="text-xl font-semibold text-white leading-none">{item.value}</p>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setWeekSummaryOpen(false);
-                            window.dispatchEvent(
-                              new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
-                            );
-                          }}
-                          className="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
-                        >
-                          Confirmar dia
-                        </button>
                       </div>
-                      {item.notes && <p className="text-xs text-slate-500 mt-2 line-clamp-2">{item.notes}</p>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-blue-100 bg-blue-50/70 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-blue-900">Agendado</p>
-                  <span className="text-xs text-blue-700">{weekDetails.scheduled.length} cliente(s)</span>
-                </div>
-                <div className="mt-3 space-y-2">
-                  {weekDetails.scheduled.length === 0 && (
-                    <p className="text-xs text-blue-700">Nenhum agendamento confirmado.</p>
-                  )}
-                  {weekDetails.scheduled.map((item) => (
-                    <div key={item.id} className="rounded-2xl bg-white border border-blue-100 px-3 py-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
-                          <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
+              <div className="space-y-6">
+                <div className="rounded-[24px] border border-amber-100 bg-amber-50/80 p-4 shadow-sm space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                        <AlertTriangle size={18} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-amber-900">A confirmar</p>
+                        <p className="text-xs text-amber-700">
+                          Confirme o dia com o cliente para garantir o atendimento.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="rounded-full border border-amber-200 bg-white px-3 py-1 text-[11px] font-semibold text-amber-800">
+                      {weekDetails.confirm.length} cliente(s)
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {weekDetails.confirm.length === 0 && (
+                      <p className="text-xs text-amber-700">Nenhum cliente aguardando confirmação.</p>
+                    )}
+                    {weekDetails.confirm.map((item) => (
+                      <div key={item.id} className="rounded-2xl bg-white border border-amber-100 px-3 py-3 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
+                            <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
+                            {item.notes && <p className="text-xs text-slate-500 line-clamp-2">{item.notes}</p>}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWeekSummaryOpen(false);
+                                window.dispatchEvent(
+                                  new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
+                                );
+                              }}
+                              className="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
+                            >
+                              Confirmar dia
+                            </button>
+                            {item.price != null && (
+                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                                {currencyFormatter.format(item.price)}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setWeekSummaryOpen(false);
-                            window.dispatchEvent(
-                              new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
-                            );
-                          }}
-                          className="text-xs font-semibold text-blue-700 hover:text-blue-800"
-                        >
-                          Editar
-                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-blue-100 bg-blue-50/80 p-4 shadow-sm space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
+                        <CheckCircle2 size={18} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-blue-900">Agendado</p>
+                        <p className="text-xs text-blue-700">Tudo confirmado para estes clientes.</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-red-100 bg-red-50/70 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-red-900">Cancelado</p>
-                  <span className="text-xs text-red-700">{weekDetails.canceled.length} cliente(s)</span>
-                </div>
-                <div className="mt-3 space-y-2">
-                  {weekDetails.canceled.length === 0 && (
-                    <p className="text-xs text-red-700">Nenhum cancelamento nesta semana.</p>
-                  )}
-                  {weekDetails.canceled.map((item) => (
-                    <div key={item.id} className="rounded-2xl bg-white border border-red-100 px-3 py-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
-                          <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
+                    <span className="rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-semibold text-blue-800">
+                      {weekDetails.scheduled.length} cliente(s)
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {weekDetails.scheduled.length === 0 && (
+                      <p className="text-xs text-blue-700">Nenhum agendamento confirmado.</p>
+                    )}
+                    {weekDetails.scheduled.map((item) => (
+                      <div key={item.id} className="rounded-2xl bg-white border border-blue-100 px-3 py-3 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
+                            <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
+                            {item.notes && <p className="text-xs text-slate-500 line-clamp-2">{item.notes}</p>}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            {item.price != null && (
+                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                                {currencyFormatter.format(item.price)}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWeekSummaryOpen(false);
+                                window.dispatchEvent(
+                                  new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
+                                );
+                              }}
+                              className="text-xs font-semibold text-blue-700 hover:text-blue-800"
+                            >
+                              Editar
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setWeekSummaryOpen(false);
-                            window.dispatchEvent(
-                              new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
-                            );
-                          }}
-                          className="text-xs font-semibold text-red-700 hover:text-red-800"
-                        >
-                          Editar
-                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-red-100 bg-red-50/80 p-4 shadow-sm space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-800">
+                        <XCircle size={18} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-red-900">Cancelado</p>
+                        <p className="text-xs text-red-700">Observe para remarcar ou liberar agenda.</p>
                       </div>
                     </div>
-                  ))}
+                    <span className="rounded-full border border-red-200 bg-white px-3 py-1 text-[11px] font-semibold text-red-800">
+                      {weekDetails.canceled.length} cliente(s)
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {weekDetails.canceled.length === 0 && (
+                      <p className="text-xs text-red-700">Nenhum cancelamento nesta semana.</p>
+                    )}
+                    {weekDetails.canceled.map((item) => (
+                      <div key={item.id} className="rounded-2xl bg-white border border-red-100 px-3 py-3 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
+                            <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
+                            {item.notes && <p className="text-xs text-slate-500 line-clamp-2">{item.notes}</p>}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            {item.price != null && (
+                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                                {currencyFormatter.format(item.price)}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWeekSummaryOpen(false);
+                                window.dispatchEvent(
+                                  new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
+                                );
+                              }}
+                              className="text-xs font-semibold text-red-700 hover:text-red-800"
+                            >
+                              Editar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="rounded-[28px] border border-slate-200 bg-white px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900">IA analisando</p>
-                  <span className="text-xs text-slate-500">Estimativa semanal</span>
+                <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                        <TrendingUp size={16} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">IA analisando</p>
+                        <p className="text-xs text-slate-500">Estimativa semanal</p>
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-700">
+                      Baseado em agendados
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Com base nos agendamentos confirmados, você pode receber aproximadamente:
+                  </p>
+                  <div className="mt-3 rounded-2xl bg-slate-900 px-4 py-3 text-white text-lg font-semibold shadow">
+                    {currencyFormatter.format(weekRevenue)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-agent'))}
+                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800"
+                  >
+                    Abrir chat do assistente
+                  </button>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Com base nos agendamentos confirmados, você pode receber aproximadamente:
-                </p>
-                <div className="mt-3 rounded-2xl bg-slate-900 px-4 py-3 text-white text-lg font-semibold">
-                  {currencyFormatter.format(weekRevenue)}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new CustomEvent('open-agent'))}
-                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white"
-                >
-                  Abrir chat do assistente
-                </button>
               </div>
             </div>
           </div>

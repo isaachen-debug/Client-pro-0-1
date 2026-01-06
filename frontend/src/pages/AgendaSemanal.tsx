@@ -109,11 +109,13 @@ const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: str
     onClick={onClick}
     className="w-full rounded-3xl border border-purple-100 bg-white px-4 py-6 text-center shadow-sm"
   >
-    <div className="mx-auto mb-4 h-32 w-32 rounded-[28px] bg-purple-50 flex items-center justify-center relative overflow-hidden">
-      <div className="absolute -top-5 -right-6 h-16 w-16 rounded-full bg-purple-100" />
-      <div className="absolute bottom-3 left-4 h-8 w-8 rounded-full bg-white shadow-sm border border-purple-100" />
-      <div className="absolute top-6 left-5 h-6 w-6 rounded-full bg-purple-200" />
-      <div className="h-14 w-14 rounded-full bg-white border border-purple-200 shadow-sm" />
+    <div className="mx-auto mb-4 h-32 w-32 rounded-[28px] bg-white border border-purple-100 shadow-sm flex items-center justify-center overflow-hidden">
+      <img
+        src="/images/empty-state-cleanup.svg"
+        alt="Mascote vassoura limpando com nuvem e check"
+        loading="lazy"
+        className="h-full w-full object-contain"
+      />
     </div>
     <p className="text-sm font-semibold text-slate-700">{title}</p>
     <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
@@ -180,7 +182,6 @@ const AgendaSemanal = ({
   const [mentionMatches, setMentionMatches] = useState<Customer[]>([]);
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
-  const weekTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [weekSwipeDirection, setWeekSwipeDirection] = useState<'left' | 'right' | null>(null);
 
   const buildCreateForm = (baseDate: Date): CreateFormState => ({
@@ -726,6 +727,16 @@ const AgendaSemanal = ({
     CONCLUIDO: 'bg-blue-500',
     CANCELADO: 'bg-red-500',
   };
+
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   const statusSurfaces: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-amber-50 text-amber-700 border-amber-100',
     EM_ANDAMENTO: 'bg-blue-50 text-blue-700 border-blue-100',
@@ -1029,89 +1040,6 @@ const AgendaSemanal = ({
 
     return (
       <div className="space-y-4 px-4 md:px-5">
-        <div className="space-y-4">
-
-          {/* Grid de 7 dias */}
-          <div
-            className={`grid grid-cols-7 gap-2 rounded-xl bg-white border border-slate-200 px-2 py-3 sticky top-0 z-10 ${
-              weekSwipeDirection === 'left'
-                ? 'animate-week-swipe-left'
-                : weekSwipeDirection === 'right'
-                  ? 'animate-week-swipe-right'
-                  : ''
-            }`}
-            onTouchStart={(event) => {
-              const touch = event.touches[0];
-              weekTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
-            }}
-            onTouchEnd={(event) => {
-              const start = weekTouchStartRef.current;
-              weekTouchStartRef.current = null;
-              if (!start) return;
-              const touch = event.changedTouches[0];
-              const deltaX = touch.clientX - start.x;
-              const deltaY = touch.clientY - start.y;
-              if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)) {
-                return;
-              }
-              if (deltaX < 0) {
-                setWeekSwipeDirection('left');
-                setCurrentDate(addWeeks(currentDate, 1));
-                return;
-              }
-              setWeekSwipeDirection('right');
-              setCurrentDate(subWeeks(currentDate, 1));
-            }}
-          >
-            {weekDays.map((day, index) => {
-              const dayAppointments = getAgendamentosForDay(day, false);
-              const isSelected = isSameDay(day, selectedDay);
-              const today = isToday(day);
-              const weekdayLabels = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-              return (
-                <button
-                  key={day.toISOString()}
-                  type="button"
-                  onClick={() => setSelectedDay(day)}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl px-2 py-2 transition ${
-                    isSelected ? 'bg-primary-50' : 'hover:bg-slate-50'
-                  }`}
-                >
-                  <span className={`text-[10px] font-semibold uppercase ${isSelected ? 'text-primary-700' : 'text-slate-500'}`}>
-                    {weekdayLabels[index]}
-                  </span>
-                  <span
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
-                      isSelected
-                        ? 'bg-primary-600 text-white shadow-sm'
-                        : today
-                          ? 'bg-primary-50 text-primary-700 ring-2 ring-primary-200'
-                          : 'bg-white text-slate-900 border border-slate-200'
-                    }`}
-                  >
-                    {format(day, 'd')}
-                  </span>
-                  {dayAppointments.length > 0 ? (
-                    <div className="flex items-center gap-1">
-                      {dayAppointments.slice(0, 3).map((ag) => (
-                        <div
-                          key={ag.id}
-                          className={`w-2 h-2 rounded-full ${
-                            statusDotBg[ag.status] ?? 'bg-slate-400'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="h-2" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-        </div>
-
         {!hasAny ? (
           <EmptyState
             title="Ainda nao ha tarefas."
@@ -1157,29 +1085,54 @@ const AgendaSemanal = ({
                 onClick={openEmptyActions}
               />
             ) : (
-              <div className="space-y-2">
+          <div className="relative space-y-4">
                 {getAgendamentosForDay(selectedDay, false)
                   .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                  .map((ag) => {
+                  .map((ag, idx, arr) => {
                     const start = ag.startTime || 'Dia todo';
                     const end = ag.endTime ? ` · ${ag.endTime}` : '';
+                    const isLast = idx === arr.length - 1;
+                    const initials = getInitials(ag.customer.name);
                     return (
-                      <button
+                      <div
                         key={ag.id}
-                        type="button"
-                        onClick={() => openCustomerInfo(ag)}
-                        className={`w-full text-left rounded-xl px-3 py-2 shadow-sm border transition ${statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'} ${statusAccents[ag.status] ?? 'border-l-4 border-slate-200'} pl-4`}
+                        className="relative pl-6 animate-cascade"
+                        style={{ animationDelay: `${idx * 100}ms` }}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-medium text-slate-900 truncate">{ag.customer.name}</span>
-                          <span className="text-xs text-slate-600">{start}</span>
+                        <div className="absolute left-2 top-2 bottom-0 w-px bg-slate-200" aria-hidden />
+                        {isLast && <div className="absolute left-2 bottom-0 w-px h-2 bg-white" aria-hidden />}
+                        <div className="relative flex gap-3 pb-2">
+                          <div className="flex flex-col items-center w-12 shrink-0">
+                            <span className="text-xs font-semibold text-slate-600">{start}</span>
+                            <div className="relative">
+                              <div className="h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow" />
+                              {!isLast && <div className="absolute left-1/2 top-3 h-full w-px -translate-x-1/2 bg-slate-200" aria-hidden />}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openCustomerInfo(ag)}
+                            className={`w-full text-left rounded-2xl px-3 py-3 shadow-sm border transition-transform duration-150 active:scale-95 ${statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'} ${statusAccents[ag.status] ?? 'border-l-4 border-slate-200'} pl-4`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+                                {initials || '?'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-sm font-semibold text-slate-900 truncate">{ag.customer.name}</span>
+                                  <span className="text-[11px] font-semibold text-slate-500">{formatStatusLabel(ag.status)}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                  {start}
+                                  {end}
+                                </p>
+                                {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
+                              </div>
+                            </div>
+                          </button>
                         </div>
-                        {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
-                        <p className="text-xs text-slate-500 mt-1 truncate">
-                          {start}
-                          {end}
-                        </p>
-                      </button>
+                      </div>
                     );
                   })}
               </div>
@@ -1268,62 +1221,119 @@ const AgendaSemanal = ({
 
   const pageSections = (
     <>
-      <div className="space-y-4">
-        <div className="-mx-3 sm:-mx-4 md:-mx-8 -mt-3 bg-white border-b border-slate-200 px-3 sm:px-4 md:px-8 pt-2 pb-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full bg-slate-50 border border-slate-200 px-2 py-2">
+      <div className="space-y-3 -mt-2">
+        <div className="-mx-4 md:-mx-8 rounded-b-[28px] rounded-t-[0px] bg-white border border-slate-100 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 py-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-2 py-1 shadow-sm">
               <button
                 type="button"
                 onClick={handlePrevRange}
-                className="p-2 rounded-full text-slate-700 hover:bg-white"
+                className="h-9 w-9 rounded-full text-slate-600 hover:bg-slate-50 flex items-center justify-center"
                 aria-label="Anterior"
               >
                 <ChevronLeft size={16} />
               </button>
-              <div className="px-3 py-1.5 rounded-full bg-white text-sm font-semibold text-slate-900">
+              <div className="px-4 py-2 rounded-full bg-white text-sm font-semibold text-slate-800">
                 {viewLabel}
               </div>
               <button
                 type="button"
                 onClick={handleNextRange}
-                className="p-2 rounded-full text-slate-700 hover:bg-white"
+                className="h-9 w-9 rounded-full text-slate-600 hover:bg-slate-50 flex items-center justify-center"
                 aria-label="Próximo"
               >
                 <ChevronRight size={16} />
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const today = new Date();
-                  setCurrentDate(today);
-                  setSelectedDay(today);
-                }}
-                className="px-3 py-1.5 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700"
-              >
-                Hoje
-              </button>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-sm font-semibold text-slate-700">
-              {['today', 'week', 'month', 'chat'].map((mode) => (
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date();
+                setCurrentDate(today);
+                setSelectedDay(today);
+              }}
+              className="h-10 px-4 rounded-full bg-emerald-500 text-white text-sm font-semibold shadow-[0_14px_32px_-18px_rgba(16,185,129,0.75)] hover:bg-emerald-600 transition"
+            >
+              Hoje
+            </button>
+          </div>
+          <div className="flex items-center rounded-full bg-slate-50 border border-slate-200 p-1 gap-1">
+            {['today', 'week', 'month', 'chat'].map((mode) => {
+              const label = mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat';
+              const active = viewMode === mode;
+              return (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode as 'today' | 'week' | 'month' | 'chat')}
-                  className={`px-3 py-2 rounded-full transition ${
-                    viewMode === mode ? 'bg-primary-600 text-white' : 'bg-white text-slate-700'
+                  className={`flex-1 h-10 rounded-full text-sm font-semibold transition ${
+                    active
+                      ? 'bg-emerald-500 text-white shadow-[0_12px_30px_-18px_rgba(16,185,129,0.7)]'
+                      : 'text-slate-700 hover:bg-white'
                   }`}
                 >
-                  {mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat'}
+                  {label}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+          {viewMode === 'week' && (
+            <div className="grid grid-cols-7 gap-2 px-1 py-2">
+              {weekDays.map((day, index) => {
+                const dayAppointments = getAgendamentosForDay(day, false);
+                const isSelected = isSameDay(day, selectedDay);
+                const today = isToday(day);
+                const weekdayLabels = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+                return (
+                  <button
+                    key={day.toISOString()}
+                    type="button"
+                    onClick={() => setSelectedDay(day)}
+                    className="flex flex-col items-center gap-1.5 rounded-2xl px-1.5 py-2 transition hover:bg-slate-50"
+                  >
+                    <span className={`text-[10px] font-semibold uppercase ${isSelected ? 'text-emerald-600' : 'text-slate-500'}`}>
+                      {weekdayLabels[index]}
+                    </span>
+                    <span
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border ${
+                        isSelected
+                          ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                          : today
+                            ? 'bg-white text-emerald-600 border-emerald-200 ring-2 ring-emerald-100'
+                            : 'bg-white text-slate-900 border-slate-200'
+                      }`}
+                    >
+                      {format(day, 'd')}
+                    </span>
+                    {dayAppointments.length > 0 ? (
+                      <div className="flex items-center gap-1 h-2">
+                        {dayAppointments.slice(0, 3).map((ag) => (
+                          <div
+                            key={ag.id}
+                            className={`w-2 h-2 rounded-full ${
+                              statusDotBg[ag.status] ?? 'bg-slate-400'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="h-2" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {viewMode === 'month' && (
+            <div className="mt-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <AgendaMensal embedded />
+            </div>
+          )}
         </div>
       </div>
 
       <div className="space-y-6">
         {viewMode === 'today' && renderTodayTimeline()}
         {viewMode === 'week' && renderWeekSection()}
-        {viewMode === 'month' && <AgendaMensal embedded />}
         {viewMode === 'chat' && renderChatView()}
       </div>
 
@@ -1457,9 +1467,9 @@ const AgendaSemanal = ({
         </div>
       )}
       {customerInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="fixed inset-0 bg-black/50" onClick={() => setCustomerInfo(null)} />
-          <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl z-10 w-full max-w-md p-5 space-y-4">
+          <div className="relative w-full max-w-md rounded-t-[24px] md:rounded-3xl border border-slate-100 bg-white shadow-2xl z-10 p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="h-11 w-11 rounded-full bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
@@ -1468,6 +1478,7 @@ const AgendaSemanal = ({
                 <div>
                   <p className="text-xs uppercase tracking-wide text-slate-500">Cliente</p>
                   <p className="text-lg font-semibold text-slate-900">{customerInfo.name}</p>
+                  <p className="text-[11px] text-slate-400">09:00 • 3h</p>
                 </div>
               </div>
               <button
@@ -1484,7 +1495,7 @@ const AgendaSemanal = ({
               <button
                 type="button"
                 onClick={() => setShowEditOptions((prev) => !prev)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-white"
+                className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900 shadow-sm transition hover:border-slate-200"
               >
                 Editar informações
                 <span className="block text-xs font-normal text-slate-500">Endereço, horário e detalhes</span>
@@ -1498,7 +1509,7 @@ const AgendaSemanal = ({
                         navigate(`/app/clientes?customerId=${customerInfo.id}`);
                       }
                     }}
-                    className="w-full rounded-2xl border border-primary-200 bg-white px-4 py-3 text-left text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50"
+                    className="w-full rounded-2xl border border-primary-100 bg-white px-4 py-3 text-left text-sm font-semibold text-primary-700 shadow-sm transition hover:border-primary-200 hover:bg-primary-50/60"
                   >
                     Editar endereço (clientes)
                   </button>
@@ -1513,27 +1524,42 @@ const AgendaSemanal = ({
               )}
             </div>
 
-            <div className="grid gap-2 text-sm text-slate-700">
-              {customerInfo.phone && (
-                <a
-                  href={`tel:${customerInfo.phone}`}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-800 hover:border-primary-200 hover:bg-white transition"
-                >
-                  <Phone size={16} className="text-primary-600" />
-                  {customerInfo.phone}
-                </a>
-              )}
+            <div className="grid gap-3 text-sm text-slate-700">
+              <div className="grid grid-cols-2 gap-2">
+                {customerInfo.phone && (
+                  <a
+                    href={`sms:${customerInfo.phone}`}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3 font-semibold text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50/70 transition shadow-sm"
+                  >
+                    <Phone size={16} className="text-emerald-600" />
+                    SMS
+                  </a>
+                )}
+                {customerInfo.phone && (
+                  <a
+                    href={`https://api.whatsapp.com/send?phone=${customerInfo.phone}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3 font-semibold text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50/70 transition shadow-sm"
+                  >
+                    <Phone size={16} className="text-emerald-600" />
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+
               {customerInfo.email && (
                 <a
                   href={`mailto:${customerInfo.email}`}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-800 hover:border-primary-200 hover:bg-white transition"
+                  className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-white px-3 py-2 font-semibold text-slate-800 hover:border-primary-200 hover:bg-primary-50/50 transition"
                 >
                   <Mail size={16} className="text-primary-600" />
                   {customerInfo.email}
                 </a>
               )}
+
               {(customerInfo.address || mapLink) && (
-                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
                   <div className="flex items-start gap-2">
                     <MapPin size={16} className="text-primary-600 mt-0.5" />
                     <div className="space-y-1">

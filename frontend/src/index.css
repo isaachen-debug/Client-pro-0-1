@@ -243,6 +243,22 @@ button {
   animation: fabGlow 3.2s ease-in-out infinite;
 }
 
+@keyframes cascadeSlideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-cascade {
+  opacity: 0;
+  animation: cascadeSlideUpFade 0.35s ease forwards;
+}
+
 @keyframes sheetSlideUp {
   0% {
     opacity: 0;

@@ -597,83 +597,90 @@ const Clientes = () => {
 
   return (
     <div
-      className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-8`}
-      style={{
-        background: isDarkTheme
-          ? 'linear-gradient(180deg, #0b0f1a 0%, #111827 100%)'
-          : 'linear-gradient(180deg, #f3f4ff 0%, #eef2ff 100%)',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: '100% 420px',
-        backgroundPosition: 'top center',
-        borderRadius: '24px',
-      }}
+    className={`${pageGutters} max-w-full md:max-w-6xl mx-auto space-y-6`}
     >
-      <PageHeader
-        label="CLIENTES"
-        title="Clients"
-        subtitle="Base de clientes e contratos em um só lugar."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-          {[
-            { key: 'list', label: 'Clientes' },
-            { key: 'contracts', label: 'Contracts' },
-          ].map((tab) => {
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                    isActive ? 'bg-primary-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:text-primary-600'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-        }
-      />
-
-      {activeTab === 'list' ? (
-        <>
-      {/* Search */}
-          <div className="rounded-[24px] border border-slate-100 bg-white shadow-sm p-5 space-y-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar por nome, endereço ou contrato..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-              />
+      <div className="space-y-3 -mx-4 md:-mx-8">
+        <div className="rounded-b-[24px] bg-white border border-slate-100 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 py-4 space-y-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Clients</h1>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {statusFilterOptions.map((option) => {
-                const isActive = statusFilter === option.value;
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { key: 'list', label: 'Clientes' },
+                { key: 'contracts', label: 'Contracts' },
+              ].map((tab) => {
+                const isActive = activeTab === tab.key;
                 return (
                   <button
-                    key={option.value}
-                    onClick={() => setStatusFilter(option.value)}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition border ${
-                      isActive
-                        ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-primary-200 hover:text-primary-700'
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                      isActive ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    {option.label}
+                    {tab.label}
                   </button>
                 );
               })}
             </div>
-            {loading && !initialLoading && (
-              <div className="flex items-center text-sm text-gray-500">
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                <span>Atualizando lista...</span>
+          </div>
+        </div>
+      </div>
+
+      {activeTab === 'list' ? (
+        <>
+          {/* Header estilo agenda */}
+          <div className="space-y-3 -mx-4 md:-mx-8">
+            <div className="rounded-b-[24px] bg-white border border-slate-100 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 py-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Buscar cliente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={openCreateModal}
+                    className="inline-flex items-center gap-2 rounded-full bg-emerald-500 text-white px-4 py-2 text-sm font-semibold shadow-[0_12px_30px_-18px_rgba(16,185,129,0.7)] hover:bg-emerald-600"
+                  >
+                    <Plus size={16} />
+                    Novo cliente
+                  </button>
+                </div>
               </div>
-            )}
+              <div className="flex flex-wrap gap-2">
+                {statusFilterOptions.map((option) => {
+                  const isActive = statusFilter === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setStatusFilter(option.value)}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                        isActive
+                          ? 'bg-slate-900 text-white shadow-sm'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {loading && !initialLoading && (
+                <div className="flex items-center text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <span>Atualizando lista...</span>
+                </div>
+              )}
+            </div>
           </div>
 
       {/* List em cards simples */}
@@ -681,83 +688,72 @@ const Clientes = () => {
         {clientes.map((cliente) => (
           <div
             key={cliente.id}
-            className="rounded-2xl border border-slate-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 space-y-3"
+            className="rounded-3xl border border-slate-100 bg-white shadow-sm p-4 space-y-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 font-semibold flex items-center justify-center">
+                <div className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold flex items-center justify-center text-sm">
                   {cliente.name.substring(0, 2).toUpperCase()}
                 </div>
-                <div>
+                <div className="space-y-0.5">
                   <p className="text-base font-semibold text-slate-900">{cliente.name}</p>
-                  <p className="text-sm text-slate-600">{cliente.serviceType || 'Tipo de serviço não informado'}</p>
-                  {cliente.email ? <p className="text-xs text-slate-500">{cliente.email}</p> : null}
+                  <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 font-semibold text-slate-700">
+                      {STATUS_LABELS[cliente.status]}
+                    </span>
+                    <span className="text-slate-500">{cliente.serviceType || cliente.frequency || 'Frequência não informada'}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 line-clamp-1">{cliente.address || 'Sem endereço cadastrado'}</p>
                 </div>
               </div>
-              <span
-                className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${STATUS_BADGE_CLASSES[cliente.status]}`}
-              >
-                {STATUS_LABELS[cliente.status]}
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => openEditModal(cliente)}
+                  className="h-9 w-9 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+                  aria-label="Editar"
+                >
+                  <Edit3 size={16} />
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-700">
               <div className="flex items-center gap-2">
-                <Phone size={16} className="text-slate-400" />
-                <span>{cliente.phone || 'Sem telefone'}</span>
+                <Phone size={16} className="text-emerald-600" />
+                <a href={cliente.phone ? `tel:${cliente.phone}` : undefined} className="hover:underline">
+                  {cliente.phone || 'Sem telefone'}
+                </a>
               </div>
-              <div className="flex items-start gap-2">
-                <MapPin size={16} className="text-slate-400 mt-0.5" />
-                <span className="line-clamp-2">{cliente.address || 'Sem endereço cadastrado'}</span>
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => handleViewHistory(cliente)}
+                  className="rounded-full border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50"
+                >
+                  Histórico
+                </button>
+                {cliente.status !== 'PAUSED' && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(cliente, 'PAUSED')}
+                    disabled={statusActionId === cliente.id}
+                    className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1.5 text-amber-700 disabled:opacity-60"
+                  >
+                    {statusActionId === cliente.id ? 'Atualizando...' : 'Pausar'}
+                  </button>
+                )}
+                {cliente.status !== 'ACTIVE' && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(cliente, 'ACTIVE')}
+                    disabled={statusActionId === cliente.id}
+                    className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-emerald-700 disabled:opacity-60"
+                  >
+                    {statusActionId === cliente.id ? 'Atualizando...' : 'Reativar'}
+                  </button>
+                )}
               </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleViewHistory(cliente)}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Histórico
-              </button>
-              <button
-                type="button"
-                onClick={() => openEditModal(cliente)}
-                className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-100"
-              >
-                <Edit3 size={16} />
-                Editar
-              </button>
-              {cliente.status !== 'PAUSED' && (
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus(cliente, 'PAUSED')}
-                  disabled={statusActionId === cliente.id}
-                  className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 disabled:opacity-60"
-                >
-                  {statusActionId === cliente.id ? 'Atualizando...' : 'Pausar'}
-                </button>
-              )}
-              {cliente.status !== 'ACTIVE' && (
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus(cliente, 'ACTIVE')}
-                  disabled={statusActionId === cliente.id}
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 disabled:opacity-60"
-                >
-                  {statusActionId === cliente.id ? 'Atualizando...' : 'Reativar'}
-                </button>
-              )}
-              {cliente.status !== 'INACTIVE' && (
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus(cliente, 'INACTIVE')}
-                  disabled={statusActionId === cliente.id}
-                  className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60"
-                >
-                  {statusActionId === cliente.id ? 'Atualizando...' : 'Ex-cliente'}
-                </button>
-              )}
             </div>
           </div>
         ))}

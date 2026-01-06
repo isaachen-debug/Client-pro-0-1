@@ -346,9 +346,9 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
     CANCELADO: 'bg-red-500',
   };
 
-  const headerAndGrid = (
-    <>
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 space-y-3">
+  const headerCard = (
+    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 space-y-3">
+      {!embedded && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
@@ -374,120 +374,122 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
             >
               <ChevronRight size={18} />
             </button>
-        </div>
-        <button
-            onClick={handleToday}
-            className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-        >
-            Hoje
-        </button>
-        </div>
-        <div className="grid grid-cols-7 gap-1.5">
-          {monthGridDays.map((day) => {
-            const inMonth = isSameMonth(day, currentDate);
-            const isToday = isSameDay(day, new Date());
-            const isSelected = isSameDay(day, selectedDay);
-            const dayAppointments = getAgendamentosForDay(day).sort((a, b) =>
-              (a.startTime || '').localeCompare(b.startTime || ''),
-            );
-            const dots = dayAppointments.slice(0, 3);
-
-            return (
-              <button
-                key={day.getTime()}
-                type="button"
-                onClick={() => {
-                  setSelectedDay(day);
-                  onDateChange?.(day);
-                }}
-                className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${
-                  isSelected
-                    ? 'text-white bg-slate-900 shadow-sm'
-                    : isToday
-                      ? 'text-primary-700 bg-primary-50'
-                      : inMonth
-                        ? 'text-slate-800 bg-white'
-                        : 'text-slate-400 bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center justify-center w-full">
-                  <span
-                    className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${
-                      isSelected
-                        ? 'bg-slate-800 text-white'
-                        : isToday
-                          ? 'bg-primary-100 text-primary-700'
-                          : 'bg-transparent'
-                    }`}
-                  >
-                    {format(day, 'd')}
-                  </span>
-                </div>
-                <div className="flex items-center justify-center gap-1 mt-1">
-                  {dots.map((appt, idx) => (
-                    <span
-                      key={idx}
-                      className={`h-1.5 w-1.5 rounded-full ${statusDotBg[appt.status] ?? 'bg-slate-400'}`}
-                    />
-                  ))}
-                  {dayAppointments.length > 3 && (
-                    <span className="text-[10px] font-semibold text-slate-500">+{dayAppointments.length - 3}</span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-wide text-slate-500">Eventos do dia</p>
-            <p className="text-lg font-semibold text-slate-900">
-              {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
-            </p>
           </div>
           <button
-            onClick={() => handleAddAppointmentForDay(selectedDay)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-sm font-semibold transition"
+            onClick={handleToday}
+            className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
           >
-            <Plus size={16} />
-            Novo
+            Hoje
           </button>
         </div>
+      )}
+      <div className="grid grid-cols-7 gap-1.5 px-0">
+        {monthGridDays.map((day) => {
+          const inMonth = isSameMonth(day, currentDate);
+          const isToday = isSameDay(day, new Date());
+          const isSelected = isSameDay(day, selectedDay);
+          const dayAppointments = getAgendamentosForDay(day).sort((a, b) =>
+            (a.startTime || '').localeCompare(b.startTime || ''),
+          );
+          const dots = dayAppointments.slice(0, 3);
 
-        {getAgendamentosForDay(selectedDay).length === 0 ? (
-          <div className="text-sm text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-xl">
-            Nenhum evento
-                </div>
-        ) : (
-          <div className="space-y-3">
-            {getAgendamentosForDay(selectedDay)
-                      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                      .map((appointment) => (
-                        <button
-                  key={appointment.id}
-                          type="button"
-                          onClick={() => openEditModal(appointment)}
-                  className={`w-full text-left rounded-xl border bg-white px-4 py-3 shadow-sm ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200'} ${statusSurfaces[appointment.status] ?? 'border-slate-200'} pl-4`}
-                        >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</span>
-                    <span className="text-xs text-slate-700">
-                      {appointment.startTime}
-                      {appointment.endTime ? ` · ${appointment.endTime}` : ''}
-                    </span>
-                          </div>
-                  {appointment.notes ? (
-                    <p className="text-xs text-slate-600 mt-1 line-clamp-2">{appointment.notes}</p>
-                  ) : null}
-                        </button>
-                      ))}
-                </div>
-        )}
+          return (
+            <button
+              key={day.getTime()}
+              type="button"
+              onClick={() => {
+                setSelectedDay(day);
+                onDateChange?.(day);
+              }}
+              className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${
+                isSelected
+                  ? 'text-white bg-slate-900 shadow-sm'
+                  : isToday
+                    ? 'text-primary-700 bg-primary-50'
+                    : inMonth
+                      ? 'text-slate-800 bg-white'
+                      : 'text-slate-400 bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center justify-center w-full">
+                <span
+                  className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${
+                    isSelected
+                      ? 'bg-slate-800 text-white'
+                      : isToday
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'bg-transparent'
+                  }`}
+                >
+                  {format(day, 'd')}
+                </span>
+              </div>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                {dots.map((appt, idx) => (
+                  <span
+                    key={idx}
+                    className={`h-1.5 w-1.5 rounded-full ${statusDotBg[appt.status] ?? 'bg-slate-400'}`}
+                  />
+                ))}
+                {dayAppointments.length > 3 && (
+                  <span className="text-[10px] font-semibold text-slate-500">+{dayAppointments.length - 3}</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
-    </>
+    </div>
+  );
+
+  const eventsPanel = (
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-slate-500">Eventos do dia</p>
+          <p className="text-lg font-semibold text-slate-900">
+            {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
+          </p>
+        </div>
+        <button
+          onClick={() => handleAddAppointmentForDay(selectedDay)}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-sm font-semibold transition"
+        >
+          <Plus size={16} />
+          Novo
+        </button>
+      </div>
+
+      {getAgendamentosForDay(selectedDay).length === 0 ? (
+        <div className="text-sm text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-xl">
+          Nenhum evento
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {getAgendamentosForDay(selectedDay)
+            .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+            .map((appointment) => (
+              <button
+                key={appointment.id}
+                type="button"
+                onClick={() => openEditModal(appointment)}
+                className={`w-full text-left rounded-xl border bg-white px-4 py-3 shadow-sm ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200'} ${statusSurfaces[appointment.status] ?? 'border-slate-200'} pl-4`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</span>
+                  <span className="text-xs text-slate-700">
+                    {appointment.startTime}
+                    {appointment.endTime ? ` · ${appointment.endTime}` : ''}
+                  </span>
+                </div>
+                {appointment.notes ? (
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">{appointment.notes}</p>
+                ) : null}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
   );
 
   const modals = (
@@ -533,8 +535,9 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
   );
 
   const layoutContent = (
-    <div className="space-y-6">
-      {headerAndGrid}
+    <div className="space-y-4">
+      {headerCard}
+      {eventsPanel}
       {modals}
     </div>
   );
