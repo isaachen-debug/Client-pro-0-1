@@ -29,6 +29,7 @@ import {
   Wallet,
   Mic,
   Square,
+  Navigation,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -757,6 +758,13 @@ const Layout = () => {
       type: 'route' as const,
     },
     {
+      key: 'rotas',
+      label: 'Rotas',
+      path: '/app/rotas',
+      icon: Navigation,
+      type: 'route' as const,
+    },
+    {
       key: 'profile',
       label: 'Perfil',
       path: '/app/profile',
@@ -768,6 +776,7 @@ const Layout = () => {
     { key: 'dashboard', label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
     { key: 'start', label: 'Hoje', path: '/app/start', icon: PlayCircle },
     { key: 'explore', label: 'Explorar', path: '/app/explore', icon: Grid },
+    { key: 'rotas', label: 'Rotas', path: '/app/rotas', icon: Navigation },
     { key: 'empresa', label: 'Empresa', path: '/app/empresa', icon: Building2 },
     { key: 'team', label: 'Equipe', path: '/app/team', icon: Users },
     { key: 'settings', label: 'Configurações', path: '/app/settings', icon: SettingsIcon },

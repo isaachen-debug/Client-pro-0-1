@@ -123,71 +123,62 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
       </div>
 
       {!embedded && viewMode === 'week' && weekSummary && !weekBannerDismissed && (
-        <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 px-5 py-5 shadow-[0_16px_40px_-26px_rgba(15,23,42,0.45)] backdrop-blur">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-indigo-50 via-emerald-50 to-white" />
-          <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-emerald-200/40 blur-2xl" />
-          <div className="pointer-events-none absolute -left-10 -bottom-12 h-36 w-36 rounded-full bg-indigo-200/40 blur-2xl" />
-          <div className="relative flex flex-col gap-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-800">
-                  <CalendarRange size={14} />
-                  Resumo da semana
-                </span>
-                <p className="text-lg font-bold text-slate-900 leading-tight">{weekSummary.rangeLabel}</p>
-                <p className="text-sm text-slate-600">
-                  Acompanhe confirmações, agendas e cancelamentos desta semana.
-                </p>
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-700">
+                <CalendarRange size={14} />
+                Resumo
               </div>
-              <button
-                type="button"
-                onClick={() => setWeekBannerDismissed(true)}
-                className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:border-slate-300 transition shadow-sm"
-                aria-label="Fechar banner"
-              >
-                ✕
-              </button>
+              <p className="text-base font-semibold text-slate-900 leading-tight">{weekSummary.rangeLabel}</p>
+              <p className="text-xs text-slate-500">Status rápido dos agendamentos da semana.</p>
             </div>
+            <button
+              type="button"
+              onClick={() => setWeekBannerDismissed(true)}
+              className="h-8 w-8 rounded-full border border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300 transition"
+              aria-label="Fechar banner"
+            >
+              ✕
+            </button>
+          </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              {summaryCards.map((item) => {
-                const Icon = item.icon;
-                const tone = toneStyles[item.tone];
-                return (
-                  <div
-                    key={item.label}
-                    className={`flex items-center gap-3 rounded-2xl border bg-white/90 px-3 py-3 shadow-sm ${tone.lightBorder}`}
-                  >
-                    <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone.lightIcon}`}>
-                      <Icon size={18} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] uppercase tracking-wide text-slate-500">{item.label}</p>
-                      <p className="text-lg font-semibold text-slate-900 leading-tight">{item.value}</p>
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {summaryCards.map((item) => {
+              const Icon = item.icon;
+              const tone = toneStyles[item.tone];
+              return (
+                <div
+                  key={item.label}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${tone.lightBorder}`}
+                >
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full ${tone.lightIcon}`}>
+                    <Icon size={14} />
+                  </span>
+                  <span className="text-slate-700">{item.label}:</span>
+                  <span className="text-slate-900">{item.value}</span>
+                </div>
+              );
+            })}
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700">
+              <Users size={14} />
+              {weekSummary.uniqueCustomers} clientes únicos
             </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700">
+              <TrendingUp size={14} />
+              Total: {weekSummary.totalCount}
+            </div>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setWeekSummaryOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.5)] hover:bg-slate-800 transition"
-              >
-                Ver detalhes
-                <ArrowRight size={16} />
-              </button>
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                <Users size={14} />
-                {weekSummary.uniqueCustomers} clientes únicos
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                <TrendingUp size={14} />
-                Total da semana: {weekSummary.totalCount}
-              </div>
-            </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setWeekSummaryOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition"
+            >
+              Ver detalhes
+              <ArrowRight size={16} />
+            </button>
           </div>
         </div>
       )}

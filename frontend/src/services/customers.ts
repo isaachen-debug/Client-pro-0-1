@@ -6,11 +6,15 @@ export type CustomerPayload = {
   email?: string;
   phone?: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   serviceType?: string;
   status?: CustomerStatus;
   notes?: string;
   defaultPrice?: number;
 };
+
+export type CustomerUpdatePayload = Partial<CustomerPayload>;
 
 type CustomerListParams = {
   search?: string;
@@ -31,7 +35,7 @@ export const customersApi = {
     const { data } = await api.post<Customer>('/customers', payload);
     return data;
   },
-  async update(id: string, payload: CustomerPayload) {
+  async update(id: string, payload: CustomerUpdatePayload) {
     const { data } = await api.put<Customer>(`/customers/${id}`, payload);
     return data;
   },
@@ -43,4 +47,3 @@ export const customersApi = {
     await api.delete(`/customers/${id}`);
   },
 };
-

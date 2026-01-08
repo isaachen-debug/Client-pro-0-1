@@ -12,6 +12,7 @@ import Invoice from './pages/Invoice';
 import Explore from './pages/Explore';
 import HelperResources from './pages/HelperResources';
 import Apps from './pages/Apps';
+import RoutePlanner from './pages/Rotas';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
@@ -55,6 +56,7 @@ function App() {
               <Route path="agenda" element={<Agenda />} />
               <Route path="semana" element={<Agenda initialMode="week" />} />
               <Route path="financeiro" element={<Financeiro />} />
+              <Route path="rotas" element={<RoutePlanner />} />
               <Route path="plans" element={<Plans />} />
               <Route path="empresa" element={<Empresa />} />
               <Route path="profile" element={<Profile />} />
