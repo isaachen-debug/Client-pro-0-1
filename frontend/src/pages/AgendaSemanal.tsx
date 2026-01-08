@@ -87,6 +87,32 @@ const normalizeValue = (value: string) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
+const pad = (value: number) => value.toString().padStart(2, '0');
+
+const buildGoogleEventPayload = (appointment: Appointment) => {
+  const start = new Date(`${appointment.date}T${appointment.startTime}`);
+  const end = appointment.endTime
+    ? new Date(`${appointment.date}T${appointment.endTime}`)
+    : new Date(start.getTime() + 60 * 60 * 1000);
+  const customerName = appointment.customer?.name || 'Agendamento';
+  const serviceLabel = appointment.customer?.serviceType;
+  const summary = serviceLabel ? `${customerName} - ${serviceLabel}` : customerName;
+  const description = appointment.notes || undefined;
+  const location = appointment.customer?.address || undefined;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+  const formatDateTime = (value: Date) => format(value, "yyyy-MM-dd'T'HH:mm:ss");
+
+  return {
+    summary,
+    description,
+    start: formatDateTime(start),
+    end: formatDateTime(end),
+    timeZone,
+    location,
+    appointmentId: appointment.id,
+  };
+};
+
 const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: string; onClick?: () => void }) => (
   <button
     type="button"
@@ -112,7 +138,6 @@ const getInitialChat = (): AgentChatMessage[] => {
 };
 
 const AgendaSemanal = ({
-  embedded = false,
   quickCreateNonce = 0,
   onWeekSummaryChange,
   onWeekDetailsChange,
@@ -162,14 +187,16 @@ const AgendaSemanal = ({
   } | null>(null);
   const chatSyncRef = useRef('');
   const chatSyncSource = 'agenda-chat';
-  const [createYear] = useState(new Date().getFullYear());
+  const [createYear, setCreateYear] = useState(new Date().getFullYear());
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionMatches, setMentionMatches] = useState<Customer[]>([]);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [createForm, setCreateForm] = useState<CreateFormState>({
     customerId: '',
-    date: '',
+    month: format(new Date(), 'MM'),
+    day: format(new Date(), 'dd'),
     startTime: '',
+    endTime: '',
     price: '',
     helperFee: '',
     notes: '',
@@ -239,10 +266,33 @@ const AgendaSemanal = ({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!createForm.customerId || !createForm.date || !createForm.startTime || !createForm.price) {
+    if (
+      !createForm.customerId ||
+      !createForm.month ||
+      !createForm.day ||
+      !createForm.startTime ||
+      !createForm.price
+    ) {
       return;
     }
-    const selectedDate = parseDateFromInput(createForm.date);
+    const monthNumber = Number(createForm.month);
+    const dayNumber = Number(createForm.day);
+    const daysInMonth = new Date(createYear, monthNumber, 0).getDate();
+
+    if (
+      Number.isNaN(monthNumber) ||
+      Number.isNaN(dayNumber) ||
+      monthNumber < 1 ||
+      monthNumber > 12 ||
+      dayNumber < 1 ||
+      dayNumber > daysInMonth
+    ) {
+      setDateError('Selecione um dia válido para o mês escolhido.');
+      return;
+    }
+
+    const composedDate = `${createYear}-${pad(monthNumber)}-${pad(dayNumber)}`;
+    const selectedDate = parseDateFromInput(composedDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (selectedDate < today) {
@@ -254,8 +304,9 @@ const AgendaSemanal = ({
     try {
       const payload: any = {
         customerId: createForm.customerId,
-        date: formatDateToYMD(selectedDate),
+        date: composedDate,
         startTime: createForm.startTime,
+        endTime: createForm.endTime || undefined,
         price: Number(createForm.price),
         status: 'AGENDADO',
         notes: createForm.notes,
@@ -266,14 +317,16 @@ const AgendaSemanal = ({
       if (createForm.assignedHelperId) payload.assignedHelperId = createForm.assignedHelperId;
       const newAppt = await appointmentsApi.create(payload);
       if (googleConnected) {
-        await syncGoogleEvent(newAppt.id);
+        await syncGoogleEvent(buildGoogleEventPayload(newAppt));
       }
       setShowCreateModal(false);
       fetchAgendamentos();
       setCreateForm({
         customerId: '',
-        date: '',
+        month: format(new Date(), 'MM'),
+        day: format(new Date(), 'dd'),
         startTime: '',
+        endTime: '',
         price: '',
         helperFee: '',
         notes: '',
@@ -285,27 +338,6 @@ const AgendaSemanal = ({
       console.error('Erro ao criar:', error);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!editingAppointment) return;
-    if (
-      !window.confirm(
-        'Tem certeza que deseja excluir? Se for recorrente, apenas este será removido.',
-      )
-    )
-      return;
-    try {
-      await appointmentsApi.remove(editingAppointment.id);
-      if (googleConnected) {
-        // google sync handled by backend
-      }
-      setShowEditModal(false);
-      setEditingAppointment(null);
-      fetchAgendamentos();
-    } catch (error) {
-      console.error('Erro ao excluir:', error);
     }
   };
 
@@ -339,15 +371,30 @@ const AgendaSemanal = ({
       };
       if (editForm.helperFee) payload.helperFee = Number(editForm.helperFee);
       payload.assignedHelperId = editForm.assignedHelperId || null;
-      await appointmentsApi.update(editingAppointment.id, payload);
+      const updated = await appointmentsApi.update(editingAppointment.id, payload);
       if (googleConnected) {
-        await syncGoogleEvent(editingAppointment.id);
+        await syncGoogleEvent(buildGoogleEventPayload(updated));
       }
       setShowEditModal(false);
       setEditingAppointment(null);
       fetchAgendamentos();
     } catch (error) {
       console.error('Erro ao editar:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleQuickStatus = async (status: AppointmentStatus) => {
+    if (!editingAppointment) return;
+    setSaving(true);
+    try {
+      await appointmentsApi.changeStatus(editingAppointment.id, status);
+      setShowEditModal(false);
+      setEditingAppointment(null);
+      fetchAgendamentos();
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
     } finally {
       setSaving(false);
     }
@@ -375,11 +422,12 @@ const AgendaSemanal = ({
     preSelectedCustomer?: Customer,
     preSelectedHelper?: User,
   ) => {
+    const baseDate = preSelectedDate ?? new Date();
+    setCreateYear(baseDate.getFullYear());
     setCreateForm((prev) => ({
       ...prev,
-      date: preSelectedDate
-        ? format(preSelectedDate, 'yyyy-MM-dd')
-        : format(new Date(), 'yyyy-MM-dd'),
+      month: format(baseDate, 'MM'),
+      day: format(baseDate, 'dd'),
       customerId: preSelectedCustomer?.id || '',
       assignedHelperId: preSelectedHelper?.id || '',
       price: preSelectedCustomer?.defaultPrice?.toString() || '',
@@ -601,29 +649,34 @@ const AgendaSemanal = ({
     setChatPendingIntent(null);
 
     if (chatSyncRef.current !== JSON.stringify(newHistory)) {
-      emitAgentChatSync(chatSyncSource, newHistory);
+      emitAgentChatSync(newHistory, chatSyncSource);
       chatSyncRef.current = JSON.stringify(newHistory);
     }
 
     try {
-      const response = await agentIntentApi.parse(text); 
-      if (response.reply) {
-        const botMsg: AgentChatMessage = { role: 'assistant', text: response.reply };
+      const response = await agentIntentApi.parse(text, newHistory);
+      if (response.error) {
+        const errorMsg: AgentChatMessage = { role: 'assistant', text: response.error };
+        const updated = [...newHistory, errorMsg];
+        setChatMessages(updated);
+        saveAgentChatMessages(updated);
+        chatSyncRef.current = JSON.stringify(updated);
+        return;
+      }
+      const reply = response.answer || response.summary;
+      if (reply) {
+        const botMsg: AgentChatMessage = { role: 'assistant', text: reply };
         const updated = [...newHistory, botMsg];
         setChatMessages(updated);
         saveAgentChatMessages(updated);
         chatSyncRef.current = JSON.stringify(updated);
       }
-      if (response.intent && response.intent !== 'unknown') {
-        if (response.intent === 'create_appointment' || response.intent === 'reschedule' || response.intent === 'cancel') {
-          if (response.requiresConfirmation) {
-            setChatPendingIntent({
-              intent: response.intent,
-              summary: response.reply, 
-              payload: response.payload
-            });
-          }
-        }
+      if (response.requiresConfirmation && response.intent !== 'unknown') {
+        setChatPendingIntent({
+          intent: response.intent,
+          summary: response.summary || response.answer,
+          payload: response.payload,
+        });
       }
     } catch (error) {
       console.error('Erro no chat:', error);
@@ -1297,7 +1350,6 @@ const AgendaSemanal = ({
         {showEditModal && editingAppointment && (
           <EditModal
             appointment={editingAppointment}
-            customers={customers}
             helpers={helpers}
             formData={editForm}
             setFormData={setEditForm}
@@ -1307,8 +1359,9 @@ const AgendaSemanal = ({
               setEditingAppointment(null);
             }}
             onSubmit={handleEditSubmit}
-            onDelete={handleDelete}
-            onDeleteSeries={editingAppointment.isRecurring ? handleDeleteSeries : undefined}
+            onQuickStatus={handleQuickStatus}
+            canDeleteSeries={Boolean(editingAppointment.isRecurring || editingAppointment.recurrenceRule)}
+            onDeleteSeries={handleDeleteSeries}
           />
         )}
 
