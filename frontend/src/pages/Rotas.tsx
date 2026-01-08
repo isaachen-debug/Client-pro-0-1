@@ -70,6 +70,40 @@ const RoutePlanner = () => {
   const [fixingAddressId, setFixingAddressId] = useState<string | null>(null);
   
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
+  const [showRouteBuilder, setShowRouteBuilder] = useState(false);
+  const [builderSelectedIds, setBuilderSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleBuilderSelection = (id: string) => {
+    const next = new Set(builderSelectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setBuilderSelectedIds(next);
+  };
+
+  const handleAddSelectionToRoute = () => {
+    const selectedCustomers = customers.filter(c => builderSelectedIds.has(c.id));
+    const newStops = selectedCustomers.map(c => ({
+      id: c.id,
+      type: 'customer' as const,
+      lat: c.latitude!,
+      lng: c.longitude!,
+      label: c.name,
+      customer: c,
+    })).filter(s => s.lat && s.lng);
+    
+    setRouteStops(prev => {
+        // Filter out duplicates
+        const existingIds = new Set(prev.map(p => p.id));
+        const uniqueNew = newStops.filter(s => !existingIds.has(s.id));
+        return [...prev, ...uniqueNew];
+    });
+    setShowRouteBuilder(false);
+    setBuilderSelectedIds(new Set());
+    setIsSheetExpanded(false); // Minimizamos para ver o mapa
+  };
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const googleMap = useRef<any>(null);
@@ -297,7 +331,7 @@ const RoutePlanner = () => {
         ];
 
         googleMap.current = new window.google.maps.Map(mapRef.current, {
-          center: userLocation ?? { lat: -23.55052, lng: -46.633308 },
+          center: userLocation ?? { lat: 42.5251, lng: -71.7598 }, // Leominster, MA default
           zoom: 12,
           disableDefaultUI: true,
           clickableIcons: false,
@@ -581,7 +615,7 @@ const RoutePlanner = () => {
 
           {/* Botão ADD Rota (Roxo) */}
           <button
-            onClick={() => setSelectedDay(new Date())}
+            onClick={() => setShowRouteBuilder(true)}
             className="w-12 h-12 rounded-full bg-[#6366f1] text-white shadow-xl shadow-indigo-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
           >
             <Plus size={24} />
@@ -811,6 +845,92 @@ const RoutePlanner = () => {
           )}
         </div>
       </motion.div>
+      {/* 5. ROUTE BUILDER MODAL */}
+      {showRouteBuilder && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setShowRouteBuilder(false)} />
+          <div className={`relative w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col max-h-[90vh] animate-sheet-up sm:animate-scale-in overflow-hidden ${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+            <div className={`p-6 border-b flex items-center justify-between sticky top-0 z-10 ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'}`}>
+              <div>
+                <h3 className="text-xl font-bold">Planejar Rota</h3>
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Selecione os clientes para visitar.</p>
+              </div>
+              <button 
+                onClick={() => setShowRouteBuilder(false)}
+                className={`p-2 rounded-full transition ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+               <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl border transition-colors ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                  <Search size={18} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
+                  <input
+                    type="text"
+                    placeholder="Filtrar lista..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-transparent flex-1 outline-none text-sm font-medium placeholder:text-slate-500"
+                  />
+               </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2">
+                {visibleCustomers.length === 0 ? (
+                    <div className="py-10 text-center text-slate-500">
+                        <p>Nenhum cliente encontrado.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-1">
+                        {visibleCustomers.map(customer => {
+                            const isSelected = builderSelectedIds.has(customer.id);
+                            return (
+                                <button
+                                    key={customer.id}
+                                    onClick={() => toggleBuilderSelection(customer.id)}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                                        isSelected 
+                                            ? isDark ? 'bg-indigo-900/30 border-indigo-500/50' : 'bg-indigo-50 border-indigo-200'
+                                            : isDark ? 'bg-slate-800/50 border-transparent hover:bg-slate-800' : 'bg-white border-transparent hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                                        isSelected
+                                            ? 'bg-indigo-600 border-indigo-600'
+                                            : isDark ? 'border-slate-600' : 'border-slate-300'
+                                    }`}>
+                                        {isSelected && <Plus size={14} className="text-white rotate-45" />}
+                                    </div>
+                                    <div className="flex-1 text-left min-w-0">
+                                        <p className={`text-sm font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{customer.name}</p>
+                                        <p className={`text-xs truncate ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{customer.address || 'Sem endereço'}</p>
+                                    </div>
+                                    {customer.frequency && (
+                                        <span className={`text-[10px] px-2 py-1 rounded-full border ${isDark ? 'border-slate-700 bg-slate-800 text-slate-400' : 'border-slate-100 bg-slate-50 text-slate-500'}`}>
+                                            {customer.frequency}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            <div className={`p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'}`}>
+                <button
+                    onClick={handleAddSelectionToRoute}
+                    disabled={builderSelectedIds.size === 0}
+                    className="w-full py-3.5 rounded-2xl bg-[#6366f1] text-white font-bold shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:shadow-none hover:bg-indigo-600 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                    <MapPin size={18} />
+                    Adicionar {builderSelectedIds.size} à Rota
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

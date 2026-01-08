@@ -328,16 +328,16 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
   };
 
   const statusSurfaces: Record<AppointmentStatus, string> = {
-    AGENDADO: 'text-slate-800',
-    EM_ANDAMENTO: 'text-slate-800',
-    CONCLUIDO: 'text-slate-800',
-    CANCELADO: 'text-slate-800',
+    AGENDADO: 'text-slate-800 dark:text-slate-200',
+    EM_ANDAMENTO: 'text-slate-800 dark:text-slate-200',
+    CONCLUIDO: 'text-slate-800 dark:text-slate-200',
+    CANCELADO: 'text-slate-800 dark:text-slate-200',
   };
   const statusAccents: Record<AppointmentStatus, string> = {
-    AGENDADO: 'border-l-4 border-amber-300',
-    EM_ANDAMENTO: 'border-l-4 border-blue-300',
-    CONCLUIDO: 'border-l-4 border-blue-300',
-    CANCELADO: 'border-l-4 border-red-300',
+    AGENDADO: 'border-l-4 border-amber-300 dark:border-amber-600',
+    EM_ANDAMENTO: 'border-l-4 border-blue-300 dark:border-blue-600',
+    CONCLUIDO: 'border-l-4 border-blue-300 dark:border-blue-600',
+    CANCELADO: 'border-l-4 border-red-300 dark:border-red-600',
   };
   const statusDotBg: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-amber-400',
@@ -347,7 +347,7 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
   };
 
   const headerCard = (
-    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 space-y-3">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 space-y-3">
       {!embedded && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -357,11 +357,11 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                 setCurrentDate(next);
                 onDateChange?.(next);
               }}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400"
             >
               <ChevronLeft size={18} />
             </button>
-            <span className="text-lg font-semibold text-slate-900">
+            <span className="text-lg font-semibold text-slate-900 dark:text-white">
               {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
             </span>
             <button
@@ -370,14 +370,14 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                 setCurrentDate(next);
                 onDateChange?.(next);
               }}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400"
             >
               <ChevronRight size={18} />
             </button>
           </div>
           <button
             onClick={handleToday}
-            className="px-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+            className="px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
           >
             Hoje
           </button>
@@ -403,21 +403,21 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
               }}
               className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${
                 isSelected
-                  ? 'text-white bg-slate-900 shadow-sm'
+                  ? 'text-white bg-slate-900 dark:bg-emerald-600 shadow-sm'
                   : isToday
-                    ? 'text-primary-700 bg-primary-50'
+                    ? 'text-primary-700 dark:text-emerald-400 bg-primary-50 dark:bg-emerald-900/20'
                     : inMonth
-                      ? 'text-slate-800 bg-white'
-                      : 'text-slate-400 bg-slate-50'
+                      ? 'text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800/50'
+                      : 'text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900/50'
               }`}
             >
               <div className="flex items-center justify-center w-full">
                 <span
                   className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${
                     isSelected
-                      ? 'bg-slate-800 text-white'
+                      ? 'bg-slate-800 dark:bg-emerald-500 text-white'
                       : isToday
-                        ? 'bg-primary-100 text-primary-700'
+                        ? 'bg-primary-100 dark:bg-emerald-900/40 text-primary-700 dark:text-emerald-400'
                         : 'bg-transparent'
                   }`}
                 >
@@ -432,7 +432,7 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                   />
                 ))}
                 {dayAppointments.length > 3 && (
-                  <span className="text-[10px] font-semibold text-slate-500">+{dayAppointments.length - 3}</span>
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">+{dayAppointments.length - 3}</span>
                 )}
               </div>
             </button>
@@ -443,17 +443,17 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
   );
 
   const eventsPanel = (
-    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-3">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] uppercase tracking-wide text-slate-500">Eventos do dia</p>
-          <p className="text-lg font-semibold text-slate-900">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Eventos do dia</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">
             {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
           </p>
         </div>
         <button
           onClick={() => handleAddAppointmentForDay(selectedDay)}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-sm font-semibold transition"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-semibold transition"
         >
           <Plus size={16} />
           Novo
@@ -461,7 +461,7 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
       </div>
 
       {getAgendamentosForDay(selectedDay).length === 0 ? (
-        <div className="text-sm text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-xl">
+        <div className="text-sm text-slate-500 dark:text-slate-400 text-center py-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
           Nenhum evento
         </div>
       ) : (
@@ -473,17 +473,17 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                 key={appointment.id}
                 type="button"
                 onClick={() => openEditModal(appointment)}
-                className={`w-full text-left rounded-xl border bg-white px-4 py-3 shadow-sm ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200'} ${statusSurfaces[appointment.status] ?? 'border-slate-200'} pl-4`}
+                className={`w-full text-left rounded-xl border px-4 py-3 shadow-sm ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200 dark:border-slate-700'} ${statusSurfaces[appointment.status] ?? 'border-slate-200 dark:border-slate-700'} ${isSameDay(parseDateFromInput(appointment.date), selectedDay) ? 'bg-white dark:bg-slate-800' : 'bg-slate-50 dark:bg-slate-800/50'} pl-4`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</span>
-                  <span className="text-xs text-slate-700">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{appointment.customer.name}</span>
+                  <span className="text-xs text-slate-700 dark:text-slate-300">
                     {appointment.startTime}
                     {appointment.endTime ? ` · ${appointment.endTime}` : ''}
                   </span>
                 </div>
                 {appointment.notes ? (
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">{appointment.notes}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{appointment.notes}</p>
                 ) : null}
               </button>
             ))}
@@ -545,7 +545,7 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-emerald-500" />
       </div>
     );
   }

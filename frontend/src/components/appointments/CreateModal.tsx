@@ -50,15 +50,15 @@ const CreateModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="bg-white rounded-3xl shadow-[0_25px_60px_rgba(15,23,42,0.18)] z-50 w-full max-w-md max-h-[92vh] overflow-y-auto border border-slate-100">
+      <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_25px_60px_rgba(15,23,42,0.18)] z-50 w-full max-w-md max-h-[92vh] overflow-y-auto border border-slate-100 dark:border-slate-800">
         <div className="p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
             <button
               type="button"
               onClick={onClose}
-              className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-600 flex items-center justify-center"
+              className="h-9 w-9 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700"
               aria-label="Fechar"
             >
               ✕
@@ -66,7 +66,7 @@ const CreateModal = ({
           </div>
           <form className="space-y-3" onSubmit={onSubmit}>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Cliente *</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Cliente *</label>
               <div className="relative">
                 <input
                   required
@@ -94,18 +94,18 @@ const CreateModal = ({
                   onFocus={() => setCustomerMenuOpen(true)}
                   onBlur={() => setTimeout(() => setCustomerMenuOpen(false), 120)}
                   placeholder="Digite o nome do cliente"
-                  className="w-full px-9 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                  className="w-full px-9 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                 />
                 <button
                   type="button"
                   onClick={() => setCustomerMenuOpen((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full text-slate-500 hover:bg-slate-100 flex items-center justify-center"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center"
                   aria-label="Mostrar clientes"
                 >
                   <span className="text-xs">▾</span>
                 </button>
                 {customerMenuOpen && filteredCustomers.length > 0 && (
-                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-slate-200 bg-white shadow-lg">
+                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
                     {filteredCustomers.map((customer) => (
                       <button
                         key={customer.id}
@@ -125,7 +125,7 @@ const CreateModal = ({
                                 : '',
                           }));
                         }}
-                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                       >
                         {customer.name}
                       </button>
@@ -137,7 +137,7 @@ const CreateModal = ({
 
             {helpers.length > 0 && (
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Atribuir helper</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Atribuir helper</label>
                 <select
                   value={formData.assignedHelperId}
                   onChange={(e) =>
@@ -146,7 +146,7 @@ const CreateModal = ({
                       assignedHelperId: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                  className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white"
                 >
                   <option value="">Sem atribuição</option>
                   {helpers.map((helper) => (
@@ -155,14 +155,14 @@ const CreateModal = ({
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-gray-500 mt-1">
+                <p className="text-[11px] text-gray-500 dark:text-slate-500 mt-1">
                   Helpers enxergam apenas os serviços atribuídos no app dedicado.
                 </p>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Data *</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Data *</label>
               <input
                 type="date"
                 required
@@ -179,12 +179,12 @@ const CreateModal = ({
                     day: day ?? prev.day,
                   }));
                 }}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white"
               />
             </div>
-            {dateError && <p className="text-[11px] text-red-600">{dateError}</p>}
+            {dateError && <p className="text-[11px] text-red-600 dark:text-red-400">{dateError}</p>}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Início *</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Início *</label>
               <input
                 type="time"
                 required
@@ -195,12 +195,12 @@ const CreateModal = ({
                     startTime: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Valor cobrado (USD)</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Valor cobrado (USD)</label>
               <input
                 type="number"
                 step="0.01"
@@ -212,12 +212,12 @@ const CreateModal = ({
                     price: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white"
               />
-              <p className="text-[11px] text-gray-500 mt-1">Se vazio, usa o preço padrão do cliente (se houver).</p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-500 mt-1">Se vazio, usa o preço padrão do cliente (se houver).</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Pagamento da helper (USD)</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Pagamento da helper (USD)</label>
               <input
                 type="number"
                 step="0.01"
@@ -229,9 +229,9 @@ const CreateModal = ({
                     helperFee: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white"
               />
-              <p className="text-[11px] text-gray-500 mt-1">Valor combinado para repassar à helper.</p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-500 mt-1">Valor combinado para repassar à helper.</p>
             </div>
 
             <div>
@@ -248,12 +248,12 @@ const CreateModal = ({
                   }
                   className="rounded text-primary-600 focus:ring-primary-500"
                 />
-                <span className="text-xs font-semibold text-gray-700">Agendamento recorrente</span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">Agendamento recorrente</span>
               </label>
             </div>
             {formData.isRecurring && (
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Periodicidade</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Periodicidade</label>
                 <select
                   value={formData.recurrenceRule}
                   onChange={(e) =>
@@ -262,7 +262,7 @@ const CreateModal = ({
                       recurrenceRule: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                  className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white"
                 >
                   <option value="">Selecione</option>
                   <option value="FREQ=WEEKLY">Semanal</option>
@@ -274,7 +274,7 @@ const CreateModal = ({
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Observações</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Observações</label>
               <textarea
                 rows={3}
                 value={formData.notes}
@@ -284,7 +284,7 @@ const CreateModal = ({
                     notes: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 text-sm bg-white"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 dark:focus:ring-primary-900 text-sm bg-white dark:bg-slate-800 dark:text-white"
               />
             </div>
 
@@ -292,14 +292,14 @@ const CreateModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-3 py-2.5 border border-gray-200 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-full text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-full text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 bg-slate-900 dark:bg-emerald-600 text-white rounded-full text-sm font-semibold hover:bg-slate-800 dark:hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>

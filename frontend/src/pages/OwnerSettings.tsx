@@ -140,26 +140,28 @@ const OwnerSettings = () => {
 
   return (
     <div className={`${pageGutters} max-w-3xl mx-auto space-y-5 pb-6`}>
-      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100">
-          <p className="text-sm font-semibold text-slate-900">Preferências</p>
+      <section className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Preferências</p>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className={`divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-100'}`}>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <span className="h-9 w-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
                 <Bell size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Notificações</p>
-                <p className="text-xs text-slate-500">Receber alertas do sistema</p>
+                <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Notificações</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Receber alertas do sistema</p>
               </div>
             </div>
             <button
               type="button"
               onClick={handleToggleNotifications}
               className={`w-12 h-6 rounded-full border transition ${
-                notificationsEnabled ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+                notificationsEnabled 
+                  ? (isDark ? 'bg-emerald-600 border-emerald-600' : 'bg-slate-900 border-slate-900')
+                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
               } ${pushNotifications.status === 'loading' ? 'opacity-60' : ''}`}
               aria-pressed={notificationsEnabled}
             >
@@ -172,19 +174,21 @@ const OwnerSettings = () => {
           </div>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <span className="h-9 w-9 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
                 <Moon size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Modo Escuro</p>
-                <p className="text-xs text-slate-500">Tema da interface</p>
+                <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Modo Escuro</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Tema da interface</p>
               </div>
             </div>
             <button
               type="button"
               onClick={handleToggleTheme}
               className={`w-12 h-6 rounded-full border transition ${
-                isDark ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+                isDark 
+                  ? (isDark ? 'bg-purple-600 border-purple-600' : 'bg-slate-900 border-slate-900') 
+                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
               } ${savingTheme ? 'opacity-60' : ''}`}
               aria-pressed={isDark}
             >
@@ -197,19 +201,21 @@ const OwnerSettings = () => {
           </div>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <span className="h-9 w-9 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
                 <Volume2 size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Sons</p>
-                <p className="text-xs text-slate-500">Efeitos sonoros</p>
+                <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Sons</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Efeitos sonoros</p>
               </div>
             </div>
             <button
               type="button"
               onClick={handleToggleSounds}
               className={`w-12 h-6 rounded-full border transition ${
-                soundsEnabled ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-200'
+                soundsEnabled 
+                  ? (isDark ? 'bg-orange-600 border-orange-600' : 'bg-slate-900 border-slate-900')
+                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
               }`}
               aria-pressed={soundsEnabled}
             >
@@ -223,93 +229,95 @@ const OwnerSettings = () => {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100">
-          <p className="text-sm font-semibold text-slate-900">Conta</p>
+      <section className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Conta</p>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className={`divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-100'}`}>
           <button
             type="button"
             onClick={handleLanguageCycle}
-            className="w-full flex items-center justify-between px-4 py-3 text-left"
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:opacity-80 transition"
           >
             <div className="flex items-center gap-3">
-              <span className="h-9 w-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
                 <Languages size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Idioma</p>
-                <p className="text-xs text-slate-500">{languageLabel}</p>
+                <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Idioma</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{languageLabel}</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-slate-400" />
+            <ChevronRight size={16} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
           </button>
           <button
             type="button"
             onClick={() => alert('Configurações de privacidade em breve.')}
-            className="w-full flex items-center justify-between px-4 py-3 text-left"
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:opacity-80 transition"
           >
             <div className="flex items-center gap-3">
-              <span className="h-9 w-9 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-rose-900/30 text-rose-400' : 'bg-rose-50 text-rose-600'}`}>
                 <ShieldCheck size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Privacidade</p>
-                <p className="text-xs text-slate-500">Gerencie seus dados</p>
+                <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Privacidade</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gerencie seus dados</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-slate-400" />
+            <ChevronRight size={16} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
           </button>
           <button
             type="button"
             onClick={() => alert('Dispositivos conectados em breve.')}
-            className="w-full flex items-center justify-between px-4 py-3 text-left"
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:opacity-80 transition"
           >
             <div className="flex items-center gap-3">
-              <span className="h-9 w-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-indigo-900/30 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
                 <Smartphone size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Dispositivos</p>
-                <p className="text-xs text-slate-500">Gerenciar dispositivos conectados</p>
+                <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Dispositivos</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gerenciar dispositivos conectados</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-slate-400" />
+            <ChevronRight size={16} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
           </button>
         </div>
         {languageMessage && <p className="px-4 pb-3 text-xs text-emerald-600">{languageMessage}</p>}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100">
-          <p className="text-sm font-semibold text-slate-900">Atalhos rápidos</p>
+      <section className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Atalhos rápidos</p>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className={`divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-100'}`}>
           {QUICK_ACTIONS.map((item) => (
-            <Link key={item.title} to={item.to} className="flex items-center justify-between px-4 py-3">
+            <Link key={item.title} to={item.to} className="flex items-center justify-between px-4 py-3 hover:opacity-80 transition">
               <div>
-                <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                <p className="text-xs text-slate-500">{item.subtitle}</p>
+                <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{item.title}</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.subtitle}</p>
               </div>
-              <ChevronRight size={16} className="text-slate-400" />
+              <ChevronRight size={16} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-900">Integrações</p>
+      <section className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <div className={`px-4 py-3 border-b flex items-center justify-between ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Integrações</p>
           <span
             className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-              googleStatus.connected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+              googleStatus.connected 
+                ? (isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-50 text-emerald-700')
+                : (isDark ? 'bg-amber-900/30 text-amber-400' : 'bg-amber-50 text-amber-700')
             }`}
           >
             {googleStatus.connected ? 'Conectado' : 'Desconectado'}
           </span>
         </div>
         <div className="px-4 py-3 space-y-3">
-          <p className="text-xs text-slate-500">
+          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             Sincronize eventos do Google Calendar para manter sua agenda atualizada.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -317,7 +325,11 @@ const OwnerSettings = () => {
               type="button"
               onClick={handleGoogleConnect}
               disabled={googleLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-60"
+              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${
+                isDark 
+                  ? 'border-emerald-800 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30'
+                  : 'border-primary-100 bg-white text-primary-700 hover:bg-primary-50'
+              }`}
             >
               <Link2 size={16} />
               {googleLoading ? 'Redirecionando...' : googleStatus.connected ? 'Reconectar' : 'Conectar Google'}
@@ -326,13 +338,21 @@ const OwnerSettings = () => {
               type="button"
               onClick={handleGoogleImport}
               disabled={importingGoogle || !googleStatus.connected}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${
+                isDark
+                  ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                  : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
             >
               {importingGoogle ? 'Importando...' : 'Importar eventos'}
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                isDark
+                  ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                  : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
             >
               <Sparkles size={16} className="text-amber-500" />
               Ver integrações
@@ -342,32 +362,32 @@ const OwnerSettings = () => {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100">
-          <p className="text-sm font-semibold text-slate-900">Informações</p>
+      <section className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Informações</p>
         </div>
-        <div className="px-4 py-3 space-y-2 text-sm text-slate-700">
+        <div className={`px-4 py-3 space-y-2 text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           <div>
-            <p className="text-xs text-slate-400">Usuário</p>
+            <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Usuário</p>
             <p className="font-semibold">{user.name}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Email</p>
+            <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Email</p>
             <p className="font-semibold">{user.email}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Versão do App</p>
+            <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Versão do App</p>
             <p className="font-semibold">{APP_VERSION}</p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-rose-200 bg-white p-4 space-y-3">
+      <section className={`rounded-2xl border p-4 space-y-3 ${isDark ? 'border-rose-900/30 bg-slate-900' : 'border-rose-200 bg-white'}`}>
         <div className="flex items-center gap-2">
           <Trash2 size={16} className="text-rose-500" />
-          <p className="text-sm font-semibold text-slate-900">Excluir conta</p>
+          <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Excluir conta</p>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
           Digite seu e-mail para receber um link seguro de exclusão.
         </p>
         <input
@@ -375,7 +395,7 @@ const OwnerSettings = () => {
           value={deleteEmail}
           onChange={(e) => setDeleteEmail(e.target.value)}
           placeholder="seuemail@exemplo.com"
-          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-rose-100 focus:border-rose-300"
+          className={`w-full rounded-xl border px-3 py-2 text-sm focus:ring-2 focus:ring-rose-100 focus:border-rose-300 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'border-slate-200'}`}
         />
         <button
           type="button"
