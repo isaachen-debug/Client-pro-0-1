@@ -349,8 +349,6 @@ const Layout = () => {
     [quickCreateActions, quickCreateQuery],
   );
   const isDarkTheme = theme === 'dark';
-  // Atualizando para slate-900 (mais escuro e premium)
-  const sidebarSurfaceClass = isDarkTheme ? 'bg-slate-900 text-slate-100 border-r border-slate-800' : 'bg-white text-gray-900 border-r border-[#eadff8]';
 
   // Desktop: grupos para organizar navegação principal e extras (sem afetar o mobile).
   const primaryMenuItems = [

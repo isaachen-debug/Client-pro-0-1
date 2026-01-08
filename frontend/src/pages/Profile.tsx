@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, LogOut, Moon, Settings, HelpCircle, Crown, ChevronRight, User, Mail, Shield, CheckCircle2, X, Phone } from 'lucide-react';
+import { Bell, LogOut, Moon, Settings, HelpCircle, Crown, ChevronRight, Mail, CheckCircle2, X, Phone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import usePushNotifications from '../hooks/usePushNotifications';

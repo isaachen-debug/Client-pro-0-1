@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, CalendarRange, CheckCircle2, TrendingUp, Users, XCircle, Sparkles } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, TrendingUp, Users, XCircle, Sparkles } from 'lucide-react';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal, { type WeekDetails, type WeekSummary } from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
@@ -7,35 +7,7 @@ import { usePreferences } from '../contexts/PreferencesContext';
 import { heroInner, heroOuter } from '../styles/uiTokens';
 import { pageGutters } from '../styles/uiTokens';
 
-const toneStyles: Record<
-  'amber' | 'blue' | 'red',
-  { lightBorder: string; lightIcon: string; darkIcon: string }
-> = {
-  amber: {
-    lightBorder: 'border-amber-100 dark:border-amber-900/30',
-    lightIcon: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
-    darkIcon: 'bg-amber-500/25 text-amber-50',
-  },
-  blue: {
-    lightBorder: 'border-blue-100 dark:border-blue-900/30',
-    lightIcon: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
-    darkIcon: 'bg-blue-500/25 text-blue-50',
-  },
-  red: {
-    lightBorder: 'border-red-100 dark:border-red-900/30',
-    lightIcon: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
-    darkIcon: 'bg-red-500/25 text-red-50',
-  },
-};
-
 type AgendaView = 'week' | 'month';
-type ToneKey = keyof typeof toneStyles;
-type SummaryCard = {
-  label: string;
-  value: number;
-  tone: ToneKey;
-  icon: typeof AlertTriangle;
-};
 
 const STORAGE_KEY = 'clientepro:agenda-view-mode';
 
@@ -70,14 +42,6 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   const [weekDetails, setWeekDetails] = useState<WeekDetails | null>(null);
   const [weekSummaryOpen, setWeekSummaryOpen] = useState(false);
   const [weekBannerDismissed, setWeekBannerDismissed] = useState(false);
-  const summaryCards = useMemo<SummaryCard[]>(() => {
-    if (!weekSummary) return [];
-    return [
-      { label: 'Não confirmado', value: weekSummary.confirmCount, tone: 'amber', icon: AlertTriangle },
-      { label: 'Agendado', value: weekSummary.scheduledCount, tone: 'blue', icon: CheckCircle2 },
-      { label: 'Cancelado', value: weekSummary.canceledCount, tone: 'red', icon: XCircle },
-    ];
-  }, [weekSummary]);
   const weekRevenue = useMemo(() => {
     if (!weekDetails) return 0;
     return weekDetails.scheduled.reduce((total, item) => total + (item.price ?? 0), 0);

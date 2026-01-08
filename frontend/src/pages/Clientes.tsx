@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Search, Phone, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download, MoreHorizontal, MessageCircle, Archive, Trash2, MapPin, Tag } from 'lucide-react';
+import { Plus, Search, Phone, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download, MoreHorizontal, Archive, Trash2, MapPin, Tag } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { geoApi, type AddressSuggestion } from '../services/geo';
 import { useSearchParams } from 'react-router-dom';
@@ -22,7 +22,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
-import { SurfaceCard } from '../components/OwnerUI';
 import AudioQuickAdd from '../components/AudioQuickAdd';
 import { pageGutters } from '../styles/uiTokens';
 
@@ -112,13 +111,6 @@ const CONTRACT_STATUS_CLASSES: Record<ContractStatus, string> = {
   RECUSADO: 'bg-red-50 text-red-600 border border-red-100',
 };
 
-const CONTRACT_FILTER_OPTIONS: Array<{ label: string; value: 'ALL' | ContractStatus }> = [
-  { label: 'Todos', value: 'ALL' },
-  { label: 'Pendentes', value: 'PENDENTE' },
-  { label: 'Aceitos', value: 'ACEITO' },
-  { label: 'Recusados', value: 'RECUSADO' },
-];
-
 const Clientes = () => {
   const { theme } = usePreferences();
   const isDark = theme === 'dark';
@@ -133,7 +125,7 @@ const Clientes = () => {
   const [statusFilter, setStatusFilter] = useState<'ALL' | CustomerStatus>('ALL');
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [statusActionId, setStatusActionId] = useState<string | null>(null);
+  const [, setStatusActionId] = useState<string | null>(null);
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -150,19 +142,18 @@ const Clientes = () => {
   };
 
   const [formData, setFormData] = useState<CustomerFormState>(initialFormState);
-  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
-  const [addressLoading, setAddressLoading] = useState(false);
+  const [, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [, setAddressLoading] = useState(false);
   const addressRequestRef = useRef(0);
   const [activeTab, setActiveTab] = useState<'list' | 'contracts'>('list');
 
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [contractsLoading, setContractsLoading] = useState(false);
+  const [, setContractsLoading] = useState(false);
   const [savingContract, setSavingContract] = useState(false);
-  const [updatingContractId, setUpdatingContractId] = useState<string | null>(null);
-  const [copiedContractId, setCopiedContractId] = useState<string | null>(null);
+  const [, setCopiedContractId] = useState<string | null>(null);
   const [downloadingContractId, setDownloadingContractId] = useState<string | null>(null);
   const [wizardStatus, setWizardStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [contractStatusFilter, setContractStatusFilter] = useState<'ALL' | ContractStatus>('ALL');
+  const [contractStatusFilter] = useState<'ALL' | ContractStatus>('ALL');
   const [openedFromQuery, setOpenedFromQuery] = useState(false);
   const filteredContracts = useMemo(
     () =>
@@ -171,7 +162,6 @@ const Clientes = () => {
         : contracts.filter((contract) => contract.status === contractStatusFilter),
     [contractStatusFilter, contracts]
   );
-  const customersWithPortal = useMemo(() => clientes.filter((cliente) => !!cliente.email).length, [clientes]);
 
   useEffect(() => {
     return () => {};
@@ -278,18 +268,6 @@ const Clientes = () => {
     setShowModal(true);
   };
   useRegisterQuickAction('clients:add', openCreateModal);
-
-  const handleContractStatusChange = async (contractId: string, status: ContractStatus) => {
-    try {
-      setUpdatingContractId(contractId);
-      const updated = await teamApi.updateContractStatus(contractId, status);
-      setContracts((prev) => prev.map((contract) => (contract.id === contractId ? updated : contract)));
-    } catch (error) {
-      console.error('Erro ao atualizar contrato:', error);
-    } finally {
-      setUpdatingContractId(null);
-    }
-  };
 
   const formatContractDate = (value?: string | null) => {
     if (!value) return '-';
@@ -525,60 +503,6 @@ const Clientes = () => {
   const closeHistoryModal = () => {
     setHistoryCustomer(null);
     setHistoryAppointments([]);
-  };
-
-  const sanitizeCsvValue = (value: string | number | null | undefined) => {
-    if (value === null || value === undefined) {
-      return '';
-    }
-    return String(value).replace(/"/g, '""');
-  };
-
-  const handleExportClientes = () => {
-    // ... manter lógica
-    if (clientes.length === 0) {
-        alert('Não há clientes para exportar.');
-        return;
-      }
-  
-      const headers = [
-        'Nome',
-        'E-mail',
-        'Telefone',
-        'Endereço',
-        'Tipo de serviço',
-        'Status',
-        'Preço padrão',
-      ];
-  
-      const rows = clientes.map((cliente) => [
-        cliente.name ?? '',
-        cliente.email ?? '',
-        cliente.phone ?? '',
-        cliente.address ?? '',
-        cliente.serviceType ?? '',
-        STATUS_LABELS[cliente.status] ?? cliente.status ?? '',
-        cliente.defaultPrice !== undefined && cliente.defaultPrice !== null
-          ? cliente.defaultPrice.toFixed(2).replace('.', ',')
-          : '',
-      ]);
-  
-      const csvContent = [headers, ...rows]
-        .map((row) => row.map((value) => `"${sanitizeCsvValue(value)}"`).join(';'))
-        .join('\n');
-  
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute(
-        'download',
-        `clientes_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.csv`,
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
   };
 
   if (initialLoading) {

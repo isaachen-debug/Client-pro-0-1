@@ -10,13 +10,12 @@ import {
   Eye,
   EyeOff,
   Filter,
-  Calendar,
   Trash2,
   Wallet,
   TrendingUp,
   Target
 } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { transactionsApi } from '../services/api';
 import { pageGutters } from '../styles/uiTokens';
 import type { Transaction, TransactionStatus } from '../types';
@@ -36,11 +35,11 @@ const Financeiro = () => {
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseDescription, setExpenseDescription] = useState('');
   const [expenseLoading, setExpenseLoading] = useState(false);
-  const [expenseError, setExpenseError] = useState<string | null>(null);
+  const [, setExpenseError] = useState<string | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
+  const [, setResetError] = useState<string | null>(null);
   const [showBalance, setShowBalance] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
