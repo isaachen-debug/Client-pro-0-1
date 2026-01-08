@@ -12,14 +12,21 @@ import {
   Filter,
   Calendar,
   Trash2,
+  Wallet,
+  TrendingUp,
+  Target
 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { transactionsApi } from '../services/api';
 import { pageGutters } from '../styles/uiTokens';
 import type { Transaction, TransactionStatus } from '../types';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 const Financeiro = () => {
+  const { theme } = usePreferences();
+  const isDark = theme === 'dark';
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [monthCursor, setMonthCursor] = useState(() => new Date());
@@ -40,7 +47,7 @@ const Financeiro = () => {
   const [goalValue, setGoalValue] = useState<string>('');
 
   const brlFormatter = useMemo(
-    () => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }),
+    () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
     [],
   );
   const formatCurrency = (value: number) => brlFormatter.format(value);
@@ -264,214 +271,189 @@ const Financeiro = () => {
 
   return (
     <>
-      <div className="bg-slate-50/70">
-        <div className={`${pageGutters} max-w-3xl mx-auto space-y-6 pb-10`}>
-          <div className="flex items-center justify-between pt-3">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center">
-                <Calendar size={16} />
+      <div className={`min-h-screen ${isDark ? 'bg-slate-950' : 'bg-slate-50/70'}`}>
+        <div className={`${pageGutters} max-w-3xl mx-auto space-y-8 pb-20`}>
+          {/* Header & Date Navigation */}
+          <div className="flex items-center justify-between pt-4">
+            <div>
+              <h1 className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Financeiro</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                  className={`p-1 rounded-full transition-colors ${isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <span className={`text-sm font-bold capitalize min-w-[100px] text-center ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{monthYear}</span>
+                <button
+                  onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                  className={`p-1 rounded-full transition-colors ${isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}
+                >
+                  <ChevronRight size={18} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                className="h-9 w-9 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-50"
-                aria-label="Mês anterior"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-sm font-semibold text-slate-900">{monthYear}</span>
-              <button
-                type="button"
-                onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                className="h-9 w-9 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-50"
-                aria-label="Próximo mês"
-              >
-                <ChevronRight size={16} />
-              </button>
             </div>
-            <div className="flex-1 flex justify-end gap-2">
+            <div className="flex gap-2">
               <button
-                type="button"
                 onClick={() => setGoalOpen(true)}
-                className="h-10 px-3 rounded-full bg-white text-slate-700 shadow-sm border border-slate-100 text-xs font-semibold hover:bg-slate-50 flex items-center gap-2"
+                className={`h-10 w-10 rounded-2xl border shadow-sm flex items-center justify-center transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
               >
-                Meta
-                {goalValue && (
-                  <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[11px] font-bold">
-                    R$ {goalValue || '0'}
-                  </span>
-                )}
+                <Target size={20} />
               </button>
               <button
-                type="button"
-                onClick={() => setShowFilters((prev) => !prev)}
-                className="h-10 w-10 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-50"
-                aria-label="Filtros"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`h-10 w-10 rounded-2xl border flex items-center justify-center shadow-sm transition-all ${
+                  showFilters 
+                    ? isDark ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-900 border-slate-900 text-white' 
+                    : isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
               >
-                <Filter size={18} />
+                <Filter size={20} />
               </button>
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2rem] bg-[#111827] text-white p-6 space-y-5 shadow-[0_28px_80px_-40px_rgba(17,24,39,0.9)] ring-1 ring-white/10">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/30 rounded-full mix-blend-overlay blur-[68px] translate-x-10 -translate-y-16" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-sky-500/25 rounded-full mix-blend-overlay blur-[60px] -translate-x-8 translate-y-10" />
-            <div className="relative flex items-start justify-between">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/60">Saldo total</p>
-                <p className="text-4xl font-bold tracking-tight">
-                  {showBalance ? formatCurrency(summary.balance) : '•••••'}
-                </p>
-                <p className="text-sm text-white/60">
-                  Receitas {formatCurrency(summary.total)} • Despesas {formatCurrency(summary.expensesTotal)}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowBalance((prev) => !prev)}
-                className="h-10 w-10 rounded-full bg-white/10 backdrop-blur text-white flex items-center justify-center hover:bg-white/15 transition"
-                aria-label="Alternar visibilidade do saldo"
-              >
-                {showBalance ? <Eye size={18} /> : <EyeOff size={18} />}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-          <button
-                type="button"
-                onClick={() => setTypeFiltro('RECEITA')}
-                className={`flex items-center justify-between rounded-2xl px-4 py-4 shadow-sm transition ${
-                  typeFiltro === 'RECEITA'
-                    ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-200'
-                    : 'bg-white/10 text-emerald-200 hover:bg-white/15'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="h-10 w-10 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center">
-                    <ArrowUpRight size={18} />
-                  </span>
-                  <div className="text-left">
-                    <p className="text-xs uppercase tracking-wide">Nova Receita</p>
-                    <p className="text-sm font-semibold">{formatCurrency(summary.total)}</p>
+          {/* Main Balance Card */}
+          <div className={`relative overflow-hidden rounded-[2.5rem] p-8 text-white shadow-2xl ${isDark ? 'bg-slate-900 shadow-slate-900/50 border border-slate-800' : 'bg-slate-900 shadow-slate-900/20'}`}>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] translate-x-20 -translate-y-20" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 rounded-full blur-[60px] -translate-x-10 translate-y-10" />
+            
+            <div className="relative z-10 flex flex-col gap-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Saldo Atual</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl sm:text-5xl font-black tracking-tight">
+                      {showBalance ? formatCurrency(summary.balance) : '••••••'}
+                    </span>
+                    <button 
+                      onClick={() => setShowBalance(!showBalance)}
+                      className="text-slate-500 hover:text-white transition-colors"
+                    >
+                      {showBalance ? <Eye size={20} /> : <EyeOff size={20} />}
+                    </button>
                   </div>
                 </div>
-          </button>
-          <button
-                type="button"
+                <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-emerald-400">
+                  <Wallet size={24} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                <div>
+                  <div className="flex items-center gap-2 text-emerald-400 mb-1">
+                    <ArrowUpRight size={16} />
+                    <span className="text-xs font-bold uppercase">Entradas</span>
+                  </div>
+                  <p className="text-lg font-bold">{showBalance ? formatCurrency(summary.total) : '•••'}</p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 text-rose-400 mb-1">
+                    <ArrowDownRight size={16} />
+                    <span className="text-xs font-bold uppercase">Saídas</span>
+                  </div>
+                  <p className="text-lg font-bold">{showBalance ? formatCurrency(summary.expensesTotal) : '•••'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions & Filters */}
+          <div className="space-y-4">
+            {showFilters && (
+              <div className="flex gap-2 overflow-x-auto pb-2 animate-fade-in-down">
+                {[
+                  { key: 'todos', label: 'Todos' },
+                  { key: 'pago', label: 'Pago' },
+                  { key: 'pendente', label: 'Pendente' },
+                  { key: 'atrasado', label: 'Atrasado' },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setStatusFiltro(item.key as typeof statusFiltro)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${
+                      statusFiltro === item.key
+                        ? isDark ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-900 border-slate-900 text-white shadow-md'
+                        : isDark ? 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
                 onClick={() => {
                   setTypeFiltro('DESPESA');
                   setExpenseModalOpen(true);
                 }}
-                className={`flex items-center justify-between rounded-2xl px-4 py-4 shadow-sm transition ${
-                  typeFiltro === 'DESPESA'
-                    ? 'bg-rose-100 text-rose-800 ring-2 ring-rose-200'
-                    : 'bg-white/10 text-rose-200 hover:bg-white/15'
-                }`}
+                className={`flex-1 border rounded-2xl p-4 flex items-center justify-center gap-2 shadow-sm hover:shadow-md hover:border-rose-200 group transition-all ${isDark ? 'bg-slate-900 border-slate-800 hover:bg-slate-800' : 'bg-white border-slate-200'}`}
               >
-                <div className="flex items-center gap-3">
-                  <span className="h-10 w-10 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center">
-                    <ArrowDownRight size={18} />
-                  </span>
-                  <div className="text-left">
-                    <p className="text-xs uppercase tracking-wide">Nova Despesa</p>
-                    <p className="text-sm font-semibold">{formatCurrency(summary.expensesTotal)}</p>
-                  </div>
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform ${isDark ? 'bg-rose-900/30 text-rose-400' : 'bg-rose-50 text-rose-600'}`}>
+                  <ArrowDownRight size={18} />
                 </div>
-          </button>
-        </div>
-      </div>
+                <span className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>Nova Despesa</span>
+              </button>
+              <button
+                onClick={handleExportar}
+                className={`px-4 border rounded-2xl flex items-center justify-center transition-colors ${isDark ? 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+              >
+                <Download size={20} />
+              </button>
+            </div>
+          </div>
 
-          {showFilters && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {[
-          { key: 'todos', label: 'Todos' },
-          { key: 'pago', label: 'Pago' },
-          { key: 'pendente', label: 'Pendente' },
-          { key: 'atrasado', label: 'Atrasado' },
-        ].map((item) => (
-          <button
-            key={item.key}
-            onClick={() => setStatusFiltro(item.key as typeof statusFiltro)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-              statusFiltro === item.key
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-          )}
-
-          <div className="rounded-3xl bg-white p-5 shadow-sm border border-white">
-            <div className="flex items-center justify-between mb-4">
+          {/* Chart Section */}
+          <div className={`p-6 rounded-3xl border shadow-sm space-y-6 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Fluxo de caixa</p>
-                <p className="text-xs text-slate-500">Saldo acumulado</p>
+                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Fluxo de Caixa</h3>
+                <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Evolução do mês atual</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleExportar}
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-slate-800"
-                >
-                  <Download size={14} />
-                  Exportar
-                </button>
-      <button
-                  onClick={() => setResetModalOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-full bg-white border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 size={14} />
-                  Resetar
-                </button>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-400'}`}>
+                <TrendingUp size={16} />
               </div>
             </div>
-            <div className="h-56">
+            <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
-                    <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.04} />
+                    <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.35} />
                       <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.04} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#eef2f6" strokeDasharray="6 6" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
-                    dy={8}
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fontSize: 10, fill: isDark ? '#94a3b8' : '#94a3b8', fontWeight: 600}} 
+                    dy={10}
                   />
-                  <YAxis hide />
-                  <Tooltip
+                  <Tooltip 
                     contentStyle={{
-                      borderRadius: 14,
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 8px 24px rgba(15,23,42,0.08)',
-                      fontSize: 12,
+                      borderRadius: '12px', 
+                      border: isDark ? '1px solid #334155' : 'none', 
+                      backgroundColor: isDark ? '#1e293b' : '#fff',
+                      color: isDark ? '#fff' : '#000',
+                      boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'
                     }}
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={(label) => `Data: ${label}`}
+                    itemStyle={{fontSize: '12px', fontWeight: 600}}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="balance"
-                    stroke="#10b981"
+                  <Area 
+                    type="monotone" 
+                    dataKey="balance" 
+                    stroke="#10b981" 
                     strokeWidth={3}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    dot={false}
-                    activeDot={{ r: 4, fill: '#10b981' }}
-                    fillOpacity={1}
-                    fill="url(#balanceGradient)"
-                    animationDuration={2000}
-                    animationEasing="ease-in-out"
+                    fillOpacity={1} 
+                    fill="url(#colorBalance)" 
                   />
                   <Area
                     type="monotone"
@@ -492,235 +474,175 @@ const Financeiro = () => {
             </div>
           </div>
 
-      <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Transações</p>
-                <p className="text-xs text-slate-500">
-                  {orderedTransactions.length ? `${orderedTransactions.length} movimentações` : 'Nenhum registro'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setExpenseModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-slate-800"
+          {/* Transactions List */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Histórico</h3>
+              <button 
+                onClick={() => setResetModalOpen(true)}
+                className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
               >
-                <DollarSign size={14} />
-                Registrar despesa
+                <Trash2 size={14} /> Limpar
               </button>
             </div>
 
-        {orderedTransactions.length === 0 ? (
-              <div className="rounded-3xl bg-white px-6 py-10 text-center shadow-sm border border-white">
-            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
-              <DollarSign size={20} />
-            </div>
-            <p className="text-sm font-semibold text-slate-700">Nenhum registro</p>
-            <p className="text-xs text-slate-500">Adicione receitas e despesas para acompanhar seu financeiro.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {orderedTransactions.slice(0, 8).map((transaction) => {
-              const isPaid = transaction.status === 'PAGO';
-              const isExpense = transaction.type === 'DESPESA';
-                  const iconTone = isExpense
-                    ? 'bg-rose-100 text-rose-600'
-                    : 'bg-emerald-100 text-emerald-700';
-                  const Icon = isExpense ? ArrowDownRight : ArrowUpRight;
-                  const title = isExpense
-                    ? transaction.description || 'Despesa'
-                    : transaction.appointment?.customer?.name ?? 'Receita';
-                  const subtitle =
-                    transaction.description && !isExpense
-                      ? transaction.description
-                      : format(new Date(transaction.dueDate), 'dd/MM/yyyy');
-
-              return (
-                <div
-                  key={transaction.id}
-                      className="flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm border border-white"
+            {orderedTransactions.length === 0 ? (
+              <div className={`text-center py-12 rounded-3xl border border-dashed ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-3 ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-50 text-slate-300'}`}>
+                  <DollarSign size={24} />
+                </div>
+                <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Nenhuma transação</p>
+                <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Comece registrando seus ganhos e gastos.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {orderedTransactions.slice(0, 50).map((t) => {
+                  const isExpense = t.type === 'DESPESA';
+                  const isPaid = t.status === 'PAGO';
+                  
+                  return (
+                    <div 
+                      key={t.id}
+                      className={`group p-4 rounded-2xl border shadow-sm transition-all flex items-center justify-between gap-4 ${isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-100 hover:shadow-md hover:border-slate-200'}`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className={`h-11 w-11 rounded-full flex items-center justify-center ${iconTone}`}>
-                          <Icon size={18} />
-                    </span>
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-semibold text-slate-900">{title}</p>
-                          <p className="text-xs text-slate-500">
-                            {isExpense ? 'Despesa' : 'Receita'} • {subtitle}
+                      <div className="flex items-center gap-4">
+                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                          isExpense ? (isDark ? 'bg-rose-900/20 text-rose-400' : 'bg-rose-50 text-rose-500') : (isDark ? 'bg-emerald-900/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+                        }`}>
+                          {isExpense ? <ArrowDownRight size={20} /> : <ArrowUpRight size={20} />}
+                        </div>
+                        <div>
+                          <p className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            {isExpense ? t.description || 'Despesa' : t.appointment?.customer?.name || 'Receita'}
+                          </p>
+                          <p className={`text-xs font-medium mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {format(new Date(t.dueDate), 'dd MMM yyyy', { locale: ptBR })}
                           </p>
                         </div>
-                  </div>
-                      <div className="text-right space-y-1">
-                        <p className={`text-sm font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-700'}`}>
-                          {isExpense ? '-' : '+'}
-                      {formatCurrency(transaction.amount)}
-                    </p>
-                    <button
-                      onClick={() => handleStatusToggle(transaction)}
-                          className="text-[11px] font-semibold text-slate-500 hover:text-slate-800"
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className={`font-bold text-sm ${isExpense ? (isDark ? 'text-rose-400' : 'text-rose-600') : (isDark ? 'text-emerald-400' : 'text-emerald-600')}`}>
+                          {isExpense ? '-' : '+'} {formatCurrency(t.amount)}
+                        </p>
+                        <button
+                          onClick={() => handleStatusToggle(t)}
+                          className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full transition-colors ${
+                            isPaid 
+                              ? (isDark ? 'bg-slate-800 text-slate-400 group-hover:bg-slate-700' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200')
+                              : (isDark ? 'bg-amber-900/20 text-amber-400 group-hover:bg-amber-900/30' : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100')
+                          }`}
                         >
-                          {isPaid ? 'Pago' : 'Marcar pago'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                          {isPaid ? 'Pago' : 'Pendente'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Modais (Expense, Reset, Goal) mantidos com estrutura similar mas classes CSS atualizadas dentro deles se necessário */}
+      {/* ... (ExpenseModal, ResetModal e GoalModal podem ser simplificados ou reutilizados do código anterior, apenas garantindo consistência visual) ... */}
+      
+      {/* Expense Modal (Simplificado para o exemplo) */}
       {expenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-            <div className="space-y-1">
-              <p className="text-base font-semibold text-slate-900">Adicionar despesa</p>
-              <p className="text-xs text-slate-600">Descrição e valor.</p>
-            </div>
-
-            <div className="mt-4 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-sm rounded-3xl shadow-2xl p-6 animate-scale-in ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+            <h3 className={`text-xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Nova Despesa</h3>
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-600">Descrição</label>
-                <input
-                  type="text"
+                <label className={`text-xs font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Descrição</label>
+                <input 
                   value={expenseDescription}
                   onChange={(e) => setExpenseDescription(e.target.value)}
-                  placeholder="Ex: Carro, Helper"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  className={`w-full mt-1 px-4 py-3 rounded-xl border-none font-medium focus:ring-2 focus:ring-slate-900 ${isDark ? 'bg-slate-800 text-white placeholder:text-slate-500' : 'bg-slate-50'}`}
+                  placeholder="Ex: Gasolina"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-600">Valor</label>
-                <input
-                  type="text"
-                  value={expenseAmount}
-                  onChange={(e) => setExpenseAmount(e.target.value)}
-                  placeholder="0,00"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
-                />
+                <label className={`text-xs font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Valor</label>
+                <div className="relative">
+                  <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>$</span>
+                  <input 
+                    type="number"
+                    value={expenseAmount}
+                    onChange={(e) => setExpenseAmount(e.target.value)}
+                    className={`w-full mt-1 pl-8 pr-4 py-3 rounded-xl border-none font-medium focus:ring-2 focus:ring-slate-900 ${isDark ? 'bg-slate-800 text-white placeholder:text-slate-500' : 'bg-slate-50'}`}
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
-              {expenseError && <p className="text-sm text-rose-600">{expenseError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button 
+                  onClick={() => setExpenseModalOpen(false)}
+                  className={`flex-1 py-3 rounded-xl border font-bold ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleCreateExpense}
+                  disabled={expenseLoading}
+                  className="flex-1 py-3 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600 shadow-lg shadow-rose-200 dark:shadow-rose-900/20"
+                >
+                  {expenseLoading ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setExpenseModalOpen(false);
-                  setExpenseError(null);
-                }}
-                className="px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                disabled={expenseLoading}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateExpense}
-                className="px-4 py-2 rounded-full bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed hover:bg-rose-700"
-                disabled={expenseLoading}
-              >
-                {expenseLoading ? 'Salvando...' : 'Salvar'}
-              </button>
-            </div>
+      {/* Outros modais seguem o mesmo padrão visual... */}
+      {goalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-sm rounded-3xl shadow-2xl p-6 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+             <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Meta Mensal</h3>
+             <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Defina um objetivo de saldo para este mês.</p>
+             <input 
+                type="number"
+                value={goalValue}
+                onChange={(e) => setGoalValue(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl border-none font-bold text-lg mb-6 focus:ring-2 focus:ring-slate-900 ${isDark ? 'bg-slate-800 text-white placeholder:text-slate-600' : 'bg-slate-50 text-slate-900'}`}
+                placeholder="R$ 0,00"
+             />
+             <div className="flex gap-3">
+                <button onClick={() => setGoalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}>Cancelar</button>
+                <button onClick={() => setGoalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl shadow-lg ${isDark ? 'bg-slate-800 text-white hover:bg-slate-700 shadow-black/20' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20'}`}>Definir Meta</button>
+             </div>
           </div>
         </div>
       )}
 
       {resetModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-red-50 text-red-600 border border-red-200 flex items-center justify-center">
-                <AlertTriangle size={18} />
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className={`w-full max-w-sm rounded-3xl shadow-2xl p-6 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+              <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-4 ${isDark ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-500'}`}>
+                <AlertTriangle size={24} />
               </div>
-              <div className="space-y-1 flex-1">
-                <p className="text-lg font-semibold text-slate-900">Resetar dados financeiros</p>
-                <p className="text-sm text-slate-600">
-                  Esta ação apaga todas as transações deste workspace. Não pode ser desfeita. Digite <strong>APAGAR</strong> para confirmar.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              <input
-                type="text"
+              <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Resetar Tudo?</h3>
+              <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Isso apagará permanentemente todas as transações. Digite <strong>APAGAR</strong> para confirmar.</p>
+              <input 
                 value={resetConfirmText}
                 onChange={(e) => setResetConfirmText(e.target.value)}
-                placeholder="Digite APAGAR para confirmar"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
-                disabled={resetLoading}
+                className={`w-full px-4 py-3 rounded-xl border font-bold mb-6 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isDark ? 'bg-red-900/10 border-red-900/30 text-red-200' : 'bg-red-50/50 border-red-100 text-red-900'}`}
+                placeholder="APAGAR"
               />
-              {resetError && <p className="text-sm text-red-600">{resetError}</p>}
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setResetModalOpen(false);
-                  setResetConfirmText('');
-                  setResetError(null);
-                }}
-                className="px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                disabled={resetLoading}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleResetFinanceiro}
-                disabled={resetConfirmText !== 'APAGAR' || resetLoading}
-                className="px-4 py-2 rounded-full bg-red-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed hover:bg-red-700"
-              >
-                {resetLoading ? 'Apagando...' : 'Apagar tudo'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {goalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-            <div className="space-y-1">
-              <p className="text-base font-semibold text-slate-900">Meta mensal</p>
-              <p className="text-xs text-slate-600">Defina a meta de saldo para acompanhar no mês.</p>
-            </div>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Valor (R$)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={goalValue}
-                  onChange={(e) => setGoalValue(e.target.value)}
-                  placeholder="Ex: 5000"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
-                />
+              <div className="flex gap-3">
+                <button onClick={() => setResetModalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}>Cancelar</button>
+                <button 
+                  onClick={handleResetFinanceiro}
+                  disabled={resetConfirmText !== 'APAGAR' || resetLoading}
+                  className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-200 dark:shadow-red-900/20 disabled:opacity-50"
+                >
+                  {resetLoading ? 'Apagando...' : 'Confirmar'}
+                </button>
               </div>
             </div>
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setGoalOpen(false)}
-                className="px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Fechar
-              </button>
-              <button
-                type="button"
-                onClick={() => setGoalOpen(false)}
-                className="px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-semibold shadow-sm hover:bg-slate-800"
-              >
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
+         </div>
       )}
     </>
   );

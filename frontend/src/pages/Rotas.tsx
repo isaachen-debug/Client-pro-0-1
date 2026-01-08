@@ -19,6 +19,7 @@ import { appointmentsApi } from '../services/appointments';
 import { customersApi } from '../services/customers';
 import type { Appointment, Customer } from '../types';
 import { motion } from 'framer-motion';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 type RoutePoint = {
   id: string;
@@ -52,6 +53,8 @@ const statusColors: Record<string, string> = {
 };
 
 const RoutePlanner = () => {
+  const { theme } = usePreferences();
+  const isDark = theme === 'dark';
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
@@ -210,17 +213,100 @@ const RoutePlanner = () => {
         return;
       }
       try {
+        // Dark mode styles for Google Maps
+        const darkMapStyles = [
+          { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+          { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+          {
+            featureType: 'administrative.locality',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+          },
+          {
+            featureType: 'poi',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+          },
+          {
+            featureType: 'poi.park',
+            elementType: 'geometry',
+            stylers: [{ color: '#263c3f' }],
+          },
+          {
+            featureType: 'poi.park',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#6b9a76' }],
+          },
+          {
+            featureType: 'road',
+            elementType: 'geometry',
+            stylers: [{ color: '#38414e' }],
+          },
+          {
+            featureType: 'road',
+            elementType: 'geometry.stroke',
+            stylers: [{ color: '#212a37' }],
+          },
+          {
+            featureType: 'road',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#9ca5b3' }],
+          },
+          {
+            featureType: 'road.highway',
+            elementType: 'geometry',
+            stylers: [{ color: '#746855' }],
+          },
+          {
+            featureType: 'road.highway',
+            elementType: 'geometry.stroke',
+            stylers: [{ color: '#1f2835' }],
+          },
+          {
+            featureType: 'road.highway',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#f3d19c' }],
+          },
+          {
+            featureType: 'transit',
+            elementType: 'geometry',
+            stylers: [{ color: '#2f3948' }],
+          },
+          {
+            featureType: 'transit.station',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+          },
+          {
+            featureType: 'water',
+            elementType: 'geometry',
+            stylers: [{ color: '#17263c' }],
+          },
+          {
+            featureType: 'water',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#515c6d' }],
+          },
+          {
+            featureType: 'water',
+            elementType: 'labels.text.stroke',
+            stylers: [{ color: '#17263c' }],
+          },
+          { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] } // Keep POI labels off as requested
+        ];
+
         googleMap.current = new window.google.maps.Map(mapRef.current, {
           center: userLocation ?? { lat: -23.55052, lng: -46.633308 },
           zoom: 12,
           disableDefaultUI: true,
           clickableIcons: false,
-          styles: [{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }],
+          styles: isDark ? darkMapStyles : [{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }],
         });
         directionsRenderer.current = new window.google.maps.DirectionsRenderer({
           map: googleMap.current,
           suppressMarkers: true,
-          polylineOptions: { strokeColor: '#0f172a', strokeWeight: 5 },
+          polylineOptions: { strokeColor: isDark ? '#6366f1' : '#0f172a', strokeWeight: 5 },
         });
       } catch (e) {
         setMapMode('fallback');
@@ -239,7 +325,7 @@ const RoutePlanner = () => {
     } else {
       initMap();
     }
-  }, [userLocation]);
+  }, [userLocation, isDark]); // Re-init map if theme changes
 
   const renderMarkers = useCallback(() => {
     if (mapMode !== 'google' || !window.google || !googleMap.current) return;
@@ -256,7 +342,7 @@ const RoutePlanner = () => {
           ? { text: label, color: 'white', fontSize: '12px', fontWeight: 'bold' }
           : name ? {
               text: name,
-              color: '#000000', // Preto absoluto para contraste máximo
+              color: isDark ? '#ffffff' : '#000000', // Adapt label color
               fontSize: '14px', // Maior
               fontWeight: 'bold',
               className: 'map-marker-label'
@@ -266,7 +352,7 @@ const RoutePlanner = () => {
           path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
           fillColor: color,
           fillOpacity: 1,
-          strokeColor: 'white',
+          strokeColor: isDark ? '#1e293b' : 'white',
           strokeWeight: 2,
           scale: label ? 1.8 : 1.4,
           anchor: new window.google.maps.Point(12, 22),
@@ -297,13 +383,13 @@ const RoutePlanner = () => {
       const nextAppt = getNextAppointment(c.id);
       const tone = nextAppt ? statusColors[nextAppt.status] || statusColors.default : statusColors.default;
       // Passa o nome do cliente apenas se NÃO estiver na rota (se estiver, o número tem prioridade visual no pin)
-      createMarker(c, isInRoute ? '#0f172a' : tone, isInRoute ? `${idx + 1}` : undefined, isInRoute ? undefined : c.label);
+      createMarker(c, isInRoute ? (isDark ? '#f8fafc' : '#0f172a') : tone, isInRoute ? `${idx + 1}` : undefined, isInRoute ? undefined : c.label);
     });
 
     if (googleMap.current && customerPoints.length > 0) {
        // Opcional: auto-fit bounds
     }
-  }, [mapMode, customerPoints, routeStops, userLocation, getNextAppointment]);
+  }, [mapMode, customerPoints, routeStops, userLocation, getNextAppointment, isDark]);
 
   useEffect(() => {
     renderMarkers();
@@ -457,13 +543,13 @@ const RoutePlanner = () => {
 
   // --- RENDER ---
   return (
-    <div className="relative h-[calc(100vh-64px)] w-full overflow-hidden bg-slate-50">
+    <div className={`relative h-[calc(100vh-64px)] w-full overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
       {/* 1. MAPA FULL SCREEN (Fundo) */}
       <div className="absolute inset-0 z-0">
         {mapMode === 'google' ? (
           <div ref={mapRef} className="w-full h-full" />
         ) : (
-          <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center text-slate-400">
+          <div className={`w-full h-full flex flex-col items-center justify-center ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'}`}>
             <MapPin size={48} className="mb-2 opacity-20" />
             <p className="text-sm">Mapa indisponível</p>
           </div>
@@ -474,7 +560,7 @@ const RoutePlanner = () => {
       <div className="absolute top-4 left-4 right-4 z-20 flex flex-col gap-3 pointer-events-none">
         <div className="flex items-center justify-between pointer-events-auto">
           {/* Chips de Filtro */}
-          <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-white/20 p-1">
+          <div className={`flex items-center gap-1 rounded-full shadow-lg border p-1 backdrop-blur-md ${isDark ? 'bg-slate-900/90 border-slate-700' : 'bg-white/90 border-white/20'}`}>
             {(['today', 'week', 'all'] as const).map((t) => (
               <button
                 key={t}
@@ -484,8 +570,8 @@ const RoutePlanner = () => {
                 }}
                 className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
                   timeFilter === t
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? isDark ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-900 text-white shadow-sm'
+                    : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 {t === 'today' ? 'Hoje' : t === 'week' ? 'Semana' : 'Todos'}
@@ -503,8 +589,8 @@ const RoutePlanner = () => {
         </div>
 
         {/* Barra de Busca */}
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-1 flex items-center pointer-events-auto">
-          <div className="w-10 h-10 flex items-center justify-center text-slate-400">
+        <div className={`backdrop-blur-md rounded-2xl shadow-lg border p-1 flex items-center pointer-events-auto ${isDark ? 'bg-slate-900/90 border-slate-700' : 'bg-white/90 border-white/20'}`}>
+          <div className={`w-10 h-10 flex items-center justify-center ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
             <Search size={20} />
           </div>
           <input
@@ -512,10 +598,10 @@ const RoutePlanner = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar cliente, rua ou bairro..."
-            className="flex-1 bg-transparent h-10 text-sm outline-none text-slate-800 placeholder:text-slate-400"
+            className={`flex-1 bg-transparent h-10 text-sm outline-none placeholder:text-slate-400 ${isDark ? 'text-slate-100' : 'text-slate-800'}`}
           />
           {searchTerm && (
-            <button onClick={() => setSearchTerm('')} className="w-10 h-10 flex items-center justify-center text-slate-400">
+            <button onClick={() => setSearchTerm('')} className={`w-10 h-10 flex items-center justify-center ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
               <X size={16} />
             </button>
           )}
@@ -531,7 +617,7 @@ const RoutePlanner = () => {
               googleMap.current.setZoom(15);
             }
           }}
-          className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-95 transition-transform"
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform ${isDark ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-50'}`}
         >
           <Crosshair size={22} />
         </button>
@@ -539,7 +625,7 @@ const RoutePlanner = () => {
           onClick={() => {
              if (googleMap.current) googleMap.current.setZoom(12);
           }}
-          className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-95 transition-transform"
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform ${isDark ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-50'}`}
         >
           <Navigation size={22} />
         </button>
@@ -550,14 +636,14 @@ const RoutePlanner = () => {
         initial={{ y: '85%' }}
         animate={{ y: isSheetExpanded || selectedCustomer ? '0%' : '85%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-[32px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.2)] h-[80%] flex flex-col pointer-events-auto"
+        className={`absolute bottom-0 left-0 right-0 z-30 rounded-t-[32px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.2)] h-[80%] flex flex-col pointer-events-auto ${isDark ? 'bg-slate-900 border-t border-slate-800' : 'bg-white'}`}
       >
         {/* Puxador */}
         <div 
           className="w-full h-8 flex items-center justify-center cursor-grab active:cursor-grabbing"
           onClick={() => setIsSheetExpanded(!isSheetExpanded)}
         >
-          <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+          <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
         </div>
 
         {/* Conteúdo do Sheet */}
@@ -568,15 +654,15 @@ const RoutePlanner = () => {
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">{selectedCustomer.name}</h2>
-                  <div className="flex items-center gap-1.5 text-slate-500 mt-1">
+                  <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{selectedCustomer.name}</h2>
+                  <div className={`flex items-center gap-1.5 mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     <MapPin size={16} className="text-[#6366f1]" />
                     <span className="text-sm line-clamp-1">{selectedCustomer.address || 'Sem endereço'}</span>
                   </div>
                 </div>
                 <button 
                   onClick={closeCustomerCard}
-                  className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                 >
                   <X size={18} />
                 </button>
@@ -584,16 +670,16 @@ const RoutePlanner = () => {
 
               {/* Status / Próximas Visitas */}
               <div className="mb-6">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">PRÓXIMAS VISITAS</p>
+                <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>PRÓXIMAS VISITAS</p>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {(selectedCustomerAppointments.length > 0 ? selectedCustomerAppointments.slice(0, 3) : []).map(ap => (
-                    <div key={ap.id} className="min-w-[100px] bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center text-center">
-                      <span className="text-xs font-semibold text-slate-900 mb-1">{format(new Date(ap.date), 'dd MMM', { locale: ptBR })}</span>
-                      <span className="text-[10px] text-slate-500">{ap.startTime}</span>
+                    <div key={ap.id} className={`min-w-[100px] border rounded-xl p-3 flex flex-col items-center text-center ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                      <span className={`text-xs font-semibold mb-1 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{format(new Date(ap.date), 'dd MMM', { locale: ptBR })}</span>
+                      <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{ap.startTime}</span>
                     </div>
                   ))}
                   {selectedCustomerAppointments.length === 0 && (
-                    <p className="text-sm text-slate-400 italic">Nenhuma visita agendada.</p>
+                    <p className={`text-sm italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Nenhuma visita agendada.</p>
                   )}
                 </div>
               </div>
@@ -632,7 +718,7 @@ const RoutePlanner = () => {
                 <div className="grid grid-cols-2 gap-3">
                     <a 
                       href={`tel:${selectedCustomer.phone}`}
-                      className="h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-700 font-semibold hover:bg-slate-50"
+                      className={`h-12 border rounded-xl flex items-center justify-center gap-2 font-semibold transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                     >
                         <Phone size={18} /> Ligar
                     </a>
@@ -640,7 +726,7 @@ const RoutePlanner = () => {
                       href={`https://maps.google.com/?q=${encodeURIComponent(selectedCustomer.address || '')}`}
                       target="_blank" 
                       rel="noreferrer"
-                      className="h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-700 font-semibold hover:bg-slate-50"
+                      className={`h-12 border rounded-xl flex items-center justify-center gap-2 font-semibold transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                     >
                         <ExternalLink size={18} /> Navegar
                     </a>
@@ -651,28 +737,28 @@ const RoutePlanner = () => {
             // --- LISTA GERAL / ROTA ATUAL (Modo Imagem 2) ---
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-slate-900">Visão da Base</h2>
-                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
+                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Visão da Base</h2>
+                <span className={`text-xs font-medium px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
                   {visibleCustomers.length} clientes no mapa
                 </span>
               </div>
 
               {/* Resumo da Rota Ativa (se houver) */}
               {routeStops.length > 0 && (
-                <div className="mb-6 bg-[#f8fafc] border border-slate-200 rounded-2xl p-4">
+                <div className={`mb-6 border rounded-2xl p-4 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-[#f8fafc] border-slate-200'}`}>
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">ROTA ATIVA</span>
                         <div className="flex gap-2">
-                            <button onClick={() => setIsSheetExpanded(false)} className="text-slate-400 hover:text-indigo-600"><ChevronDown size={14}/></button>
-                            <button onClick={resetRoute} className="text-slate-400 hover:text-red-500"><RefreshCcw size={14}/></button>
+                            <button onClick={() => setIsSheetExpanded(false)} className={`hover:text-indigo-600 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}><ChevronDown size={14}/></button>
+                            <button onClick={resetRoute} className={`hover:text-red-500 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}><RefreshCcw size={14}/></button>
                         </div>
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-slate-900">{routeSummary?.duration || '--'}</span>
-                        <span className="text-sm text-slate-500 font-medium">{routeSummary?.distance}</span>
+                        <span className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{routeSummary?.duration || '--'}</span>
+                        <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{routeSummary?.distance}</span>
                     </div>
-                    <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
-                        <span className="bg-white border px-2 py-1 rounded-lg">{routeStops.length} Paradas</span>
+                    <div className={`flex items-center gap-2 mt-3 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <span className={`border px-2 py-1 rounded-lg ${isDark ? 'bg-slate-700 border-slate-600' : 'bg-white'}`}>{routeStops.length} Paradas</span>
                         <span>•</span>
                         <span>Otimizado por distância</span>
                     </div>
@@ -680,12 +766,12 @@ const RoutePlanner = () => {
                     {/* Lista de Stops (Reordenável) */}
                     <div className="mt-4 space-y-2 max-h-[150px] overflow-y-auto">
                         {routeStops.map((stop, idx) => (
-                            <div key={stop.id} className="flex items-center justify-between text-sm bg-white p-2 rounded-lg border border-slate-100">
+                            <div key={stop.id} className={`flex items-center justify-between text-sm p-2 rounded-lg border ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-100'}`}>
                                 <div className="flex items-center gap-2">
-                                    <span className="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center">{idx + 1}</span>
+                                    <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center ${isDark ? 'bg-slate-700 text-white' : 'bg-slate-900 text-white'}`}>{idx + 1}</span>
                                     <span className="truncate max-w-[150px]">{stop.label}</span>
                                 </div>
-                                <button onClick={() => removeStop(stop.id)} className="text-slate-400 hover:text-red-500"><X size={14}/></button>
+                                <button onClick={() => removeStop(stop.id)} className={`hover:text-red-500 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}><X size={14}/></button>
                             </div>
                         ))}
                     </div>
@@ -704,16 +790,16 @@ const RoutePlanner = () => {
                             <button
                                 key={customer.id}
                                 onClick={() => openCustomerCard(customer)}
-                                className="w-full bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center gap-4 transition-colors text-left group"
+                                className={`w-full border rounded-2xl p-3 flex items-center gap-4 transition-colors text-left group ${isDark ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white hover:bg-slate-50 border-slate-100'}`}
                             >
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isInRoute ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isInRoute ? 'bg-indigo-600 text-white' : isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                                     {isInRoute ? routeStops.findIndex(r => r.id === customer.id) + 1 : initials}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-slate-900 truncate">{customer.name}</h3>
-                                    <p className="text-xs text-slate-500 truncate">{customer.address || 'Sem endereço'}</p>
+                                    <h3 className={`font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{customer.name}</h3>
+                                    <p className={`text-xs truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{customer.address || 'Sem endereço'}</p>
                                 </div>
-                                <div className="text-xs font-medium text-slate-400 group-hover:text-indigo-600">
+                                <div className={`text-xs font-medium group-hover:text-indigo-600 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                                     {customer.frequency || 'Mensal'}
                                 </div>
                             </button>

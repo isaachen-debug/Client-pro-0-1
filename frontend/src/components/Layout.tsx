@@ -48,7 +48,7 @@ import { agentAudioApi } from '../services/agentAudio';
 import { emitAgentChatSync, loadAgentChatMessages, saveAgentChatMessages } from '../utils/agentChat';
 
 const LogoMark = () => (
-  <div className="w-12 h-12 rounded-3xl bg-white border border-gray-100 shadow-lg shadow-emerald-300/30 flex items-center justify-center overflow-hidden">
+  <div className="w-12 h-12 rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-lg shadow-emerald-300/30 dark:shadow-none flex items-center justify-center overflow-hidden transition-colors">
     <img src={brandLogo} alt="Clean Up logo" className="w-10 h-10 object-contain" />
   </div>
 );
@@ -57,8 +57,8 @@ const BrandBlock = ({ subtitle, className = '' }: { subtitle: string; className?
   <div className={`flex items-center space-x-2 ${className}`}>
     <LogoMark />
     <div>
-      <h1 className="text-lg font-bold text-gray-900 tracking-tight">Clean Up</h1>
-      <p className="text-xs text-gray-500">{subtitle}</p>
+      <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight transition-colors">Clean Up</h1>
+      <p className="text-xs text-gray-500 dark:text-slate-400 transition-colors">{subtitle}</p>
     </div>
   </div>
 );
@@ -133,8 +133,8 @@ const Layout = () => {
     <div
       ref={workspaceMenuRef}
       className={`${className} ${
-        isDarkTheme ? 'bg-[#060911] border border-white/15 text-white' : 'bg-white border border-gray-200 text-gray-900'
-      } rounded-3xl shadow-[0_25px_45px_rgba(15,23,42,0.25)] p-4 space-y-3 z-30 animate-dropdown`}
+        isDarkTheme ? 'bg-[#1e293b] border border-white/10 text-white' : 'bg-white border border-gray-200 text-gray-900'
+      } rounded-3xl shadow-[0_25px_45px_rgba(15,23,42,0.25)] p-4 space-y-3 z-30 animate-dropdown transition-colors`}
     >
       <div className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">Workspace</p>
@@ -143,7 +143,7 @@ const Layout = () => {
       <button
         type="button"
         onClick={() => handleWorkspaceMenuAction('/app/plans')}
-        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
           isDarkTheme ? 'bg-emerald-500/10 border border-emerald-400/30 text-emerald-200 hover:bg-emerald-500/20' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100'
         }`}
       >
@@ -158,7 +158,7 @@ const Layout = () => {
             () => alert('Clean Up Apps: em breve um hub completo para novos produtos.')
           )
         }
-        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
           isDarkTheme ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10' : 'bg-gray-100 border border-gray-200 text-gray-900 hover:bg-gray-200'
         }`}
       >
@@ -168,8 +168,8 @@ const Layout = () => {
       <button
         type="button"
         onClick={() => handleWorkspaceMenuAction('/app/profile')}
-        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-          isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
+          isDarkTheme ? 'text-white/70 hover:text-white hover:bg-white/5' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
         }`}
       >
         <UserCircle size={16} />
@@ -178,8 +178,8 @@ const Layout = () => {
       <button
         type="button"
         onClick={() => handleWorkspaceMenuAction('/app/settings')}
-        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-          isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
+          isDarkTheme ? 'text-white/70 hover:text-white hover:bg-white/5' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
         }`}
       >
         <SettingsIcon size={16} />
@@ -192,7 +192,7 @@ const Layout = () => {
         <button
           type="button"
           onClick={() => handleWorkspaceMenuAction('/app/team?view=invite')}
-          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
+          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
             isDarkTheme ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10' : 'bg-gray-100 border border-gray-200 text-gray-900 hover:bg-gray-200'
           }`}
         >
@@ -207,8 +207,8 @@ const Layout = () => {
               undefined
             )
           }
-          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-            isDarkTheme ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
+            isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/5' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           }`}
         >
           <HelpCircle size={16} />
@@ -217,8 +217,8 @@ const Layout = () => {
         <button
           type="button"
           onClick={() => handleWorkspaceMenuAction('/app/apps')}
-          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold ${
-            isDarkTheme ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+          className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
+            isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/5' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           }`}
         >
           <LayoutGrid size={16} />
@@ -228,7 +228,7 @@ const Layout = () => {
       <button
         type="button"
         onClick={() => handleWorkspaceMenuAction(undefined, handleLogout)}
-        className={`w-full flex items-center justify-between rounded-2xl px-3 py-2 text-sm font-semibold ${
+        className={`w-full flex items-center justify-between rounded-2xl px-3 py-2 text-sm font-semibold transition-colors ${
           isDarkTheme ? 'bg-red-500/10 text-red-200 border border-red-400/30 hover:bg-red-500/20' : 'bg-red-50 text-red-600 border border-red-100 hover:bg-red-100'
         }`}
       >
@@ -349,7 +349,8 @@ const Layout = () => {
     [quickCreateActions, quickCreateQuery],
   );
   const isDarkTheme = theme === 'dark';
-  const sidebarSurfaceClass = isDarkTheme ? 'bg-[#05070c] text-white' : 'bg-white text-gray-900';
+  // Atualizando para slate-900 (mais escuro e premium)
+  const sidebarSurfaceClass = isDarkTheme ? 'bg-slate-900 text-slate-100 border-r border-slate-800' : 'bg-white text-gray-900 border-r border-[#eadff8]';
 
   // Desktop: grupos para organizar navegação principal e extras (sem afetar o mobile).
   const primaryMenuItems = [
@@ -383,7 +384,7 @@ const Layout = () => {
         .join('')
         .substring(0, 2)
         .toUpperCase()
-    : 'CP';
+        : 'CP';
 
   const handleLogout = async () => {
     await logout();
@@ -698,29 +699,29 @@ const Layout = () => {
   const ProfileQuickInfo = ({ hideTip = false }: { hideTip?: boolean }) => (
     <div className="relative mb-4">
       {shouldShowProfileTip && !hideTip && (
-        <div className="absolute -top-3 right-0 translate-y-[-100%] bg-white border border-primary-100 shadow-lg rounded-xl p-3 text-xs text-gray-600 w-60 z-10">
-          <p className="text-sm font-semibold text-gray-900">Personalize com o logo da sua empresa</p>
+        <div className="absolute -top-3 right-0 translate-y-[-100%] bg-white dark:bg-slate-800 border border-primary-100 dark:border-slate-700 shadow-lg rounded-xl p-3 text-xs text-gray-600 dark:text-slate-300 w-60 z-10 transition-colors">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Personalize com o logo da sua empresa</p>
           <p className="mt-1">Envie uma imagem e escolha a cor principal para deixar o app com a sua cara.</p>
-          <button type="button" onClick={dismissProfileTip} className="mt-2 text-primary-600 font-semibold hover:underline">
+          <button type="button" onClick={dismissProfileTip} className="mt-2 text-primary-600 dark:text-primary-400 font-semibold hover:underline">
             Entendi
           </button>
         </div>
       )}
-      <div className="w-full flex items-center space-x-3 p-3 rounded-xl bg-primary-50/40 border border-primary-100 text-left">
+      <div className="w-full flex items-center space-x-3 p-3 rounded-xl bg-primary-50/40 dark:bg-slate-800 border border-primary-100 dark:border-slate-700 text-left transition-colors">
         <div className="relative">
-          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center overflow-hidden">
+          <div className="w-12 h-12 bg-primary-100 dark:bg-slate-700 rounded-full flex items-center justify-center overflow-hidden transition-colors">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt={user.name ?? 'Usuário'} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-primary-700 font-semibold text-base">{initials}</span>
+              <span className="text-primary-700 dark:text-primary-300 font-semibold text-base transition-colors">{initials}</span>
             )}
           </div>
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-gray-900 truncate">
+          <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate transition-colors">
             {user?.companyName || user?.name || 'Adicione sua marca'}
           </p>
-          <p className="text-xs text-gray-500 truncate">{user?.email ?? 'email@clientepro.com'}</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400 truncate transition-colors">{user?.email ?? 'email@clientepro.com'}</p>
         </div>
       </div>
     </div>
@@ -818,12 +819,12 @@ const Layout = () => {
     <QuickActionProvider value={quickActionContextValue}>
       <div
         className={`min-h-screen flex transition-colors duration-200 ${
-          isDarkTheme ? 'bg-[var(--app-bg)] text-[var(--text-primary)]' : 'bg-[#f6f7fb] text-gray-900'
+          isDarkTheme ? 'bg-slate-950 text-slate-100' : 'bg-[#f6f7fb] text-gray-900'
         }`}
       >
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-72 bg-[#f8f6fb] border-r border-[#eadff8] h-screen sticky top-0">
+        <div className={`flex flex-col w-72 h-screen sticky top-0 ${isDarkTheme ? 'bg-slate-900 border-r border-slate-800' : 'bg-[#f8f6fb] border-r border-[#eadff8]'} transition-colors`}>
           <div className="px-5 pt-6 pb-4 space-y-4">
             <div className="flex items-center justify-start relative">
               <button
@@ -835,12 +836,12 @@ const Layout = () => {
               </button>
               {workspaceMenuOpen && <WorkspaceMenu className="absolute left-0 mt-3 w-72" />}
             </div>
-            <div className="rounded-2xl bg-white border border-[#eadff8] px-4 py-2 flex items-center gap-2">
-              <Search size={16} className="text-gray-400" />
+            <div className={`rounded-2xl border px-4 py-2 flex items-center gap-2 ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-[#eadff8] text-gray-800'} transition-colors`}>
+              <Search size={16} className={isDarkTheme ? 'text-slate-500' : 'text-gray-400'} />
               <input
                 type="text"
                 placeholder="Buscar agenda, Clients ou contratos"
-                className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
+                className={`flex-1 bg-transparent text-sm placeholder:text-gray-400 focus:outline-none ${isDarkTheme ? 'text-slate-200 placeholder:text-slate-600' : 'text-gray-800'}`}
               />
             </div>
             <ProfileQuickInfo hideTip />
@@ -848,7 +849,7 @@ const Layout = () => {
 
           <nav className="flex-1 px-5 space-y-5">
             <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-wide text-gray-400 px-2">Principal</p>
+              <p className={`text-[11px] uppercase tracking-wide px-2 ${isDarkTheme ? 'text-slate-500' : 'text-gray-400'}`}>Principal</p>
               {primaryMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname.startsWith(item.path);
@@ -856,24 +857,24 @@ const Layout = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-colors ${
                       isActive
-                        ? 'bg-white text-primary-700 shadow-sm border border-primary-100'
-                        : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
+                        ? isDarkTheme ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700' : 'bg-white text-primary-700 shadow-sm border border-primary-100'
+                        : isDarkTheme ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
                     }`}
                   >
                     <span className="flex items-center gap-3">
                       <Icon size={18} />
                       {t(item.labelKey)}
                     </span>
-                    {isActive && <span className="text-xs text-primary-500">•</span>}
+                    {isActive && <span className={`text-xs ${isDarkTheme ? 'text-emerald-500' : 'text-primary-500'}`}>•</span>}
                   </Link>
                 );
               })}
             </div>
 
-            <div className="space-y-2 border-t border-gray-100 pt-4">
-              <p className="text-[11px] uppercase tracking-wide text-gray-400 px-2">Workspace</p>
+            <div className={`space-y-2 border-t pt-4 ${isDarkTheme ? 'border-slate-800' : 'border-gray-100'}`}>
+              <p className={`text-[11px] uppercase tracking-wide px-2 ${isDarkTheme ? 'text-slate-500' : 'text-gray-400'}`}>Workspace</p>
               {workspaceMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname.startsWith(item.path);
@@ -881,25 +882,25 @@ const Layout = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-colors ${
                       isActive
-                        ? 'bg-white text-primary-700 shadow-sm border border-primary-100'
-                        : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
+                        ? isDarkTheme ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700' : 'bg-white text-primary-700 shadow-sm border border-primary-100'
+                        : isDarkTheme ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
                     }`}
                   >
                     <span className="flex items-center gap-3">
                       <Icon size={18} />
                       {t(item.labelKey)}
                     </span>
-                    {isActive && <span className="text-xs text-primary-500">•</span>}
+                    {isActive && <span className={`text-xs ${isDarkTheme ? 'text-emerald-500' : 'text-primary-500'}`}>•</span>}
                   </Link>
                 );
               })}
             </div>
 
             {desktopExtraMenuItems.length > 0 && (
-              <div className="space-y-2 border-t border-gray-100 pt-4">
-                <p className="text-[11px] uppercase tracking-wide text-gray-400 px-2">Mais</p>
+              <div className={`space-y-2 border-t pt-4 ${isDarkTheme ? 'border-slate-800' : 'border-gray-100'}`}>
+                <p className={`text-[11px] uppercase tracking-wide px-2 ${isDarkTheme ? 'text-slate-500' : 'text-gray-400'}`}>Mais</p>
                 {desktopExtraMenuItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname.startsWith(item.path);
@@ -907,17 +908,17 @@ const Layout = () => {
                     <Link
                       key={item.path}
                       to={item.path}
-                      className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition ${
+                      className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-colors ${
                         isActive
-                          ? 'bg-white text-primary-700 shadow-sm border border-primary-100'
-                          : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
+                          ? isDarkTheme ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700' : 'bg-white text-primary-700 shadow-sm border border-primary-100'
+                          : isDarkTheme ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'text-gray-600 hover:bg-white hover:border hover:border-gray-200'
                       }`}
                     >
                       <span className="flex items-center gap-3">
                         <Icon size={18} />
                         {t(item.labelKey)}
                       </span>
-                      {isActive && <span className="text-xs text-primary-500">•</span>}
+                      {isActive && <span className={`text-xs ${isDarkTheme ? 'text-emerald-500' : 'text-primary-500'}`}>•</span>}
                     </Link>
                   );
                 })}
@@ -925,26 +926,28 @@ const Layout = () => {
             )}
           </nav>
 
-          <div className="px-5 py-4 space-y-3 border-t border-[#eadff8]">
-            <div className="rounded-2xl bg-white border border-[#eadff8] p-4">
+          <div className={`px-5 py-4 space-y-3 border-t ${isDarkTheme ? 'border-slate-800' : 'border-[#eadff8]'}`}>
+            <div className={`rounded-2xl border p-4 ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-white border-[#eadff8]'}`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Starter</p>
-                  <p className="text-xs text-gray-500">Até 50 Clients ativos</p>
+                  <p className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Starter</p>
+                  <p className={`text-xs ${isDarkTheme ? 'text-slate-400' : 'text-gray-500'}`}>Até 50 Clients ativos</p>
                 </div>
-                <span className="text-xs font-semibold text-primary-500">Plano atual</span>
+                <span className={`text-xs font-semibold ${isDarkTheme ? 'text-emerald-400' : 'text-primary-500'}`}>Plano atual</span>
               </div>
               <button
                 type="button"
                 onClick={() => navigate('/app/plans')}
-                className="mt-3 w-full text-sm font-semibold text-white bg-primary-600 rounded-xl py-2 hover:bg-primary-700 transition"
+                className={`mt-3 w-full text-sm font-semibold text-white rounded-xl py-2 transition ${isDarkTheme ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-primary-600 hover:bg-primary-700'}`}
               >
                 Ver planos e upgrades
               </button>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white border border-red-100 text-red-600 py-2 text-sm font-semibold hover:bg-red-50 transition"
+              className={`w-full flex items-center justify-center gap-2 rounded-2xl border py-2 text-sm font-semibold transition ${
+                isDarkTheme ? 'bg-slate-800 border-red-900/30 text-red-400 hover:bg-red-900/10' : 'bg-white border-red-100 text-red-600 hover:bg-red-50'
+              }`}
             >
               <LogOut size={18} />
               Sair
@@ -957,7 +960,7 @@ const Layout = () => {
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="fixed inset-0 bg-black/70" onClick={() => setSidebarOpen(false)} />
-          <aside className={`fixed top-0 bottom-0 left-0 right-0 z-50 overflow-y-auto ${sidebarSurfaceClass}`}>
+          <aside className={`fixed top-0 bottom-0 left-0 right-0 z-50 overflow-y-auto ${isDarkTheme ? 'bg-slate-900 text-white' : 'bg-white text-gray-900'}`}>
             <div className="px-6 pt-6 pb-8 space-y-5">
               <div className="flex items-center justify-between">
                 <p className="text-lg font-semibold">Profile & Settings</p>
@@ -1123,17 +1126,17 @@ const Layout = () => {
         <main className="flex-1 overflow-auto pb-24 pt-0 sm:pb-0 sm:pt-0">
           {canInstall && !dismissed && (
             <div className="px-4 pt-4">
-              <div className="bg-white border border-primary-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+              <div className={`border rounded-xl p-4 shadow-sm flex flex-col gap-3 ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-primary-100'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Instale o Clean Up</p>
-                    <p className="text-xs text-gray-500">
+                    <p className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Instale o Clean Up</p>
+                    <p className={`text-xs ${isDarkTheme ? 'text-slate-400' : 'text-gray-500'}`}>
                       Adicione o app na tela inicial para acessar mais rápido.
                     </p>
                   </div>
                   <button
                     onClick={dismiss}
-                    className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                    className={`${isDarkTheme ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'} text-sm font-medium`}
                   >
                     Não agora
                   </button>
@@ -1141,7 +1144,7 @@ const Layout = () => {
                 <div>
                   <button
                     onClick={install}
-                    className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors"
+                    className={`w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${isDarkTheme ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-primary-600 text-white hover:bg-primary-700'}`}
                   >
                     Instalar Clean Up
                   </button>
@@ -1158,7 +1161,7 @@ const Layout = () => {
         <>
           <div className="md:hidden fixed inset-x-0 bottom-0 z-40">
             <div className="relative">
-              <div className="bg-white/95 border-t border-slate-200 px-5 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] flex items-center justify-between backdrop-blur">
+              <div className={`${isDarkTheme ? 'bg-slate-900/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200'} px-5 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] flex items-center justify-between backdrop-blur transition-colors`}>
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname.startsWith(item.path ?? '');
@@ -1181,14 +1184,14 @@ const Layout = () => {
                         }
                       }}
                       className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-all duration-200 active:scale-95 ${
-                        isActive ? 'text-slate-900' : 'text-slate-400'
-                      } ${isDynamicSlot && extraMenuOpen ? 'text-slate-900' : ''}`}
+                        isActive ? (isDarkTheme ? 'text-white' : 'text-slate-900') : (isDarkTheme ? 'text-slate-500' : 'text-slate-400')
+                      } ${isDynamicSlot && extraMenuOpen ? (isDarkTheme ? 'text-white' : 'text-slate-900') : ''}`}
                     >
                       <div
                         className={`h-9 w-9 rounded-full flex items-center justify-center transform transition-all duration-200 ${
                           isActive || (isDynamicSlot && extraMenuOpen)
-                            ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 -translate-y-1'
-                            : 'bg-slate-100 text-slate-500'
+                            ? (isDarkTheme ? 'bg-slate-800 text-white shadow-lg shadow-black/20 -translate-y-1' : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 -translate-y-1')
+                            : (isDarkTheme ? 'bg-transparent text-slate-500' : 'bg-slate-100 text-slate-500')
                         }`}
                       >
                         <Icon size={18} />
@@ -1216,8 +1219,8 @@ const Layout = () => {
                 onClick={() => setExtraMenuOpen(false)}
               />
               <div className="fixed inset-x-4 bottom-24 z-50">
-                <div className="rounded-[28px] border border-slate-100 bg-gradient-to-br from-primary-50 via-white to-accent-50 shadow-[0_18px_50px_rgba(15,23,42,0.12)] p-4 space-y-3 text-slate-900">
-                  <p className="text-xs font-semibold text-slate-600 px-1">Mais páginas</p>
+                <div className={`rounded-[28px] border shadow-[0_18px_50px_rgba(15,23,42,0.12)] p-4 space-y-3 ${isDarkTheme ? 'bg-slate-900 border-slate-800 text-white' : 'border-slate-100 bg-gradient-to-br from-primary-50 via-white to-accent-50 text-slate-900'}`}>
+                  <p className={`text-xs font-semibold px-1 ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Mais páginas</p>
                   <div className="grid grid-cols-3 gap-3">
                     {extraMenuItems.map((item) => {
                       const Icon = item.icon;
@@ -1229,20 +1232,22 @@ const Layout = () => {
                           onClick={() => handleExtraSelect(item)}
                           className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-3 transition ${
                             isActive
-                              ? 'bg-primary-50 border-primary-200 text-primary-700'
-                              : 'bg-gray-50 border-gray-100 hover:border-primary-200 hover:bg-primary-50/70'
+                              ? (isDarkTheme ? 'bg-slate-800 border-slate-700 text-emerald-400' : 'bg-primary-50 border-primary-200 text-primary-700')
+                              : (isDarkTheme ? 'bg-transparent border-slate-800 hover:bg-slate-800 text-slate-400' : 'bg-gray-50 border-gray-100 hover:border-primary-200 hover:bg-primary-50/70')
                           }`}
                         >
                           <div
                             className={`w-12 h-12 rounded-2xl border flex items-center justify-center shadow-sm ${
-                              isActive ? 'bg-white border-primary-200 text-primary-700' : 'bg-white border-gray-200 text-primary-600'
+                              isActive
+                                ? (isDarkTheme ? 'bg-slate-900 border-slate-700 text-emerald-400' : 'bg-white border-primary-200 text-primary-700')
+                                : (isDarkTheme ? 'bg-slate-900 border-slate-800 text-slate-500' : 'bg-white border-gray-200 text-primary-600')
                             }`}
                           >
                             <Icon size={20} />
                           </div>
                           <span
                             className={`text-[12px] font-semibold ${
-                              isActive ? 'text-primary-700' : 'text-gray-700'
+                              isActive ? (isDarkTheme ? 'text-emerald-400' : 'text-primary-700') : (isDarkTheme ? 'text-slate-400' : 'text-gray-700')
                             }`}
                           >
                             {item.label}
@@ -1260,7 +1265,7 @@ const Layout = () => {
             <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
               <div className="flex-1" onClick={() => setQuickCreateOpen(false)} />
               <div
-                className="rounded-t-[32px] bg-white p-6 space-y-5 border-t border-gray-200 animate-sheet-up"
+                className={`rounded-t-[32px] p-6 space-y-5 border-t animate-sheet-up ${isDarkTheme ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
                 style={{ transform: createTouchDelta ? `translateY(${createTouchDelta}px)` : undefined }}
                 onTouchStart={onCreateTouchStart}
                 onTouchMove={onCreateTouchMove}
@@ -1268,25 +1273,25 @@ const Layout = () => {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Create</p>
-                    <p className="text-xs text-gray-500">Escolha uma ação rápida</p>
+                    <p className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Create</p>
+                    <p className={`text-xs ${isDarkTheme ? 'text-slate-400' : 'text-gray-500'}`}>Escolha uma ação rápida</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setQuickCreateOpen(false)}
-                    className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkTheme ? 'bg-slate-800 text-slate-400' : 'bg-gray-100 text-gray-500'}`}
                   >
                     <X size={20} />
                   </button>
                 </div>
-                <div className="rounded-2xl bg-gray-100 flex items-center gap-2 px-4 py-2">
-                  <Search size={16} className="text-gray-500" />
+                <div className={`rounded-2xl flex items-center gap-2 px-4 py-2 ${isDarkTheme ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                  <Search size={16} className={isDarkTheme ? 'text-slate-500' : 'text-gray-500'} />
                   <input
                     type="text"
                     placeholder="Buscar ações"
                     value={quickCreateQuery}
                     onChange={(e) => setQuickCreateQuery(e.target.value)}
-                    className="bg-transparent flex-1 text-sm text-gray-700 placeholder:text-gray-500 focus:outline-none"
+                    className={`bg-transparent flex-1 text-sm placeholder:text-gray-500 focus:outline-none ${isDarkTheme ? 'text-white' : 'text-gray-700'}`}
                   />
                 </div>
                 <div className="space-y-3">
@@ -1299,7 +1304,7 @@ const Layout = () => {
                           setQuickCreateOpen(false);
                           action.action();
                         }}
-                        className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        className={`w-full flex items-center gap-3 text-left px-3 py-3 rounded-2xl border transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${isDarkTheme ? 'border-slate-800 hover:bg-slate-800' : 'border-gray-200 hover:bg-gray-50'}`}
                       >
                         <div
                           className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${action.accent} border border-white/50 flex items-center justify-center`}
@@ -1307,13 +1312,13 @@ const Layout = () => {
                           <action.iconComponent size={22} />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-900">{action.label}</p>
-                          <p className="text-xs text-gray-500">{action.description}</p>
+                          <p className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>{action.label}</p>
+                          <p className={`text-xs ${isDarkTheme ? 'text-slate-400' : 'text-gray-500'}`}>{action.description}</p>
                         </div>
                       </button>
                     ))
                   ) : (
-                    <div className="text-sm text-gray-500 px-3 py-4 rounded-2xl border border-dashed border-gray-200">
+                    <div className={`text-sm px-3 py-4 rounded-2xl border border-dashed ${isDarkTheme ? 'text-slate-500 border-slate-800' : 'text-gray-500 border-gray-200'}`}>
                       Nenhuma ação encontrada.
                     </div>
                   )}
@@ -1373,13 +1378,13 @@ const Layout = () => {
       {agentOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
           <div className="fixed inset-0" onClick={() => setAgentOpen(false)} />
-          <div className="relative rounded-t-[24px] bg-white animate-sheet-up max-h-[90vh] sm:max-h-[92vh] h-[90vh] sm:h-[92vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t border-slate-200 overflow-hidden">
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
-              <p className="text-base font-semibold text-slate-900">Chat</p>
+          <div className={`relative rounded-t-[24px] animate-sheet-up max-h-[90vh] sm:max-h-[92vh] h-[90vh] sm:h-[92vh] flex flex-col shadow-[0_-18px_60px_rgba(15,23,42,0.14)] border-t overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className={`flex items-center justify-between px-5 pt-5 pb-3 border-b ${isDarkTheme ? 'border-slate-800' : 'border-slate-100'}`}>
+              <p className={`text-base font-semibold ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>Chat</p>
               <button
                 type="button"
                 onClick={() => setAgentOpen(false)}
-                className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                className={`h-10 w-10 flex items-center justify-center rounded-full transition ${isDarkTheme ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 aria-label="Fechar chat"
               >
                 <X size={18} />
@@ -1388,9 +1393,9 @@ const Layout = () => {
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
               {!agentLoading && agentMessages.length === 0 && !agentError && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                  <p className="text-sm font-semibold text-slate-900">Sugestões rápidas</p>
-                  <p className="text-xs text-slate-500 mt-1">
+                <div className={`rounded-2xl border px-4 py-3 text-sm ${isDarkTheme ? 'border-slate-700 bg-slate-800 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                  <p className={`text-sm font-semibold ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>Sugestões rápidas</p>
+                  <p className={`text-xs mt-1 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
                     Dica: use @ para clientes. Ex: @Vito amanhã 10h.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -1399,7 +1404,7 @@ const Layout = () => {
                         key={prompt}
                         type="button"
                         onClick={() => handleAgentSubmit(prompt)}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                        className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition ${isDarkTheme ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`}
                       >
                         {prompt}
                       </button>
@@ -1416,14 +1421,14 @@ const Layout = () => {
                     className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                       msg.role === 'user'
                         ? 'bg-slate-900 text-white rounded-br-sm'
-                        : 'bg-slate-50 text-slate-900 border border-slate-200 rounded-bl-sm'
+                        : isDarkTheme ? 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-sm' : 'bg-slate-50 text-slate-900 border border-slate-200 rounded-bl-sm'
                     }`}
                   >
                     {msg.text}
                   </div>
                 </div>
               ))}
-              {agentLoading && <div className="text-sm text-slate-500">Pensando…</div>}
+              {agentLoading && <div className={`text-sm ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>Pensando…</div>}
               {agentError && (
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {agentError}
@@ -1444,7 +1449,7 @@ const Layout = () => {
                     <button
                       type="button"
                       onClick={() => setPendingIntent(null)}
-                      className="px-3 py-1.5 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                      className={`px-3 py-1.5 rounded-full border text-sm font-semibold disabled:opacity-60 ${isDarkTheme ? 'border-amber-200/30 text-amber-900' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                       disabled={agentLoading}
                     >
                       Cancelar
@@ -1453,17 +1458,17 @@ const Layout = () => {
                 </div>
               )}
               {!agentLoading && agentMessages.length === 0 && !agentError && (
-                <div className="text-sm text-slate-500">Digite sua mensagem para começar.</div>
+                <div className={`text-sm ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>Digite sua mensagem para começar.</div>
               )}
             </div>
 
-            <div className="mt-auto px-5 pt-3 pb-5 border-t border-slate-100 bg-white">
+            <div className={`mt-auto px-5 pt-3 pb-5 border-t ${isDarkTheme ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'}`}>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleAgentSubmit();
                 }}
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 shadow-sm"
+                className={`flex items-center gap-2 rounded-full border px-4 py-2.5 shadow-sm ${isDarkTheme ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}
               >
                 <button
                   type="button"
@@ -1471,7 +1476,7 @@ const Layout = () => {
                   className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
                     recordingAudio
                       ? 'bg-red-50 border-red-200 text-red-600'
-                      : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                      : isDarkTheme ? 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
                   }`}
                   aria-label={recordingAudio ? 'Parar gravação' : 'Gravar áudio'}
                   disabled={uploadingAudio}
@@ -1489,7 +1494,7 @@ const Layout = () => {
                       handleAgentSubmit();
                     }
                   }}
-                  className="flex-1 border-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  className={`flex-1 border-none bg-transparent text-sm focus:outline-none ${isDarkTheme ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'}`}
                 />
                 <button
                   type="submit"
@@ -1503,7 +1508,7 @@ const Layout = () => {
                 <p className="mt-2 text-xs font-semibold text-red-600">Gravando... toque no quadrado para parar.</p>
               )}
               {uploadingAudio && (
-                <p className="mt-1 text-xs text-slate-500">Enviando/transcrevendo áudio…</p>
+                <p className={`mt-1 text-xs ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>Enviando/transcrevendo áudio…</p>
               )}
             </div>
           </div>

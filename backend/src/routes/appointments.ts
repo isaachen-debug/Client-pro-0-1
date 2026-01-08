@@ -307,6 +307,7 @@ router.get('/week', async (req, res) => {
       return res.status(400).json({ error: 'Informe startDate (yyyy-mm-dd).' });
     }
 
+    const now = new Date();
     const range = buildUtcDayRange(startDate as string);
     if (!range) {
       return res.status(400).json({ error: 'Data inválida. Use o formato yyyy-mm-dd.' });
@@ -316,6 +317,41 @@ router.get('/week', async (req, res) => {
     const end = new Date(range.start);
     end.setUTCDate(end.getUTCDate() + 6);
     end.setUTCHours(23, 59, 59, 999);
+
+    const pendingToAutoFinish = await prisma.appointment.findMany({
+      where: {
+        userId: req.user!.id,
+        date: {
+          gte: start,
+          lte: end,
+        },
+        status: { in: ['AGENDADO', 'EM_ANDAMENTO'] },
+        OR: [
+          {
+            date: { lt: new Date(now.setHours(0, 0, 0, 0)) },
+          },
+          {
+            date: { equals: new Date(now.setHours(0, 0, 0, 0)) },
+            endTime: { lt: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) },
+          }
+        ]
+      },
+    });
+
+    if (pendingToAutoFinish.length > 0) {
+      for (const apt of pendingToAutoFinish) {
+        // Marca como concluído
+        await prisma.appointment.update({
+          where: { id: apt.id },
+          data: { 
+            status: 'CONCLUIDO',
+            finishedAt: new Date()
+          }
+        });
+        // Lança receita
+        await ensureRevenueTransaction(apt.id, req.user!.id, apt.price, apt.date);
+      }
+    }
 
     const appointments = await prisma.appointment.findMany({
       where: {

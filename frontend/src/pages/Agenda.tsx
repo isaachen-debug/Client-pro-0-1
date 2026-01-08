@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, CalendarRange, CheckCircle2, TrendingUp, Users, XCircle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CalendarRange, CheckCircle2, TrendingUp, Users, XCircle, Sparkles } from 'lucide-react';
 import AgendaMensal from './AgendaMensal';
 import AgendaSemanal, { type WeekDetails, type WeekSummary } from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
@@ -12,18 +12,18 @@ const toneStyles: Record<
   { lightBorder: string; lightIcon: string; darkIcon: string }
 > = {
   amber: {
-    lightBorder: 'border-amber-100',
-    lightIcon: 'bg-amber-100 text-amber-800',
+    lightBorder: 'border-amber-100 dark:border-amber-900/30',
+    lightIcon: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
     darkIcon: 'bg-amber-500/25 text-amber-50',
   },
   blue: {
-    lightBorder: 'border-blue-100',
-    lightIcon: 'bg-blue-100 text-blue-800',
+    lightBorder: 'border-blue-100 dark:border-blue-900/30',
+    lightIcon: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
     darkIcon: 'bg-blue-500/25 text-blue-50',
   },
   red: {
-    lightBorder: 'border-red-100',
-    lightIcon: 'bg-red-100 text-red-800',
+    lightBorder: 'border-red-100 dark:border-red-900/30',
+    lightIcon: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
     darkIcon: 'bg-red-500/25 text-red-50',
   },
 };
@@ -45,6 +45,9 @@ type AgendaPageProps = {
 };
 
 const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
+  const { theme } = usePreferences();
+  const isDarkTheme = theme === 'dark';
+
   const [viewMode, setViewMode] = useState<AgendaView>(() => {
     if (typeof window === 'undefined') {
       return initialMode || 'week';
@@ -70,7 +73,7 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   const summaryCards = useMemo<SummaryCard[]>(() => {
     if (!weekSummary) return [];
     return [
-      { label: 'A confirmar', value: weekSummary.confirmCount, tone: 'amber', icon: AlertTriangle },
+      { label: 'Não confirmado', value: weekSummary.confirmCount, tone: 'amber', icon: AlertTriangle },
       { label: 'Agendado', value: weekSummary.scheduledCount, tone: 'blue', icon: CheckCircle2 },
       { label: 'Cancelado', value: weekSummary.canceledCount, tone: 'red', icon: XCircle },
     ];
@@ -88,8 +91,6 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
     setQuickCreateNonce((nonce) => nonce + 1);
   }, []);
   useRegisterQuickAction('agenda:add', handleAgendaQuickCreate);
-  const { theme } = usePreferences();
-  const isDarkTheme = theme === 'dark';
 
   return (
     <div className={embedded ? 'space-y-6' : `${pageGutters} space-y-4`}>
@@ -100,7 +101,7 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
               ? undefined
               : {
                   background: isDarkTheme
-                    ? '#0b0f1a'
+                    ? '#0f172a' // slate-900
                     : '#eef2ff',
                   borderRadius: '24px',
                 }
@@ -123,62 +124,42 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
       </div>
 
       {!embedded && viewMode === 'week' && weekSummary && !weekBannerDismissed && (
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-700">
-                <CalendarRange size={14} />
-                Resumo
+        <div 
+          onClick={() => setWeekSummaryOpen(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              setWeekSummaryOpen(true);
+            }
+          }}
+          className="group relative overflow-hidden rounded-3xl bg-white dark:bg-slate-800 p-1 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 transition-all active:scale-95 cursor-pointer"
+        >
+          <div className="flex w-full items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300">
+                <Sparkles size={18} />
               </div>
-              <p className="text-base font-semibold text-slate-900 leading-tight">{weekSummary.rangeLabel}</p>
-              <p className="text-xs text-slate-500">Status rápido dos agendamentos da semana.</p>
+              <div className="text-left">
+                <p className="text-sm font-bold text-slate-900 dark:text-white">Resumo Semanal</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Toque para visualizar a análise</p>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setWeekBannerDismissed(true)}
-              className="h-8 w-8 rounded-full border border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300 transition"
-              aria-label="Fechar banner"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {summaryCards.map((item) => {
-              const Icon = item.icon;
-              const tone = toneStyles[item.tone];
-              return (
-                <div
-                  key={item.label}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${tone.lightBorder}`}
-                >
-                  <span className={`flex h-7 w-7 items-center justify-center rounded-full ${tone.lightIcon}`}>
-                    <Icon size={14} />
-                  </span>
-                  <span className="text-slate-700">{item.label}:</span>
-                  <span className="text-slate-900">{item.value}</span>
-                </div>
-              );
-            })}
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700">
-              <Users size={14} />
-              {weekSummary.uniqueCustomers} clientes únicos
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setWeekBannerDismissed(true);
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                ✕
+              </button>
+              <div className="rounded-full bg-slate-50 dark:bg-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/20 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">
+                Ver
+              </div>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700">
-              <TrendingUp size={14} />
-              Total: {weekSummary.totalCount}
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setWeekSummaryOpen(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition"
-            >
-              Ver detalhes
-              <ArrowRight size={16} />
-            </button>
           </div>
         </div>
       )}
@@ -186,26 +167,25 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
       {weekSummaryOpen && weekSummary && weekDetails && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div
-            className="fixed inset-0 bg-black/45 animate-sheet-fade"
+            className="fixed inset-0 bg-black/45 dark:bg-black/60 animate-sheet-fade backdrop-blur-sm"
             onClick={() => setWeekSummaryOpen(false)}
           />
-          <div className="relative bg-white rounded-t-[28px] animate-sheet-up max-h-[92vh] flex flex-col">
-            <div className="px-5 pt-5">
-              <div className="flex items-start justify-between gap-4 rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                <div className="space-y-1">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-700">
-                    <CalendarRange size={14} />
-                    Resumo da semana
-                  </span>
-                  <p className="text-2xl font-bold text-slate-900 leading-tight">{weekSummary.rangeLabel}</p>
-                  <p className="text-sm text-slate-500">
-                    Priorize quem precisa confirmar o dia com o cliente.
-                  </p>
+          <div className="relative bg-white dark:bg-slate-900 rounded-t-[32px] animate-sheet-up max-h-[92vh] flex flex-col shadow-2xl">
+            <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-t-[32px] border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Análise Semanal</h2>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{weekSummary.rangeLabel}</p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setWeekSummaryOpen(false)}
-                  className="h-11 w-11 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:border-slate-300 transition shadow-sm"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition"
                   aria-label="Fechar resumo"
                 >
                   ✕
@@ -213,236 +193,136 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
               </div>
             </div>
 
-            <div className="px-5 pb-10 pt-5 space-y-6 overflow-y-auto">
-              <div className="rounded-[28px] border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-5 text-white shadow-[0_18px_40px_rgba(15,23,42,0.25)]">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-white/80">Visão geral</p>
-                    <p className="text-xs text-white/70">Panorama rápido da sua semana.</p>
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-12">
+              {/* Visão Geral - Dashboard Style */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2 rounded-3xl bg-slate-900 dark:bg-slate-950 p-5 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden border border-slate-800 dark:border-slate-900">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <TrendingUp size={120} />
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-                      <Users size={14} />
-                      {weekSummary.uniqueCustomers} clientes únicos
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/90 px-3 py-1 text-white shadow">
-                      <TrendingUp size={14} />
-                      Total: {weekSummary.totalCount}
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-white/90">
-                      <TrendingUp size={14} />
-                      {currencyFormatter.format(weekRevenue)}
-                    </span>
+                  <div className="relative z-10">
+                    <p className="text-sm font-medium text-indigo-200 mb-1">Receita Estimada</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-bold tracking-tight">{currencyFormatter.format(weekRevenue)}</span>
+                    </div>
+                    <div className="mt-4 flex gap-3">
+                      <div className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                        <Users size={14} className="text-indigo-300" />
+                        <span className="text-xs font-semibold">{weekSummary.uniqueCustomers} clientes</span>
+                      </div>
+                      <div className="flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1.5 backdrop-blur-sm border border-emerald-500/30">
+                        <CheckCircle2 size={14} className="text-emerald-400" />
+                        <span className="text-xs font-semibold text-emerald-100">{weekSummary.scheduledCount} agendados</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  {summaryCards.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <div key={item.label} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${toneStyles[item.tone].darkIcon}`}
-                          >
-                            <Icon size={18} />
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] uppercase tracking-wide text-white/70">{item.label}</p>
-                            <p className="text-xl font-semibold text-white leading-none">{item.value}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+
+                <div className="rounded-3xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 p-4 flex flex-col justify-between">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 mb-2">
+                    <AlertTriangle size={16} />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold text-amber-900 dark:text-amber-100 block">{weekSummary.confirmCount}</span>
+                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">A confirmar</span>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 p-4 flex flex-col justify-between">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 mb-2">
+                    <XCircle size={16} />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold text-red-900 dark:text-red-100 block">{weekSummary.canceledCount}</span>
+                    <span className="text-xs font-semibold text-red-700 dark:text-red-300">Cancelados</span>
+                  </div>
                 </div>
               </div>
 
+              {/* Listas de Detalhes - Clean Layout */}
               <div className="space-y-6">
-                <div className="rounded-[24px] border border-amber-100 bg-amber-50/80 p-4 shadow-sm space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-                        <AlertTriangle size={18} />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-amber-900">A confirmar</p>
-                        <p className="text-xs text-amber-700">
-                          Confirme o dia com o cliente para garantir o atendimento.
-                        </p>
-                      </div>
+                {weekDetails.confirm.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-amber-500" />
+                        Atenção Necessária
+                      </h3>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{weekDetails.confirm.length} pendentes</span>
                     </div>
-                    <span className="rounded-full border border-amber-200 bg-white px-3 py-1 text-[11px] font-semibold text-amber-800">
-                      {weekDetails.confirm.length} cliente(s)
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {weekDetails.confirm.length === 0 && (
-                      <p className="text-xs text-amber-700">Nenhum cliente aguardando confirmação.</p>
-                    )}
-                    {weekDetails.confirm.map((item) => (
-                      <div key={item.id} className="rounded-2xl bg-white border border-amber-100 px-3 py-3 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
-                            <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
-                            {item.notes && <p className="text-xs text-slate-500 line-clamp-2">{item.notes}</p>}
+                    <div className="space-y-2">
+                      {weekDetails.confirm.map((item) => (
+                        <div key={item.id} className="group flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-amber-200 dark:hover:border-amber-700/50 hover:shadow-md transition-all">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{item.customerName}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.dateLabel} • {item.timeLabel}</p>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setWeekSummaryOpen(false);
-                                window.dispatchEvent(
-                                  new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
-                                );
-                              }}
-                              className="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
-                            >
-                              Confirmar dia
-                            </button>
-                            {item.price != null && (
-                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                                {currencyFormatter.format(item.price)}
-                              </span>
-                            )}
-                          </div>
+                          <button
+                            onClick={() => {
+                              setWeekSummaryOpen(false);
+                              window.dispatchEvent(
+                                new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
+                              );
+                            }}
+                            className="ml-3 shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition"
+                          >
+                            Confirmar
+                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-[24px] border border-blue-100 bg-blue-50/80 p-4 shadow-sm space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
-                        <CheckCircle2 size={18} />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-blue-900">Agendado</p>
-                        <p className="text-xs text-blue-700">Tudo confirmado para estes clientes.</p>
-                      </div>
+                      ))}
                     </div>
-                    <span className="rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-semibold text-blue-800">
-                      {weekDetails.scheduled.length} cliente(s)
-                    </span>
                   </div>
-                  <div className="space-y-2">
-                    {weekDetails.scheduled.length === 0 && (
-                      <p className="text-xs text-blue-700">Nenhum agendamento confirmado.</p>
-                    )}
-                    {weekDetails.scheduled.map((item) => (
-                      <div key={item.id} className="rounded-2xl bg-white border border-blue-100 px-3 py-3 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
-                            <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
-                            {item.notes && <p className="text-xs text-slate-500 line-clamp-2">{item.notes}</p>}
+                )}
+
+                {weekDetails.canceled.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-red-500" />
+                        Cancelamentos
+                      </h3>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{weekDetails.canceled.length} itens</span>
+                    </div>
+                    <div className="space-y-2">
+                      {weekDetails.canceled.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 opacity-75 hover:opacity-100 transition-opacity">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 line-through decoration-slate-400">{item.customerName}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-500">{item.dateLabel}</p>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
-                            {item.price != null && (
-                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                                {currencyFormatter.format(item.price)}
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setWeekSummaryOpen(false);
-                                window.dispatchEvent(
-                                  new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
-                                );
-                              }}
-                              className="text-xs font-semibold text-blue-700 hover:text-blue-800"
-                            >
-                              Editar
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              setWeekSummaryOpen(false);
+                              window.dispatchEvent(
+                                new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
+                              );
+                            }}
+                            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                          >
+                            Ver
+                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-[24px] border border-red-100 bg-red-50/80 p-4 shadow-sm space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-800">
-                        <XCircle size={18} />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-red-900">Cancelado</p>
-                        <p className="text-xs text-red-700">Observe para remarcar ou liberar agenda.</p>
-                      </div>
+                      ))}
                     </div>
-                    <span className="rounded-full border border-red-200 bg-white px-3 py-1 text-[11px] font-semibold text-red-800">
-                      {weekDetails.canceled.length} cliente(s)
-                    </span>
                   </div>
-                  <div className="space-y-2">
-                    {weekDetails.canceled.length === 0 && (
-                      <p className="text-xs text-red-700">Nenhum cancelamento nesta semana.</p>
-                    )}
-                    {weekDetails.canceled.map((item) => (
-                      <div key={item.id} className="rounded-2xl bg-white border border-red-100 px-3 py-3 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-900">{item.customerName}</p>
-                            <p className="text-xs text-slate-500">{item.dateLabel} • {item.timeLabel}</p>
-                            {item.notes && <p className="text-xs text-slate-500 line-clamp-2">{item.notes}</p>}
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            {item.price != null && (
-                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                                {currencyFormatter.format(item.price)}
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setWeekSummaryOpen(false);
-                                window.dispatchEvent(
-                                  new CustomEvent('agenda-edit-appointment', { detail: { id: item.id } }),
-                                );
-                              }}
-                              className="text-xs font-semibold text-red-700 hover:text-red-800"
-                            >
-                              Editar
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
 
-                <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                        <TrendingUp size={16} />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">IA analisando</p>
-                        <p className="text-xs text-slate-500">Estimativa semanal</p>
-                      </div>
-                    </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-700">
-                      Baseado em agendados
-                    </span>
+                {/* Call to Action - Chat */}
+                <div className="rounded-3xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-900/10 p-5 text-center space-y-3">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400">
+                    <Sparkles size={20} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">
-                    Com base nos agendamentos confirmados, você pode receber aproximadamente:
-                  </p>
-                  <div className="mt-3 rounded-2xl bg-slate-900 px-4 py-3 text-white text-lg font-semibold shadow">
-                    {currencyFormatter.format(weekRevenue)}
+                  <div>
+                    <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">Precisa de ajuda?</p>
+                    <p className="text-xs text-indigo-700/80 dark:text-indigo-300/70 max-w-[200px] mx-auto">
+                      O assistente pode ajudar a reorganizar sua agenda ou contatar clientes.
+                    </p>
                   </div>
                   <button
-                    type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent('open-agent'))}
-                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800"
+                    className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition active:scale-95"
                   >
-                    Abrir chat do assistente
+                    Falar com Assistente
                   </button>
                 </div>
               </div>

@@ -43,6 +43,7 @@ import EditModal from '../components/appointments/EditModal';
 import AgendaMensal from './AgendaMensal';
 import { getGoogleStatus, syncGoogleEvent } from '../services/googleCalendar';
 import { LayoutGroup, motion } from 'framer-motion';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 export type WeekSummary = {
   rangeLabel: string;
@@ -117,9 +118,9 @@ const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: str
   <button
     type="button"
     onClick={onClick}
-    className="w-full rounded-3xl border border-purple-100 bg-white px-4 py-6 text-center shadow-sm"
+    className="w-full rounded-3xl border border-purple-100 dark:border-purple-900/30 bg-white dark:bg-slate-800 px-4 py-6 text-center shadow-sm"
   >
-    <div className="mx-auto mb-4 h-32 w-32 rounded-[28px] bg-white border border-purple-100 shadow-sm flex items-center justify-center overflow-hidden">
+    <div className="mx-auto mb-4 h-32 w-32 rounded-[28px] bg-white dark:bg-slate-900 border border-purple-100 dark:border-purple-900/30 shadow-sm flex items-center justify-center overflow-hidden">
       <img
         src="/images/empty-state-cleanup.svg"
         alt="Mascote vassoura limpando com nuvem e check"
@@ -127,8 +128,8 @@ const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: str
         className="h-full w-full object-contain"
       />
     </div>
-    <p className="text-sm font-semibold text-slate-700">{title}</p>
-    <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</p>
+    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>
   </button>
 );
 
@@ -142,6 +143,8 @@ const AgendaSemanal = ({
   onWeekSummaryChange,
   onWeekDetailsChange,
 }: AgendaSemanalProps) => {
+  const { theme } = usePreferences();
+  const isDark = theme === 'dark';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [agendamentos, setAgendamentos] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -605,7 +608,7 @@ const AgendaSemanal = ({
   const statusDotBg: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-amber-400',
     EM_ANDAMENTO: 'bg-blue-500',
-    CONCLUIDO: 'bg-blue-500',
+    CONCLUIDO: 'bg-emerald-500',
     CANCELADO: 'bg-red-500',
   };
 
@@ -619,21 +622,22 @@ const AgendaSemanal = ({
       .toUpperCase()
       .slice(0, 2);
   const statusSurfaces: Record<AppointmentStatus, string> = {
-    AGENDADO: 'bg-amber-50 text-amber-700 border-amber-100',
-    EM_ANDAMENTO: 'bg-blue-50 text-blue-700 border-blue-100',
-    CONCLUIDO: 'bg-blue-50 text-blue-700 border-blue-100',
-    CANCELADO: 'bg-red-50 text-red-700 border-red-100',
+    AGENDADO: 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800',
+    EM_ANDAMENTO: 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800',
+    CONCLUIDO: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
+    CANCELADO: 'bg-red-50 text-red-700 border-red-100 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800',
   };
   const statusAccents: Record<AppointmentStatus, string> = {
-    AGENDADO: 'border-l-4 border-amber-300',
-    EM_ANDAMENTO: 'border-l-4 border-blue-300',
-    CONCLUIDO: 'border-l-4 border-blue-300',
-    CANCELADO: 'border-l-4 border-red-300',
+    AGENDADO: 'border-l-4 border-amber-300 dark:border-amber-600',
+    EM_ANDAMENTO: 'border-l-4 border-blue-300 dark:border-blue-600',
+    CONCLUIDO: 'border-l-4 border-emerald-300 dark:border-emerald-600',
+    CANCELADO: 'border-l-4 border-red-300 dark:border-red-600',
   };
 
   const formatStatusLabel = (status: AppointmentStatus) => {
-    if (status === 'AGENDADO') return 'A confirmar';
+    if (status === 'AGENDADO') return 'Não confirmado';
     if (status === 'CANCELADO') return 'Cancelado';
+    if (status === 'CONCLUIDO') return 'Feito';
     return 'Agendado';
   };
 
@@ -736,8 +740,8 @@ const AgendaSemanal = ({
   };
 
   const renderChatView = () => (
-    <div className="h-[500px] flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+    <div className={`h-[500px] flex flex-col rounded-3xl border shadow-sm overflow-hidden ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+      <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
         <div className="flex flex-col gap-3">
           {chatMessages.map((msg, idx) => (
             <div
@@ -748,7 +752,7 @@ const AgendaSemanal = ({
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                   msg.role === 'user'
                     ? 'bg-slate-900 text-white rounded-br-sm'
-                    : 'bg-slate-50 text-slate-900 border border-slate-200 rounded-bl-sm'
+                    : isDark ? 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-sm' : 'bg-slate-50 text-slate-900 border border-slate-200 rounded-bl-sm'
                 }`}
               >
                 {msg.text}
@@ -756,7 +760,7 @@ const AgendaSemanal = ({
             </div>
           ))}
           {chatPendingIntent && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-2">
+            <div className={`rounded-2xl border px-4 py-3 text-sm space-y-2 ${isDark ? 'border-amber-900/30 bg-amber-900/20 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
               <div>{chatPendingIntent.summary || 'Confirmar esta ação?'}</div>
               <div className="flex items-center gap-2">
                 <button
@@ -770,7 +774,7 @@ const AgendaSemanal = ({
                 <button
                   type="button"
                   onClick={() => setChatPendingIntent(null)}
-                  className="px-3 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                   disabled={chatLoading}
                 >
                   Cancelar
@@ -794,7 +798,7 @@ const AgendaSemanal = ({
                   key={prompt}
                   type="button"
                   onClick={() => handleSendChat(prompt)}
-                  className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  className={`px-3 py-1.5 rounded-full border text-xs font-semibold ${isDark ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`}
                 >
                   {prompt}
                 </button>
@@ -802,7 +806,7 @@ const AgendaSemanal = ({
             </div>
           )}
           <div className="relative">
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
+            <div className={`flex items-center gap-2 rounded-full border px-3 py-2 shadow-sm ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
               <input
                 type="text"
                 value={chatInput}
@@ -836,7 +840,7 @@ const AgendaSemanal = ({
                   if (e.key === 'Enter') handleSendChat();
                 }}
                 placeholder="Ex: @Vito amanhã 10h limpeza"
-                className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
+                className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-800 placeholder:text-slate-400'}`}
               />
               <button
                 type="button"
@@ -853,14 +857,14 @@ const AgendaSemanal = ({
               </button>
             </div>
             {mentionOpen && mentionMatches.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden z-20">
+              <div className={`absolute left-0 right-0 top-full mt-2 rounded-2xl border shadow-lg overflow-hidden z-20 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                 {mentionMatches.map((customer, index) => (
                   <button
                     key={customer.id}
                     type="button"
                     onClick={() => applyMention(customer.name)}
                     className={`w-full px-4 py-2 text-left text-sm transition ${
-                      index === mentionIndex ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50'
+                      index === mentionIndex ? (isDark ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-900') : (isDark ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50')
                     }`}
                   >
                     @{customer.name}
@@ -869,16 +873,32 @@ const AgendaSemanal = ({
               </div>
             )}
           </div>
-          <p className="text-[12px] text-slate-500 text-center">
+          <p className={`text-[12px] text-center ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
             Dica: escreva naturalmente, como se estivesse anotando sua agenda.
           </p>
           {chatLoading && (
-            <p className="text-[12px] text-slate-500 text-center">O agente está escrevendo...</p>
+            <p className={`text-[12px] text-center ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>O agente está escrevendo...</p>
           )}
         </div>
       </div>
     </div>
   );
+
+  const renderCustomerName = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0];
+    const rest = parts.slice(1).join(' ');
+    return (
+      <div className="truncate min-w-0">
+        <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{first}</span>
+        {rest && (
+          <span className={`hidden min-[450px]:inline font-normal ml-1 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            {rest}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   const renderWeekSection = () => {
     const hasAny = weekDays.some((day) => getAgendamentosForDay(day).length > 0);
@@ -895,28 +915,28 @@ const AgendaSemanal = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                <p className={`text-[11px] uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {format(selectedDay, 'EEEE', { locale: ptBR })}
                 </p>
-                <p className="text-base font-semibold text-slate-900">
+                <p className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => handleDayCardClick(selectedDay)}
-                className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+                className={`text-xs font-semibold ${isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-primary-600 hover:text-primary-700'}`}
               >
                 + Agendar
               </button>
             </div>
 
-            <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
+            <div className={`flex items-center gap-2 text-[10px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
-                <span>A confirmar</span>
+                <span>Não confirmado</span>
               </div>
-              <span className="h-px w-6 bg-slate-200" aria-hidden />
+              <span className={`h-px w-6 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} aria-hidden />
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
                 <span>Agendado</span>
@@ -944,35 +964,35 @@ const AgendaSemanal = ({
                         className="relative pl-6 animate-cascade"
                         style={{ animationDelay: `${idx * 100}ms` }}
                       >
-                        <div className="absolute left-2 top-2 bottom-0 w-px bg-slate-200" aria-hidden />
-                        {isLast && <div className="absolute left-2 bottom-0 w-px h-2 bg-white" aria-hidden />}
+                        <div className={`absolute left-2 top-2 bottom-0 w-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} aria-hidden />
+                        {isLast && <div className={`absolute left-2 bottom-0 w-px h-2 ${isDark ? 'bg-slate-900' : 'bg-white'}`} aria-hidden />}
                         <div className="relative flex gap-3 pb-2">
                           <div className="flex flex-col items-center w-12 shrink-0">
-                            <span className="text-xs font-semibold text-slate-600">{start}</span>
+                            <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{start}</span>
                             <div className="relative">
-                              <div className="h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow" />
-                              {!isLast && <div className="absolute left-1/2 top-3 h-full w-px -translate-x-1/2 bg-slate-200" aria-hidden />}
+                              <div className="h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500 shadow" />
+                              {!isLast && <div className={`absolute left-1/2 top-3 h-full w-px -translate-x-1/2 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} aria-hidden />}
                             </div>
                           </div>
                           <button
                             type="button"
                             onClick={() => openCustomerInfo(ag)}
-                            className={`flex-1 min-w-0 text-left rounded-2xl px-3 py-3 shadow-sm border transition-transform duration-150 active:scale-95 ${statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'} ${statusAccents[ag.status] ?? 'border-l-4 border-slate-200'} pl-4 overflow-hidden`}
+                            className={`flex-1 min-w-0 text-left rounded-2xl px-3 py-3 shadow-sm border transition-transform duration-150 active:scale-95 ${statusSurfaces[ag.status] ?? (isDark ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-slate-100 text-slate-800 border-slate-200')} ${statusAccents[ag.status] ?? (isDark ? 'border-l-4 border-slate-600' : 'border-l-4 border-slate-200')} pl-4 overflow-hidden`}
                           >
                             <div className="flex items-center gap-3 w-full">
-                              <div className="h-10 w-10 shrink-0 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+                              <div className={`h-10 w-10 shrink-0 rounded-full border flex items-center justify-center text-sm font-semibold ${isDark ? 'bg-emerald-900/30 border-emerald-800 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
                                 {initials || '?'}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="w-full flex items-center justify-between gap-2 overflow-hidden">
-                                  <span className="text-sm font-semibold text-slate-900 truncate min-w-0">{ag.customer.name}</span>
-                                  <span className="text-[11px] font-semibold text-slate-500 shrink-0 whitespace-nowrap">{formatStatusLabel(ag.status)}</span>
+                                  {renderCustomerName(ag.customer.name)}
+                                  <span className={`text-[11px] font-semibold shrink-0 whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{formatStatusLabel(ag.status)}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                <p className={`text-xs mt-0.5 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                                   {start}
                                   {end}
                                 </p>
-                                {ag.notes ? <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ag.notes}</p> : null}
+                                {ag.notes ? <p className={`text-xs mt-1 line-clamp-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{ag.notes}</p> : null}
                               </div>
                             </div>
                           </button>
@@ -996,7 +1016,7 @@ const AgendaSemanal = ({
     const dotsColor = (status: AppointmentStatus) => {
       switch (status) {
         case 'CONCLUIDO':
-          return 'border-blue-500';
+          return 'border-emerald-500';
         case 'EM_ANDAMENTO':
           return 'border-blue-500';
         case 'AGENDADO':
@@ -1023,10 +1043,10 @@ const AgendaSemanal = ({
               const isLast = idx === arr.length - 1;
               return (
                 <div key={ag.id} className="relative pl-4">
-                  <div className="absolute left-[7px] top-2 bottom-0 w-px bg-slate-200" aria-hidden />
-                  {isLast && <div className="absolute left-[7px] bottom-0 w-px h-full bg-white" aria-hidden />}
+                  <div className={`absolute left-[7px] top-2 bottom-0 w-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} aria-hidden />
+                  {isLast && <div className={`absolute left-[7px] bottom-0 w-px h-full ${isDark ? 'bg-slate-900' : 'bg-white'}`} aria-hidden />}
                   <div className="relative flex gap-3">
-                    <div className={`absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full border-2 bg-white ${dotsColor(ag.status)} shadow-sm z-10`} />
+                    <div className={`absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full border-2 ${isDark ? 'bg-slate-900' : 'bg-white'} ${dotsColor(ag.status)} shadow-sm z-10`} />
                     <div className="flex-1 pb-4">
                       <button
                         type="button"
@@ -1034,15 +1054,15 @@ const AgendaSemanal = ({
                         className={`w-full text-left rounded-2xl p-4 shadow-sm border transition active:scale-95 ${statusSurfaces[ag.status]}`}
                       >
                         <div className="flex justify-between items-start mb-1 overflow-hidden gap-2">
-                          <h3 className="font-bold text-sm truncate min-w-0">{ag.customer.name}</h3>
+                          {renderCustomerName(ag.customer.name)}
                           <span className="text-[10px] font-bold uppercase tracking-wide opacity-70 shrink-0 whitespace-nowrap">{ag.status}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs opacity-80 mb-2">
+                        <div className={`flex items-center gap-2 text-xs opacity-80 mb-2 ${isDark ? 'text-slate-300' : ''}`}>
                           <Clock3 size={12} />
                           <span>{start} {ag.endTime ? `- ${ag.endTime}` : ''}</span>
                         </div>
                         {ag.customer.address && (
-                          <div className="flex items-start gap-1.5 text-xs opacity-70">
+                          <div className={`flex items-start gap-1.5 text-xs opacity-70 ${isDark ? 'text-slate-400' : ''}`}>
                             <MapPin size={12} className="mt-0.5 shrink-0" />
                             <span className="line-clamp-1">{ag.customer.address}</span>
                           </div>
@@ -1078,13 +1098,13 @@ const AgendaSemanal = ({
   }) => (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="relative bg-white rounded-t-[32px] p-6 animate-sheet-up space-y-5">
+      <div className={`relative rounded-t-[32px] p-6 animate-sheet-up space-y-5 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">AÇÕES PARA</p>
-            <h3 className="text-lg font-bold text-slate-900">{format(date, "d 'de' MMMM", { locale: ptBR })}</h3>
+            <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>AÇÕES PARA</p>
+            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{format(date, "d 'de' MMMM", { locale: ptBR })}</h3>
           </div>
-          <button onClick={onClose} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200">
+          <button onClick={onClose} className={`p-2 rounded-full transition ${isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
             <ChevronLeft className="rotate-[-90deg]" size={20} />
           </button>
         </div>
@@ -1092,18 +1112,18 @@ const AgendaSemanal = ({
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={onAdd}
-            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100 transition"
+            className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition ${isDark ? 'bg-emerald-900/20 border-emerald-800 text-emerald-400 hover:bg-emerald-900/30' : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100'}`}
           >
-            <div className="w-10 h-10 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-200 text-emerald-700'}`}>
               <Plus size={20} />
             </div>
             <span className="text-sm font-bold">Novo Agendamento</span>
           </button>
           <button
             onClick={onAi}
-            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 transition"
+            className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition ${isDark ? 'bg-indigo-900/20 border-indigo-800 text-indigo-400 hover:bg-indigo-900/30' : 'bg-indigo-50 border-indigo-100 text-indigo-700 hover:bg-indigo-100'}`}
           >
-            <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-200 text-indigo-700'}`}>
               <Sparkles size={20} />
             </div>
             <span className="text-sm font-bold">Assistente IA</span>
@@ -1112,22 +1132,22 @@ const AgendaSemanal = ({
 
         {dayApps.length > 0 && (
           <div className="space-y-3">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">NESTE DIA</p>
+            <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>NESTE DIA</p>
             <div className="max-h-[200px] overflow-y-auto space-y-2 pr-1">
               {dayApps.map((ap) => (
                 <button
                   key={ap.id}
                   onClick={() => onEdit(ap)}
-                  className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:border-emerald-200 transition text-left"
+                  className={`w-full flex items-center justify-between p-3 rounded-xl border transition text-left ${isDark ? 'bg-slate-800 border-slate-700 hover:border-emerald-600/50' : 'border-slate-100 bg-slate-50 hover:border-emerald-200'}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-8 rounded-full bg-emerald-400" />
                     <div>
-                      <p className="text-sm font-bold text-slate-700">{ap.customer.name}</p>
-                      <p className="text-xs text-slate-500">{ap.startTime} • {formatCurrency(ap.price)}</p>
+                      <p className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{ap.customer.name}</p>
+                      <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{ap.startTime} • {formatCurrency(ap.price)}</p>
                     </div>
                   </div>
-                  <PencilLine size={16} className="text-slate-400" />
+                  <PencilLine size={16} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
                 </button>
               ))}
             </div>
@@ -1140,22 +1160,22 @@ const AgendaSemanal = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full pt-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-white"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#f6f7fb]">
+    <div className={`h-full flex flex-col ${isDark ? 'bg-[#0f172a]' : 'bg-[#f6f7fb]'}`}>
       <div className="px-4 md:px-8 pt-0 pb-6 space-y-5 sm:space-y-6">
         <div className="-mx-4 md:-mx-8">
           <div className="pt-0 px-4 md:px-8 pb-0 md:py-6 flex flex-col gap-4 md:gap-6 mt-[3px] mb-[3px]">
             <div className="flex items-start justify-between mt-[5px]">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.28em] font-semibold text-slate-500">
+                <p className={`text-[11px] uppercase tracking-[0.28em] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {createYear}
                 </p>
-                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                <h1 className={`text-2xl md:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {viewLabel}
                 </h1>
               </div>
@@ -1163,7 +1183,7 @@ const AgendaSemanal = ({
                 <button
                   type="button"
                   onClick={openEmptyActions}
-                  className="h-10 w-10 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center hover:bg-slate-800 transition"
+                  className={`h-10 w-10 rounded-full text-white shadow-lg flex items-center justify-center transition ${isDark ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-slate-900 hover:bg-slate-800'}`}
                   aria-label="Adicionar novo"
                 >
                   <Plus size={20} />
@@ -1174,24 +1194,24 @@ const AgendaSemanal = ({
         </div>
 
         <div className="space-y-3 -mt-4">
-          <div className="-mx-4 md:-mx-8 rounded-b-[28px] rounded-t-[0px] bg-white border border-slate-100 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 pt-[5px] pb-[1px] space-y-[5px] -mt-4 -mb-4">
+          <div className={`-mx-4 md:-mx-8 rounded-b-[28px] rounded-t-[0px] border shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 pt-[5px] pb-[1px] space-y-[5px] -mt-4 -mb-4 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1">
+              <div className={`flex items-center gap-2 border rounded-xl p-1 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
                 <button
                   type="button"
                   onClick={handlePrevRange}
-                  className="h-9 w-9 rounded-lg text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+                  className={`h-9 w-9 rounded-lg flex items-center justify-center transition ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
                   aria-label="Anterior"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-sm font-semibold text-slate-700 px-2 min-w-[80px] text-center">
+                <span className={`text-sm font-semibold px-2 min-w-[80px] text-center ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                   {viewMode === 'today' ? 'Hoje' : viewMode === 'week' ? 'Semana' : 'Mês'}
                 </span>
                 <button
                   type="button"
                   onClick={handleNextRange}
-                  className="h-9 w-9 rounded-lg text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+                  className={`h-9 w-9 rounded-lg flex items-center justify-center transition ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
                   aria-label="Próximo"
                 >
                   <ChevronRight size={16} />
@@ -1205,7 +1225,7 @@ const AgendaSemanal = ({
                     setCurrentDate(today);
                     setSelectedDay(today);
                   }}
-                  className="h-9 w-9 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 transition"
+                  className={`h-9 w-9 rounded-xl border flex items-center justify-center transition ${isDark ? 'border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
                   title="Voltar para Hoje"
                 >
                   <Calendar size={16} />
@@ -1213,14 +1233,14 @@ const AgendaSemanal = ({
                 <button
                   type="button"
                   onClick={() => navigate('/app/rotas')}
-                  className="h-9 px-3 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-sm hover:bg-slate-800 transition flex items-center gap-2"
+                  className={`h-9 px-3 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2 ${isDark ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                 >
                   <MapPin size={14} />
                   Rota
                 </button>
               </div>
             </div>
-            <div className="flex items-center rounded-full bg-slate-50 border border-slate-200 p-1 gap-1">
+            <div className={`flex items-center rounded-full border p-1 gap-1 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
               {['today', 'week', 'month', 'chat'].map((mode) => {
                 const label = mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat';
                 const active = viewMode === mode;
@@ -1231,7 +1251,7 @@ const AgendaSemanal = ({
                     className={`flex-1 h-10 rounded-full text-sm font-semibold transition ${
                       active
                         ? 'bg-emerald-500 text-white shadow-[0_12px_30px_-18px_rgba(16,185,129,0.7)]'
-                        : 'text-slate-700 hover:bg-white'
+                        : isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-700 hover:bg-white'
                     }`}
                   >
                     {label}
@@ -1252,16 +1272,16 @@ const AgendaSemanal = ({
                       key={day.toISOString()}
                       type="button"
                       onClick={() => setSelectedDay(day)}
-                      className="flex flex-col items-center gap-1.5 rounded-2xl px-1.5 py-2 transition hover:bg-slate-50"
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl px-1.5 py-2 transition ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
                     >
-                      <span className={`text-[10px] font-semibold uppercase ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}>
+                      <span className={`text-[10px] font-semibold uppercase ${isSelected ? (isDark ? 'text-white' : 'text-slate-900') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>
                         {weekdayLabels[index]}
                       </span>
                       {isSelected ? (
                         <motion.span
                           layoutId="day-pill"
                           transition={{ type: 'spring', stiffness: 340, damping: 26 }}
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border bg-slate-900 text-white border-slate-900 shadow-sm shadow-slate-900/20"
+                          className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border shadow-sm ${isDark ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-900/20' : 'bg-slate-900 text-white border-slate-900 shadow-slate-900/20'}`}
                         >
                           {format(day, 'd')}
                         </motion.span>
@@ -1269,8 +1289,8 @@ const AgendaSemanal = ({
                         <span
                           className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border transition ${
                             today
-                              ? 'bg-white text-emerald-600 border-emerald-200 ring-2 ring-emerald-100'
-                              : 'bg-white text-slate-900 border-slate-200'
+                              ? isDark ? 'bg-slate-900 text-emerald-400 border-emerald-900/50 ring-2 ring-emerald-900/30' : 'bg-white text-emerald-600 border-emerald-200 ring-2 ring-emerald-100'
+                              : isDark ? 'bg-slate-900 text-slate-300 border-slate-700' : 'bg-white text-slate-900 border-slate-200'
                           }`}
                         >
                           {format(day, 'd')}
@@ -1297,7 +1317,7 @@ const AgendaSemanal = ({
               </LayoutGroup>
             )}
             {viewMode === 'month' && (
-              <div className="mt-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className={`mt-2 rounded-2xl border shadow-sm overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <AgendaMensal embedded />
               </div>
             )}
@@ -1314,7 +1334,7 @@ const AgendaSemanal = ({
           <button
             type="button"
             onClick={() => setShowEmptyActions(true)}
-            className="fixed right-4 bottom-24 z-50 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-slate-800 transition"
+            className={`fixed right-4 bottom-24 z-50 rounded-full px-5 py-3 text-sm font-semibold text-white shadow-lg transition ${isDark ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-slate-900 hover:bg-slate-800'}`}
           >
             + Agendar
           </button>
@@ -1368,13 +1388,13 @@ const AgendaSemanal = ({
         {customerInfo && editingAppointment && (
           <div className="fixed inset-0 z-50 flex flex-col justify-end">
             <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setCustomerInfo(null)} />
-            <div className="relative bg-white rounded-t-[32px] p-6 animate-sheet-up space-y-6">
+            <div className={`relative rounded-t-[32px] p-6 animate-sheet-up space-y-6 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">DETALHES DO CLIENTE</p>
-                  <h2 className="text-xl font-bold text-slate-900 mt-1">{customerInfo.name}</h2>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>DETALHES DO CLIENTE</p>
+                  <h2 className={`text-xl font-bold mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{customerInfo.name}</h2>
                   {customerInfo.address && (
-                    <div className="flex items-center gap-1.5 text-sm text-slate-600 mt-1">
+                    <div className={`flex items-center gap-1.5 text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                       <MapPin size={14} className="text-emerald-500" />
                       <span>{customerInfo.address}</span>
                     </div>
@@ -1382,7 +1402,7 @@ const AgendaSemanal = ({
                 </div>
                 <button 
                   onClick={() => setCustomerInfo(null)}
-                  className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200"
+                  className={`p-2 rounded-full transition ${isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                 >
                   <ChevronLeft className="rotate-[-90deg]" size={20} />
                 </button>
@@ -1392,7 +1412,7 @@ const AgendaSemanal = ({
                 {customerInfo.phone && (
                   <a
                     href={`tel:${customerInfo.phone}`}
-                    className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition"
+                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border font-semibold transition ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
                   >
                     <Phone size={18} />
                     Ligar
@@ -1403,7 +1423,7 @@ const AgendaSemanal = ({
                     href={`https://maps.google.com/?q=${encodeURIComponent(customerInfo.address)}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition"
+                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border font-semibold transition ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
                   >
                     <Navigation size={18} />
                     Navegar
@@ -1412,16 +1432,16 @@ const AgendaSemanal = ({
               </div>
 
               {editingAppointment.notes && (
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                  <p className="text-xs font-bold text-slate-400 uppercase mb-1">NOTAS DA VISITA</p>
-                  <p className="text-sm text-slate-700 leading-relaxed">{editingAppointment.notes}</p>
+                <div className={`rounded-2xl p-4 border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                  <p className={`text-xs font-bold uppercase mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>NOTAS DA VISITA</p>
+                  <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{editingAppointment.notes}</p>
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-100">
+              <div className={`pt-2 border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
                 <button
                   onClick={openEditModalForCustomer}
-                  className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-200"
+                  className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30"
                 >
                   <PencilLine size={20} />
                   Editar Agendamento
@@ -1437,13 +1457,13 @@ const AgendaSemanal = ({
               className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
               onClick={() => setShowEmptyActions(false)}
             />
-            <div className="relative w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl animate-zoom-in space-y-6">
+            <div className={`relative w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-zoom-in space-y-6 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
               <div className="text-center space-y-2">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Plus size={32} className="text-slate-900" />
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                  <Plus size={32} className={isDark ? 'text-white' : 'text-slate-900'} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">Adicionar Novo</h3>
-                <p className="text-sm text-slate-500">O que você gostaria de criar agora?</p>
+                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Adicionar Novo</h3>
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>O que você gostaria de criar agora?</p>
               </div>
 
               <div className="space-y-3">
@@ -1452,14 +1472,14 @@ const AgendaSemanal = ({
                     setShowEmptyActions(false);
                     openCreateModal(selectedDay);
                   }}
-                  className="w-full p-4 flex items-center gap-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition border border-slate-100 group"
+                  className={`w-full p-4 flex items-center gap-4 rounded-2xl transition border group ${isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'}`}
                 >
                   <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Clock3 size={20} />
                   </div>
                   <div className="text-left">
-                    <p className="font-bold text-slate-900">Agendamento</p>
-                    <p className="text-xs text-slate-500">Marcar visita para cliente</p>
+                    <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Agendamento</p>
+                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Marcar visita para cliente</p>
                   </div>
                 </button>
 
@@ -1468,21 +1488,21 @@ const AgendaSemanal = ({
                     setShowEmptyActions(false);
                     navigate('/app/clientes');
                   }}
-                  className="w-full p-4 flex items-center gap-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition border border-slate-100 group"
+                  className={`w-full p-4 flex items-center gap-4 rounded-2xl transition border group ${isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'}`}
                 >
                   <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Plus size={20} />
                   </div>
                   <div className="text-left">
-                    <p className="font-bold text-slate-900">Novo Cliente</p>
-                    <p className="text-xs text-slate-500">Cadastrar cliente na base</p>
+                    <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Novo Cliente</p>
+                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Cadastrar cliente na base</p>
                   </div>
                 </button>
               </div>
 
               <button
                 onClick={() => setShowEmptyActions(false)}
-                className="w-full py-3 text-sm font-semibold text-slate-500 hover:text-slate-800 transition"
+                className={`w-full py-3 text-sm font-semibold transition ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'}`}
               >
                 Cancelar
               </button>
