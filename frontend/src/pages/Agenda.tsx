@@ -105,7 +105,7 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
                   borderRadius: '24px',
                 }
           }
-          className={embedded ? undefined : `pt-3 ${heroInner}`}
+          className={embedded ? undefined : `pt-[5px] ${heroInner}`}
         >
           <div>
             {viewMode === 'week' ? (

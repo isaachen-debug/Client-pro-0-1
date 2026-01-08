@@ -17,7 +17,7 @@ export const ownerPalette = {
 };
 
 export const heroOuter = '-mx-4 md:-mx-8';
-export const heroInner = 'px-4 md:px-8 py-5 md:py-6 flex flex-col gap-4 md:gap-6';
+export const heroInner = 'px-[10px] md:px-8 py-5 md:py-6 flex flex-col gap-4 md:gap-6';
 
 export const heroLabel =
   'text-[11px] uppercase tracking-[0.28em] font-semibold text-slate-500';

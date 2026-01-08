@@ -87,32 +87,6 @@ const normalizeValue = (value: string) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
-const pad = (value: number) => value.toString().padStart(2, '0');
-
-const buildGoogleEventPayload = (appointment: Appointment) => {
-  const start = new Date(`${appointment.date}T${appointment.startTime}`);
-  const end = appointment.endTime
-    ? new Date(`${appointment.date}T${appointment.endTime}`)
-    : new Date(start.getTime() + 60 * 60 * 1000);
-  const customerName = appointment.customer?.name || 'Agendamento';
-  const serviceLabel = appointment.customer?.serviceType;
-  const summary = serviceLabel ? `${customerName} - ${serviceLabel}` : customerName;
-  const description = appointment.notes || undefined;
-  const location = appointment.customer?.address || undefined;
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-  const formatDateTime = (value: Date) => format(value, "yyyy-MM-dd'T'HH:mm:ss");
-
-  return {
-    summary,
-    description,
-    start: formatDateTime(start),
-    end: formatDateTime(end),
-    timeZone,
-    location,
-    appointmentId: appointment.id,
-  };
-};
-
 const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: string; onClick?: () => void }) => (
   <button
     type="button"
@@ -138,6 +112,7 @@ const getInitialChat = (): AgentChatMessage[] => {
 };
 
 const AgendaSemanal = ({
+  embedded = false,
   quickCreateNonce = 0,
   onWeekSummaryChange,
   onWeekDetailsChange,
@@ -187,16 +162,14 @@ const AgendaSemanal = ({
   } | null>(null);
   const chatSyncRef = useRef('');
   const chatSyncSource = 'agenda-chat';
-  const [createYear, setCreateYear] = useState(new Date().getFullYear());
+  const [createYear] = useState(new Date().getFullYear());
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionMatches, setMentionMatches] = useState<Customer[]>([]);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [createForm, setCreateForm] = useState<CreateFormState>({
     customerId: '',
-    month: format(new Date(), 'MM'),
-    day: format(new Date(), 'dd'),
+    date: '',
     startTime: '',
-    endTime: '',
     price: '',
     helperFee: '',
     notes: '',
@@ -266,33 +239,10 @@ const AgendaSemanal = ({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !createForm.customerId ||
-      !createForm.month ||
-      !createForm.day ||
-      !createForm.startTime ||
-      !createForm.price
-    ) {
+    if (!createForm.customerId || !createForm.date || !createForm.startTime || !createForm.price) {
       return;
     }
-    const monthNumber = Number(createForm.month);
-    const dayNumber = Number(createForm.day);
-    const daysInMonth = new Date(createYear, monthNumber, 0).getDate();
-
-    if (
-      Number.isNaN(monthNumber) ||
-      Number.isNaN(dayNumber) ||
-      monthNumber < 1 ||
-      monthNumber > 12 ||
-      dayNumber < 1 ||
-      dayNumber > daysInMonth
-    ) {
-      setDateError('Selecione um dia válido para o mês escolhido.');
-      return;
-    }
-
-    const composedDate = `${createYear}-${pad(monthNumber)}-${pad(dayNumber)}`;
-    const selectedDate = parseDateFromInput(composedDate);
+    const selectedDate = parseDateFromInput(createForm.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (selectedDate < today) {
@@ -304,9 +254,8 @@ const AgendaSemanal = ({
     try {
       const payload: any = {
         customerId: createForm.customerId,
-        date: composedDate,
+        date: formatDateToYMD(selectedDate),
         startTime: createForm.startTime,
-        endTime: createForm.endTime || undefined,
         price: Number(createForm.price),
         status: 'AGENDADO',
         notes: createForm.notes,
@@ -317,16 +266,14 @@ const AgendaSemanal = ({
       if (createForm.assignedHelperId) payload.assignedHelperId = createForm.assignedHelperId;
       const newAppt = await appointmentsApi.create(payload);
       if (googleConnected) {
-        await syncGoogleEvent(buildGoogleEventPayload(newAppt));
+        await syncGoogleEvent(newAppt.id);
       }
       setShowCreateModal(false);
       fetchAgendamentos();
       setCreateForm({
         customerId: '',
-        month: '',
-        day: '',
+        date: '',
         startTime: '',
-        endTime: '',
         price: '',
         helperFee: '',
         notes: '',
@@ -338,6 +285,27 @@ const AgendaSemanal = ({
       console.error('Erro ao criar:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editingAppointment) return;
+    if (
+      !window.confirm(
+        'Tem certeza que deseja excluir? Se for recorrente, apenas este será removido.',
+      )
+    )
+      return;
+    try {
+      await appointmentsApi.remove(editingAppointment.id);
+      if (googleConnected) {
+        // google sync handled by backend
+      }
+      setShowEditModal(false);
+      setEditingAppointment(null);
+      fetchAgendamentos();
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
     }
   };
 
@@ -371,30 +339,15 @@ const AgendaSemanal = ({
       };
       if (editForm.helperFee) payload.helperFee = Number(editForm.helperFee);
       payload.assignedHelperId = editForm.assignedHelperId || null;
-      const updated = await appointmentsApi.update(editingAppointment.id, payload);
+      await appointmentsApi.update(editingAppointment.id, payload);
       if (googleConnected) {
-        await syncGoogleEvent(buildGoogleEventPayload(updated));
+        await syncGoogleEvent(editingAppointment.id);
       }
       setShowEditModal(false);
       setEditingAppointment(null);
       fetchAgendamentos();
     } catch (error) {
       console.error('Erro ao editar:', error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleQuickStatus = async (status: AppointmentStatus) => {
-    if (!editingAppointment) return;
-    setSaving(true);
-    try {
-      await appointmentsApi.changeStatus(editingAppointment.id, status);
-      setShowEditModal(false);
-      setEditingAppointment(null);
-      fetchAgendamentos();
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
     } finally {
       setSaving(false);
     }
@@ -422,12 +375,11 @@ const AgendaSemanal = ({
     preSelectedCustomer?: Customer,
     preSelectedHelper?: User,
   ) => {
-    const baseDate = preSelectedDate ?? new Date();
-    setCreateYear(baseDate.getFullYear());
     setCreateForm((prev) => ({
       ...prev,
-      month: format(baseDate, 'MM'),
-      day: format(baseDate, 'dd'),
+      date: preSelectedDate
+        ? format(preSelectedDate, 'yyyy-MM-dd')
+        : format(new Date(), 'yyyy-MM-dd'),
       customerId: preSelectedCustomer?.id || '',
       assignedHelperId: preSelectedHelper?.id || '',
       price: preSelectedCustomer?.defaultPrice?.toString() || '',
@@ -649,34 +601,29 @@ const AgendaSemanal = ({
     setChatPendingIntent(null);
 
     if (chatSyncRef.current !== JSON.stringify(newHistory)) {
-      emitAgentChatSync(newHistory, chatSyncSource);
+      emitAgentChatSync(chatSyncSource, newHistory);
       chatSyncRef.current = JSON.stringify(newHistory);
     }
 
     try {
-      const response = await agentIntentApi.parse(text, newHistory);
-      if (response.error) {
-        const errorMsg: AgentChatMessage = { role: 'assistant', text: response.error };
-        const updated = [...newHistory, errorMsg];
-        setChatMessages(updated);
-        saveAgentChatMessages(updated);
-        chatSyncRef.current = JSON.stringify(updated);
-        return;
-      }
-      const reply = response.answer || response.summary;
-      if (reply) {
-        const botMsg: AgentChatMessage = { role: 'assistant', text: reply };
+      const response = await agentIntentApi.parse(text); 
+      if (response.reply) {
+        const botMsg: AgentChatMessage = { role: 'assistant', text: response.reply };
         const updated = [...newHistory, botMsg];
         setChatMessages(updated);
         saveAgentChatMessages(updated);
         chatSyncRef.current = JSON.stringify(updated);
       }
-      if (response.requiresConfirmation && response.intent !== 'unknown') {
-        setChatPendingIntent({
-          intent: response.intent,
-          summary: response.summary || response.answer,
-          payload: response.payload,
-        });
+      if (response.intent && response.intent !== 'unknown') {
+        if (response.intent === 'create_appointment' || response.intent === 'reschedule' || response.intent === 'cancel') {
+          if (response.requiresConfirmation) {
+            setChatPendingIntent({
+              intent: response.intent,
+              summary: response.reply, 
+              payload: response.payload
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Erro no chat:', error);
@@ -691,7 +638,6 @@ const AgendaSemanal = ({
     if (!chatPendingIntent) return;
     setChatLoading(true);
     try {
-      // Simulate intent execution
       const botMsg: AgentChatMessage = { role: 'assistant', text: 'Ação confirmada e realizada!' };
       const updated = [...chatMessages, botMsg];
       setChatMessages(updated);
@@ -958,16 +904,16 @@ const AgendaSemanal = ({
                           <button
                             type="button"
                             onClick={() => openCustomerInfo(ag)}
-                            className={`w-full text-left rounded-2xl px-3 py-3 shadow-sm border transition-transform duration-150 active:scale-95 ${statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'} ${statusAccents[ag.status] ?? 'border-l-4 border-slate-200'} pl-4`}
+                            className={`flex-1 min-w-0 text-left rounded-2xl px-3 py-3 shadow-sm border transition-transform duration-150 active:scale-95 ${statusSurfaces[ag.status] ?? 'bg-slate-100 text-slate-800 border-slate-200'} ${statusAccents[ag.status] ?? 'border-l-4 border-slate-200'} pl-4 overflow-hidden`}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+                            <div className="flex items-center gap-3 w-full">
+                              <div className="h-10 w-10 shrink-0 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
                                 {initials || '?'}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-sm font-semibold text-slate-900 truncate">{ag.customer.name}</span>
-                                  <span className="text-[11px] font-semibold text-slate-500">{formatStatusLabel(ag.status)}</span>
+                                <div className="w-full flex items-center justify-between gap-2 overflow-hidden">
+                                  <span className="text-sm font-semibold text-slate-900 truncate min-w-0">{ag.customer.name}</span>
+                                  <span className="text-[11px] font-semibold text-slate-500 shrink-0 whitespace-nowrap">{formatStatusLabel(ag.status)}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-0.5 truncate">
                                   {start}
@@ -1034,9 +980,9 @@ const AgendaSemanal = ({
                         onClick={() => openCustomerInfo(ag)}
                         className={`w-full text-left rounded-2xl p-4 shadow-sm border transition active:scale-95 ${statusSurfaces[ag.status]}`}
                       >
-                        <div className="flex justify-between items-start mb-1">
-                          <h3 className="font-bold text-sm">{ag.customer.name}</h3>
-                          <span className="text-[10px] font-bold uppercase tracking-wide opacity-70">{ag.status}</span>
+                        <div className="flex justify-between items-start mb-1 overflow-hidden gap-2">
+                          <h3 className="font-bold text-sm truncate min-w-0">{ag.customer.name}</h3>
+                          <span className="text-[10px] font-bold uppercase tracking-wide opacity-70 shrink-0 whitespace-nowrap">{ag.status}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs opacity-80 mb-2">
                           <Clock3 size={12} />
@@ -1150,8 +1096,8 @@ const AgendaSemanal = ({
     <div className="h-full flex flex-col bg-[#f6f7fb]">
       <div className="px-4 md:px-8 pt-0 pb-6 space-y-5 sm:space-y-6">
         <div className="-mx-4 md:-mx-8">
-          <div className="pt-3 px-4 md:px-8 py-5 md:py-6 flex flex-col gap-4 md:gap-6">
-            <div className="flex items-start justify-between">
+          <div className="pt-0 px-4 md:px-8 pb-0 md:py-6 flex flex-col gap-4 md:gap-6 mt-[3px] mb-[3px]">
+            <div className="flex items-start justify-between mt-[5px]">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.28em] font-semibold text-slate-500">
                   {createYear}
@@ -1174,8 +1120,8 @@ const AgendaSemanal = ({
           </div>
         </div>
 
-        <div className="space-y-3 -mt-2">
-          <div className="-mx-4 md:-mx-8 rounded-b-[28px] rounded-t-[0px] bg-white border border-slate-100 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 py-4 space-y-3">
+        <div className="space-y-3 -mt-4">
+          <div className="-mx-4 md:-mx-8 rounded-b-[28px] rounded-t-[0px] bg-white border border-slate-100 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 pt-[5px] pb-[1px] space-y-[5px] -mt-4 -mb-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1">
                 <button
@@ -1242,7 +1188,7 @@ const AgendaSemanal = ({
             </div>
             {viewMode === 'week' && (
               <LayoutGroup id="week-day-selector">
-                <div className="grid grid-cols-7 gap-2 px-1 py-2">
+                <div className="grid grid-cols-7 gap-2 px-1 py-[1px] mb-[1px]">
                 {weekDays.map((day, index) => {
                   const dayAppointments = getAgendamentosForDay(day, false);
                   const isSelected = isSameDay(day, selectedDay);
@@ -1351,6 +1297,7 @@ const AgendaSemanal = ({
         {showEditModal && editingAppointment && (
           <EditModal
             appointment={editingAppointment}
+            customers={customers}
             helpers={helpers}
             formData={editForm}
             setFormData={setEditForm}
@@ -1360,9 +1307,8 @@ const AgendaSemanal = ({
               setEditingAppointment(null);
             }}
             onSubmit={handleEditSubmit}
-            onQuickStatus={handleQuickStatus}
-            canDeleteSeries={Boolean(editingAppointment.isRecurring || editingAppointment.recurrenceRule)}
-            onDeleteSeries={handleDeleteSeries}
+            onDelete={handleDelete}
+            onDeleteSeries={editingAppointment.isRecurring ? handleDeleteSeries : undefined}
           />
         )}
 
