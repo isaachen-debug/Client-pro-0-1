@@ -1,4 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 300 : -300,
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 300 : -300,
+    opacity: 0,
+  }),
+};
+
+const swipePower = (offset: number, velocity: number) => {
+  return Math.abs(offset) * velocity;
+};
 import {
   ChevronLeft,
   ChevronRight,
@@ -510,7 +532,7 @@ const AgendaSemanal = ({
     viewMode === 'month'
       ? format(currentDate, 'MMMM yyyy', { locale: ptBR })
       : viewMode === 'today'
-        ? format(selectedDay, "d 'de' MMMM", { locale: ptBR })
+        ? format(selectedDay, "dd 'de' MMMM", { locale: ptBR })
         : `${format(weekStart, 'dd MMM', { locale: ptBR })} – ${format(weekEnd, 'dd MMM', { locale: ptBR })}`;
 
   const weekSummary = useMemo<WeekSummary>(() => {
@@ -579,32 +601,51 @@ const AgendaSemanal = ({
     onWeekDetailsChange(weekDetails);
   }, [onWeekDetailsChange, viewMode, weekDetails]);
 
-  const handlePrevRange = () => {
+  const [direction, setDirection] = useState(0);
+
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
     if (viewMode === 'today') {
-      setCurrentDate(subDays(currentDate, 1));
-      return;
-    }
-    if (viewMode === 'week' || viewMode === 'chat') {
-      setCurrentDate(subWeeks(currentDate, 1));
-      return;
-    }
-    if (viewMode === 'month') {
-      setCurrentDate(subMonths(currentDate, 1));
+      setCurrentDate((prev) => (newDirection > 0 ? addDays(prev, 1) : subDays(prev, 1)));
+    } else if (viewMode === 'week' || viewMode === 'chat') {
+      setCurrentDate((prev) => (newDirection > 0 ? addWeeks(prev, 1) : subWeeks(prev, 1)));
+    } else if (viewMode === 'month') {
+      setCurrentDate((prev) => (newDirection > 0 ? addMonths(prev, 1) : subMonths(prev, 1)));
     }
   };
 
-  const handleNextRange = () => {
+  const handlePrevRange = () => {
+    setDirection(-1);
     if (viewMode === 'today') {
-      setCurrentDate(addDays(currentDate, 1));
+      setSelectedDay((prev) => {
+        const nextDate = subDays(prev, 1);
+        setCurrentDate(nextDate);
+        return nextDate;
+      });
       return;
     }
     if (viewMode === 'week' || viewMode === 'chat') {
-      setCurrentDate(addWeeks(currentDate, 1));
+      setCurrentDate((prev) => subWeeks(prev, 1));
       return;
     }
-    if (viewMode === 'month') {
-      setCurrentDate(addMonths(currentDate, 1));
+    setCurrentDate((prev) => subMonths(prev, 1));
+  };
+
+  const handleNextRange = () => {
+    setDirection(1);
+    if (viewMode === 'today') {
+      setSelectedDay((prev) => {
+        const nextDate = addDays(prev, 1);
+        setCurrentDate(nextDate);
+        return nextDate;
+      });
+      return;
     }
+    if (viewMode === 'week' || viewMode === 'chat') {
+      setCurrentDate((prev) => addWeeks(prev, 1));
+      return;
+    }
+    setCurrentDate((prev) => addMonths(prev, 1));
   };
 
   const getAgendamentosForDay = (day: Date, applyStatusFilter = true) => {
@@ -916,7 +957,33 @@ const AgendaSemanal = ({
     const hasAny = weekDays.some((day) => getAgendamentosForDay(day).length > 0);
 
     return (
-      <div className="space-y-4 px-4 md:px-5">
+      <AnimatePresence initial={false} custom={direction} mode="popLayout">
+        <motion.div
+          key={format(currentDate, 'yyyy-MM-dd') + '-content'}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{
+            x: { type: 'spring', stiffness: 300, damping: 30 },
+            opacity: { duration: 0.2 },
+          }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={1}
+          dragDirectionLock
+          onDragEnd={(e, { offset, velocity }) => {
+            const swipe = swipePower(offset.x, velocity.x);
+
+            if (swipe < -10000) {
+              paginate(1);
+            } else if (swipe > 10000) {
+              paginate(-1);
+            }
+          }}
+          className="space-y-4 px-4 md:px-5"
+        >
         {!hasAny ? (
           <EmptyState
             title="Ainda nao ha tarefas."
@@ -931,7 +998,7 @@ const AgendaSemanal = ({
                   {format(selectedDay, 'EEEE', { locale: ptBR })}
                 </p>
                 <p className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
+                  {format(selectedDay, "dd 'de' MMMM", { locale: ptBR })}
                 </p>
               </div>
               <button
@@ -1016,7 +1083,8 @@ const AgendaSemanal = ({
             )}
           </div>
         )}
-      </div>
+        </motion.div>
+      </AnimatePresence>
     );
   };
 
@@ -1114,7 +1182,7 @@ const AgendaSemanal = ({
         <div className="flex items-center justify-between">
           <div>
             <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>AÇÕES PARA</p>
-            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{format(date, "d 'de' MMMM", { locale: ptBR })}</h3>
+            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{format(date, "dd 'de' MMMM", { locale: ptBR })}</h3>
           </div>
           <button onClick={onClose} className={`p-2 rounded-full transition ${isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
             <ChevronLeft className="rotate-[-90deg]" size={20} />
@@ -1273,7 +1341,32 @@ const AgendaSemanal = ({
             </div>
             {viewMode === 'week' && (
               <LayoutGroup id="week-day-selector">
-                <div className="grid grid-cols-7 gap-2 px-1 py-[1px] mb-[1px]">
+                <AnimatePresence initial={false} custom={direction}>
+                  <motion.div
+                    key={format(currentDate, 'yyyy-MM-dd')} // Unique key for AnimatePresence
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                      x: { type: 'spring', stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 },
+                    }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={1}
+                    onDragEnd={(e, { offset, velocity }) => {
+                      const swipe = swipePower(offset.x, velocity.x);
+
+                      if (swipe < -10000) {
+                        paginate(1);
+                      } else if (swipe > 10000) {
+                        paginate(-1);
+                      }
+                    }}
+                    className="grid grid-cols-7 gap-2 px-1 py-[1px] mb-[1px]"
+                  >
                 {weekDays.map((day, index) => {
                   const dayAppointments = getAgendamentosForDay(day, false);
                   const isSelected = isSameDay(day, selectedDay);
@@ -1325,7 +1418,8 @@ const AgendaSemanal = ({
                     </button>
                   );
                 })}
-                </div>
+                  </motion.div>
+                </AnimatePresence>
               </LayoutGroup>
             )}
             {viewMode === 'month' && (

@@ -2,7 +2,7 @@ import { FormEvent, useState, useEffect, TouchEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserRole } from '../types';
-import { FileText, MessageSquare, Smartphone } from 'lucide-react';
+import { FileText, MessageSquare, Smartphone, Mail, Lock, User, Building2, ArrowRight, Loader2, X } from 'lucide-react';
 import logoFull from '../assets/brand-logo.png';
 import loginHero from '../assets/login-hero.png';
 
@@ -948,107 +948,140 @@ const Login = () => {
       </section>
 
       {showLoginModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_25px_70px_rgba(15,23,42,0.18)] space-y-6 relative">
-            <button
-              type="button"
-              onClick={() => {
-                setShowLoginModal(false);
-                setLoginSegment(null);
-              }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
+            
+            {/* Header Background */}
+            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white -z-10" />
+            
+            <div className="p-8 pt-10 relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLoginModal(false);
+                  setLoginSegment(null);
+                }}
+                className="absolute top-0 right-0 p-2 m-4 rounded-full bg-white/50 hover:bg-white text-slate-400 hover:text-slate-600 transition-all shadow-sm hover:shadow-md"
+              >
+                <X size={20} />
+              </button>
 
-            <div className="space-y-2">
-              <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide border border-emerald-100">
-                {loginSegment === 'client' ? t.modal.clientBadge : t.modal.ownerBadge}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-gray-900">{t.modal.question}</p>
-              <p className="text-xs text-gray-500">{t.modal.personaPrompt}</p>
-              <div className={`grid gap-2 ${personaOptions.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                {personaOptions.map((option) => {
-                  const active = persona === option.key;
-                  return (
-                    <button
-                      type="button"
-                      key={option.key}
-                      onClick={() => setPersona(option.key as LoginPersona)}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-                        active
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_10px_25px_rgba(16,185,129,0.18)]'
-                          : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-gray-900'
-                      }`}
-                      disabled={loginSegment === 'client'}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 shadow-inner">
-                <p className="text-[10px] uppercase tracking-wide font-semibold text-emerald-700">
-                  {t.modal.infoBoxTitle}
-                </p>
-                <p className="text-xs font-semibold text-gray-900">{personaDescription.title}</p>
-                <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
-                  {personaDescription.description}
-                </p>
-              </div>
-            </div>
-
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white"
-                  placeholder={t.form.emailPlaceholder}
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 outline-none bg-white"
-                  placeholder={t.form.passwordPlaceholder}
-                  required
-                />
+              <div className="text-center space-y-4 mb-8">
+                <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm text-xs font-bold uppercase tracking-wider ${
+                  loginSegment === 'client' 
+                    ? 'bg-blue-50 text-blue-700 border-blue-100' 
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                }`}>
+                  {loginSegment === 'client' ? <User size={14} /> : <Building2 size={14} />}
+                  {loginSegment === 'client' ? t.modal.clientBadge : t.modal.ownerBadge}
+                </div>
+                
+                <div>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+                    {loginSegment === 'client' ? 'Área do Cliente' : 'Bem-vindo de volta'}
+                  </h2>
+                  <p className="text-slate-500 mt-2 text-sm leading-relaxed max-w-[280px] mx-auto">
+                    {loginSegment === 'client' ? t.modal.clientDescription : t.modal.ownerDescription}
+                  </p>
+                </div>
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                  {error}
-                </p>
+              {loginSegment !== 'client' && (
+                <div className="grid grid-cols-2 gap-2 mb-8 p-1.5 bg-slate-100/80 rounded-2xl">
+                  {personaOptions.map((option) => {
+                    const active = persona === option.key;
+                    return (
+                      <button
+                        type="button"
+                        key={option.key}
+                        onClick={() => setPersona(option.key as LoginPersona)}
+                        className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                          active
+                            ? 'bg-white text-slate-900 shadow-md transform scale-[1.02]'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                        }`}
+                        disabled={loginSegment === 'client'}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_18px_34px_rgba(16,185,129,0.28)]"
-              >
-                {loading ? t.form.submitLoading : t.form.submitIdle}
-              </button>
-            </form>
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-medium placeholder:text-slate-400 text-slate-900"
+                      placeholder={t.form.emailPlaceholder}
+                      required
+                    />
+                  </div>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-medium placeholder:text-slate-400 text-slate-900"
+                      placeholder={t.form.passwordPlaceholder}
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div className="text-center">
-              <button type="button" className="text-emerald-600 text-sm font-semibold hover:underline">
-                {t.modal.forgotPassword}
-              </button>
-              <div className="h-px bg-gray-200 my-4" />
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center w-full px-4 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-colors shadow-[0_12px_28px_rgba(15,23,42,0.24)]"
-              >
-                {t.modal.createOwner}
-              </Link>
+                {error && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3 items-start animate-in slide-in-from-top-2">
+                    <div className="bg-red-100 p-1 rounded-full shrink-0">
+                      <X size={12} className="text-red-600" />
+                    </div>
+                    <p className="text-xs font-medium text-red-600 leading-snug pt-0.5">{error}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold shadow-xl shadow-slate-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed group"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      <span>{t.form.submitLoading}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{t.form.submitIdle}</span>
+                      <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <div className="flex flex-col gap-4 text-center">
+                  <button type="button" className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
+                    {t.modal.forgotPassword}
+                  </button>
+                  
+                  {loginSegment !== 'client' && (
+                    <div className="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-100/50">
+                      <p className="text-sm text-slate-600 mb-3">Ainda não tem conta?</p>
+                      <Link
+                        to="/register"
+                        className="inline-flex w-full items-center justify-center py-3 bg-white border border-emerald-200 text-emerald-700 font-bold rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all shadow-sm"
+                      >
+                        {t.modal.createOwner}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
