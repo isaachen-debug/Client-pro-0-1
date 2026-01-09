@@ -168,7 +168,6 @@ const Clientes = () => {
   const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
   
-  const activeTabRef = useRef<'list' | 'contracts'>('list'); // Ref to track without rerender if needed, but state handles UI
   const [activeTab, setActiveTab] = useState<'list' | 'contracts'>('list');
 
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -682,8 +681,8 @@ const Clientes = () => {
 
                       <div className="space-y-1">
                         {cliente.address && (
-                          <button 
-                            onClick={() => handleNavigate(cliente.address)}
+                          <button
+                            onClick={() => handleNavigate(cliente.address ?? null)}
                             className={`flex items-center gap-1.5 text-xs hover:underline max-w-full ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
                           >
                             <MapPin size={12} className={`shrink-0 ${isDark ? 'text-slate-600' : 'text-slate-400'}`} />

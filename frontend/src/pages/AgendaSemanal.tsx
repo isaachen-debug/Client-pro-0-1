@@ -973,7 +973,8 @@ const AgendaSemanal = ({
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={1}
           dragDirectionLock
-          onDragEnd={(e, { offset, velocity }) => {
+          onDragEnd={(event, { offset, velocity }) => {
+            void event;
             const swipe = swipePower(offset.x, velocity.x);
 
             if (swipe < -10000) {
@@ -1356,7 +1357,8 @@ const AgendaSemanal = ({
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={1}
-                    onDragEnd={(e, { offset, velocity }) => {
+                    onDragEnd={(event, { offset, velocity }) => {
+                      void event;
                       const swipe = swipePower(offset.x, velocity.x);
 
                       if (swipe < -10000) {

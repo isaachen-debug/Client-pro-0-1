@@ -62,7 +62,6 @@ const RoutePlanner = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'all'>('week');
   const [searchTerm, setSearchTerm] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -643,7 +642,6 @@ const RoutePlanner = () => {
                 key={t}
                 onClick={() => {
                   setTimeFilter(t);
-                  if (t === 'today') setSelectedDay(new Date());
                 }}
                 className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${
                   timeFilter === t
@@ -790,7 +788,7 @@ const RoutePlanner = () => {
                             </div>
                             
                             <div className="space-y-2 mb-4">
-                                {dayApps.map((ap, idx) => {
+                                {dayApps.map((ap) => {
                                     const cust = customers.find(c => c.id === ap.customerId);
                                     if (!cust) return null;
                                     const isCurrent = cust.id === selectedCustomer.id;

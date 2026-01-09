@@ -483,7 +483,6 @@ const Login = () => {
     setShowLoginModal(true);
   };
 
-  const personaCopy = t.personaCopy;
   const personaOptions =
     loginSegment === 'client'
       ? [{ key: 'CLIENT', label: 'Client' }]
@@ -491,10 +490,6 @@ const Login = () => {
           { key: 'OWNER', label: 'Owner' },
           { key: 'HELPER', label: 'Partner' },
         ];
-  const personaDescription =
-    loginSegment === 'client'
-      ? personaCopy.CLIENT
-      : personaCopy[persona === 'CLIENT' ? 'OWNER' : persona];
   const mismatchMessages = t.mismatchMessages;
   const trustLogos = ['Wayfair', 'Deloitte', 'Pfizer', 'Adobe', 'American Express', 'NBCUniversal'];
   const workflowKnots = t.workSprawl.cards;
@@ -1000,7 +995,6 @@ const Login = () => {
                             ? 'bg-white text-slate-900 shadow-md transform scale-[1.02]'
                             : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                         }`}
-                        disabled={loginSegment === 'client'}
                       >
                         {option.label}
                       </button>
