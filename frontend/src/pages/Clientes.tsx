@@ -1,8 +1,9 @@
+import { createPortal } from 'react-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Search, Phone, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download, MoreHorizontal, Archive, Trash2, MapPin, Tag } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
-import { geoApi, type AddressSuggestion } from '../services/geo';
 import { useSearchParams } from 'react-router-dom';
+import { useJsApiLoader } from '@react-google-maps/api';
 import {
   AccessMethod,
   Appointment,
@@ -22,8 +23,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
+import { NavigationChoiceModal } from '../components/ui/NavigationChoiceModal';
 import AudioQuickAdd from '../components/AudioQuickAdd';
-import { pageGutters } from '../styles/uiTokens';
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
@@ -64,6 +65,9 @@ const deepServiceLabels: Record<string, string> = {
   windows: 'Windows tracks',
   highDusting: 'High dusting',
 };
+
+// Espaçamento padrão das páginas
+const pageGutters = 'px-4 md:px-8';
 
 const slugify = (value: string) =>
   value
@@ -111,9 +115,18 @@ const CONTRACT_STATUS_CLASSES: Record<ContractStatus, string> = {
   RECUSADO: 'bg-red-50 text-red-600 border border-red-100',
 };
 
+const GOOGLE_LIBS: ("places" | "geometry" | "drawing" | "visualization")[] = ['places'];
+
 const Clientes = () => {
   const { theme } = usePreferences();
   const isDark = theme === 'dark';
+  
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries: GOOGLE_LIBS
+  });
+
   // ... (Mantenha todos os hooks e estados inalterados)
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
@@ -129,6 +142,16 @@ const Clientes = () => {
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [navigationModal, setNavigationModal] = useState<{ isOpen: boolean; address: string | null }>({
+    isOpen: false,
+    address: null,
+  });
+
+  const handleNavigate = (address: string | null) => {
+    if (address) {
+      setNavigationModal({ isOpen: true, address });
+    }
+  };
 
   const initialFormState: CustomerFormState = {
     name: '',
@@ -142,9 +165,10 @@ const Clientes = () => {
   };
 
   const [formData, setFormData] = useState<CustomerFormState>(initialFormState);
-  const [, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
-  const [, setAddressLoading] = useState(false);
-  const addressRequestRef = useRef(0);
+  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  
+  const activeTabRef = useRef<'list' | 'contracts'>('list'); // Ref to track without rerender if needed, but state handles UI
   const [activeTab, setActiveTab] = useState<'list' | 'contracts'>('list');
 
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -181,39 +205,34 @@ const Clientes = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (!showModal) return;
-    const query = formData.address.trim();
-    if (query.length < 3) {
+    if (!showModal || !isLoaded || !window.google) return;
+    
+    const query = formData.address;
+    if (!query || query.length < 3) {
       setAddressSuggestions([]);
-      setAddressLoading(false);
+      setShowAddressSuggestions(false);
       return;
     }
-    const requestId = ++addressRequestRef.current;
-    setAddressLoading(true);
-    const timer = window.setTimeout(async () => {
-      try {
-        const results = await geoApi.autocomplete(query);
-        if (requestId !== addressRequestRef.current) return;
-        setAddressSuggestions(results);
-      } catch (error) {
-        console.error('Erro ao buscar enderecos:', error);
-        if (requestId !== addressRequestRef.current) return;
-        setAddressSuggestions([]);
-      } finally {
-        if (requestId === addressRequestRef.current) {
-          setAddressLoading(false);
+
+    const autocompleteService = new window.google.maps.places.AutocompleteService();
+    autocompleteService.getPlacePredictions(
+      { input: query },
+      (predictions, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setAddressSuggestions(predictions);
+          setShowAddressSuggestions(true);
+        } else {
+          setAddressSuggestions([]);
+          setShowAddressSuggestions(false);
         }
       }
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [formData.address, showModal]);
+    );
+  }, [formData.address, showModal, isLoaded]);
 
-  useEffect(() => {
-    if (!showModal) {
-      setAddressSuggestions([]);
-      setAddressLoading(false);
-    }
-  }, [showModal]);
+  const handleAddressSelect = (address: string) => {
+    setFormData({ ...formData, address });
+    setShowAddressSuggestions(false);
+  };
 
   useEffect(() => {
     const customerId = searchParams.get('customerId');
@@ -663,10 +682,13 @@ const Clientes = () => {
 
                       <div className="space-y-1">
                         {cliente.address && (
-                          <div className={`flex items-center gap-1.5 text-xs truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <button 
+                            onClick={() => handleNavigate(cliente.address)}
+                            className={`flex items-center gap-1.5 text-xs hover:underline max-w-full ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
+                          >
                             <MapPin size={12} className={`shrink-0 ${isDark ? 'text-slate-600' : 'text-slate-400'}`} />
                             <span className="truncate">{cliente.address}</span>
-                          </div>
+                          </button>
                         )}
                         {cliente.serviceType && (
                           <div className={`flex items-center gap-1.5 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -829,10 +851,41 @@ const Clientes = () => {
                         type="text"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        onFocus={() => {
+                           if (addressSuggestions.length > 0) setShowAddressSuggestions(true);
+                        }}
+                        onBlur={() => {
+                           // Delay hide to allow click
+                           setTimeout(() => setShowAddressSuggestions(false), 200);
+                        }}
                         className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all font-medium ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:bg-slate-800' : 'border-slate-200 bg-slate-50 focus:bg-white'}`}
                         placeholder="Endereço completo"
+                        autoComplete="off"
                       />
-                      {/* Dropdown de endereço mantido, apenas com estilos ajustados se necessário */}
+                      {showAddressSuggestions && addressSuggestions.length > 0 && (
+                        <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl shadow-lg border z-50 max-h-48 overflow-y-auto ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                          {addressSuggestions.map((prediction) => (
+                            <button
+                              key={prediction.place_id}
+                              type="button"
+                              onClick={() => handleAddressSelect(prediction.description)}
+                              className={`w-full text-left px-4 py-3 text-sm transition-colors border-b last:border-0 ${
+                                isDark 
+                                  ? 'border-slate-700 text-slate-200 hover:bg-slate-700' 
+                                  : 'border-slate-100 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <MapPin size={14} className="shrink-0 opacity-50" />
+                                <span className="truncate">{prediction.description}</span>
+                              </div>
+                            </button>
+                          ))}
+                          <div className={`px-2 py-1 text-[10px] text-right ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                             Powered by Google
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -896,6 +949,12 @@ const Clientes = () => {
       )}
 
       <AudioQuickAdd />
+      
+      <NavigationChoiceModal
+        isOpen={navigationModal.isOpen}
+        onClose={() => setNavigationModal({ isOpen: false, address: null })}
+        address={navigationModal.address}
+      />
     </div>
   );
 };
@@ -996,15 +1055,8 @@ const ClientMenu = ({
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
+  const [fixedPos, setFixedPos] = useState<{ top: number; right: number } | null>(null);
 
   const renderStatusOptions = () => {
     if (customer.status === 'ACTIVE') {
@@ -1069,6 +1121,21 @@ const ClientMenu = ({
     );
   };
 
+  useEffect(() => {
+    if (isOpen && menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      const isTop = spaceBelow < 220;
+      setMenuPosition(isTop ? 'top' : 'bottom');
+      
+      setFixedPos({
+        top: isTop ? rect.top : rect.bottom + 4,
+        right: window.innerWidth - rect.right
+      });
+    }
+  }, [isOpen]);
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -1078,8 +1145,17 @@ const ClientMenu = ({
         <MoreHorizontal size={20} />
       </button>
 
-      {isOpen && (
-        <div className={`absolute right-0 top-full mt-1 w-48 rounded-xl shadow-xl border z-10 overflow-hidden animate-fade-in ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+      {isOpen && fixedPos && createPortal(
+        <>
+        <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
+        <div 
+          className={`fixed w-48 rounded-xl shadow-xl border z-[9999] overflow-hidden animate-fade-in ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
+          style={{
+             top: menuPosition === 'bottom' ? fixedPos.top : 'auto',
+             bottom: menuPosition === 'top' ? (window.innerHeight - fixedPos.top) + 4 : 'auto',
+             right: fixedPos.right,
+          }}
+        >
           <button
             onClick={() => {
               setIsOpen(false);
@@ -1100,6 +1176,8 @@ const ClientMenu = ({
             <Trash2 size={16} /> Excluir
           </button>
         </div>
+        </>,
+        document.body
       )}
     </div>
   );

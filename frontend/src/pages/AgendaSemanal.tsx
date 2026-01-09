@@ -12,6 +12,7 @@ import {
   Clock3,
   Calendar,
 } from 'lucide-react';
+import { LayoutGroup, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { agentIntentApi } from '../services/agentIntent';
@@ -42,8 +43,8 @@ import CreateModal, { CreateFormState } from '../components/appointments/CreateM
 import EditModal from '../components/appointments/EditModal';
 import AgendaMensal from './AgendaMensal';
 import { getGoogleStatus, syncGoogleEvent } from '../services/googleCalendar';
-import { LayoutGroup, motion } from 'framer-motion';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { NavigationChoiceModal } from '../components/ui/NavigationChoiceModal';
 
 export type WeekSummary = {
   rangeLabel: string;
@@ -207,6 +208,17 @@ const AgendaSemanal = ({
     recurrenceRule: '',
     assignedHelperId: '',
   });
+  
+  const [navigationModal, setNavigationModal] = useState<{ isOpen: boolean; address: string | null }>({
+    isOpen: false,
+    address: null,
+  });
+
+  const handleNavigate = (address: string | null) => {
+    if (address) {
+      setNavigationModal({ isOpen: true, address });
+    }
+  };
 
   useEffect(() => {
     if (quickCreateNonce > 0) {
@@ -1419,15 +1431,14 @@ const AgendaSemanal = ({
                   </a>
                 )}
                 {customerInfo.address && (
-                  <a
-                    href={`https://maps.google.com/?q=${encodeURIComponent(customerInfo.address)}`}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate(customerInfo.address || null)}
                     className={`flex items-center justify-center gap-2 p-3 rounded-xl border font-semibold transition ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
                   >
                     <Navigation size={18} />
                     Navegar
-                  </a>
+                  </button>
                 )}
               </div>
 
@@ -1510,6 +1521,11 @@ const AgendaSemanal = ({
           </div>
         )}
       </div>
+      <NavigationChoiceModal
+        isOpen={navigationModal.isOpen}
+        onClose={() => setNavigationModal({ isOpen: false, address: null })}
+        address={navigationModal.address}
+      />
     </div>
   );
 };

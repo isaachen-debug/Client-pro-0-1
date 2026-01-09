@@ -13,13 +13,17 @@ import {
   X,
   Search,
   AlertTriangle,
-  ChevronDown
+  ChevronDown,
+  Sparkles,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+import { usePreferences } from '../contexts/PreferencesContext';
 import { appointmentsApi } from '../services/appointments';
 import { customersApi } from '../services/customers';
 import type { Appointment, Customer } from '../types';
 import { motion } from 'framer-motion';
-import { usePreferences } from '../contexts/PreferencesContext';
+import { NavigationChoiceModal } from '../components/ui/NavigationChoiceModal';
 
 type RoutePoint = {
   id: string;
@@ -63,8 +67,24 @@ const RoutePlanner = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [routeStops, setRouteStops] = useState<RoutePoint[]>([]);
-  const [routeSummary, setRouteSummary] = useState<{ distance: string; duration: string } | null>(null);
+  const [routeSummary, setRouteSummary] = useState<{ distance: string; duration: string; cost?: string } | null>(null);
+  const [showLabels, setShowLabels] = useState(false);
+  const [navigationModal, setNavigationModal] = useState<{ isOpen: boolean; address: string | null }>({
+    isOpen: false,
+    address: null,
+  });
   const [mapMode, setMapMode] = useState<'google' | 'fallback'>('google');
+
+  // Configurações simples de custo (poderiam vir do backend)
+  const FUEL_PRICE = 3.50; // $ por galão
+  const MPG = 20; // Milhas por galão
+  const COST_PER_MILE = FUEL_PRICE / MPG;
+
+  const handleNavigate = (address: string | null) => {
+    if (address) {
+      setNavigationModal({ isOpen: true, address });
+    }
+  };
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedCustomerAppointments, setSelectedCustomerAppointments] = useState<Appointment[]>([]);
   const [fixingAddressId, setFixingAddressId] = useState<string | null>(null);
@@ -123,21 +143,26 @@ const RoutePlanner = () => {
 
   const visibleCustomers = useMemo(() => {
     let base = [...customers];
+    
+    // Filtro de tempo
     if (timeFilter === 'today') {
-      const today = new Date().toDateString();
+      // Comparar strings YYYY-MM-DD para evitar problemas de timezone
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
       base = base.filter((c) =>
         (appointmentsByCustomer[c.id] || []).some(
-          (ap) => new Date(ap.date).toDateString() === today,
+          (ap) => ap.date === todayStr,
         ),
       );
     } else if (timeFilter === 'week') {
-      const selected = selectedDay.toDateString();
-      base = base.filter((c) =>
-        (appointmentsByCustomer[c.id] || []).some(
-          (ap) => new Date(ap.date).toDateString() === selected,
-        ),
-      );
+      // Como 'appointments' já contém apenas os dados da semana atual (via loadAppointments),
+      // basta verificar se o cliente tem algum agendamento nessa lista.
+      base = base.filter((c) => (appointmentsByCustomer[c.id] || []).length > 0);
     }
+    // Se for 'all', mostra todos (sem filtro de agendamento)
+
+    // Filtro de busca
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       base = base.filter(
@@ -148,7 +173,7 @@ const RoutePlanner = () => {
       );
     }
     return base;
-  }, [appointmentsByCustomer, customers, searchTerm, selectedDay, timeFilter]);
+  }, [appointmentsByCustomer, customers, searchTerm, timeFilter]);
 
   const customerPoints: RoutePoint[] = useMemo(
     () =>
@@ -335,7 +360,7 @@ const RoutePlanner = () => {
           zoom: 12,
           disableDefaultUI: true,
           clickableIcons: false,
-          styles: isDark ? darkMapStyles : [{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }],
+          styles: isDark ? darkMapStyles : [], // Retornando ao estilo padrão claro
         });
         directionsRenderer.current = new window.google.maps.DirectionsRenderer({
           map: googleMap.current,
@@ -368,32 +393,40 @@ const RoutePlanner = () => {
     
     // Adicionado parâmetro 'name' e lógica de label ajustada
     const createMarker = (point: RoutePoint, color: string, label?: string, name?: string) => {
+      // Se já existir marker para este ID, remove o anterior para evitar duplicatas (ex: quando user move)
+      const existingIdx = markersRef.current.findIndex(m => m.get('id') === point.id);
+      if (existingIdx !== -1) {
+          markersRef.current[existingIdx].setMap(null);
+          markersRef.current.splice(existingIdx, 1);
+      }
+
       const marker = new window.google.maps.Marker({
         position: { lat: point.lat, lng: point.lng },
         map: googleMap.current,
-        // Se tiver label (número da rota), mostra dentro. Se não, mostra o nome embaixo.
+        title: name || label, // Native tooltip
         label: label
-          ? { text: label, color: 'white', fontSize: '12px', fontWeight: 'bold' }
-          : name ? {
+          ? { text: label, color: 'white', fontSize: '10px', fontWeight: 'bold' }
+          : (showLabels && name) ? {
               text: name,
-              color: isDark ? '#ffffff' : '#000000', // Adapt label color
-              fontSize: '14px', // Maior
+              color: isDark ? '#e2e8f0' : '#1e293b',
+              fontSize: '11px',
               fontWeight: 'bold',
               className: 'map-marker-label'
             } : undefined,
         zIndex: label ? 100 : 1,
         icon: {
-          path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+          path: window.google.maps.SymbolPath.CIRCLE,
           fillColor: color,
           fillOpacity: 1,
           strokeColor: isDark ? '#1e293b' : 'white',
           strokeWeight: 2,
-          scale: label ? 1.8 : 1.4,
-          anchor: new window.google.maps.Point(12, 22),
-          // Ajusta a origem do label: centro se for número, MAIS ABAIXO se for nome (40px)
-          labelOrigin: label ? new window.google.maps.Point(12, 9) : new window.google.maps.Point(12, 40),
+          scale: label ? 10 : 7, // Larger if it's a stop number
+          labelOrigin: label ? new window.google.maps.Point(0, 0) : new window.google.maps.Point(0, 2.5), // Adjust label position
         },
       });
+      // Salva ID no marker para controle
+      marker.set('id', point.id);
+
       marker.addListener('click', () => {
         if (point.type === 'customer' && point.customer) {
           openCustomerCard(point.customer);
@@ -423,7 +456,7 @@ const RoutePlanner = () => {
     if (googleMap.current && customerPoints.length > 0) {
        // Opcional: auto-fit bounds
     }
-  }, [mapMode, customerPoints, routeStops, userLocation, getNextAppointment, isDark]);
+  }, [mapMode, customerPoints, routeStops, userLocation, getNextAppointment, isDark, showLabels]);
 
   useEffect(() => {
     renderMarkers();
@@ -462,9 +495,11 @@ const RoutePlanner = () => {
       }
       const mph = 25;
       const totalMin = (totalMiles / mph) * 60;
+      const estimatedCost = totalMiles * COST_PER_MILE;
       setRouteSummary({
         distance: `${totalMiles.toFixed(1)} mi`,
         duration: `~${Math.ceil(totalMin)} min`,
+        cost: `$${estimatedCost.toFixed(2)}`,
       });
     };
 
@@ -487,10 +522,13 @@ const RoutePlanner = () => {
           seconds += leg.duration.value;
         });
         const km = meters / 1000;
+        const miles = km * 0.621371;
+        const estimatedCost = miles * COST_PER_MILE;
         const minutes = Math.round(seconds / 60);
         setRouteSummary({
-          distance: `${km.toFixed(1)} km`,
+          distance: `${miles.toFixed(1)} mi`,
           duration: `${Math.floor(minutes / 60)}h ${minutes % 60}m`,
+          cost: `$${estimatedCost.toFixed(2)}`,
         });
       } catch (e) {
         console.warn('Directions falhou, usando fallback');
@@ -590,53 +628,58 @@ const RoutePlanner = () => {
         )}
       </div>
 
-      {/* 2. TOP BAR FLUTUANTE */}
-      <div className="absolute top-4 left-4 right-4 z-20 flex flex-col gap-3 pointer-events-none">
-        <div className="flex items-center justify-between pointer-events-auto">
-          {/* Chips de Filtro */}
-          <div className={`flex items-center gap-1 rounded-full shadow-lg border p-1 backdrop-blur-md ${isDark ? 'bg-slate-900/90 border-slate-700' : 'bg-white/90 border-white/20'}`}>
-            {(['today', 'week', 'all'] as const).map((t) => (
+      {/* 2. TOP BAR FLUTUANTE - CENTRALIZADO */}
+      <div className="absolute top-6 left-0 right-0 z-20 flex flex-col items-center gap-3 pointer-events-none px-4">
+        
+        {/* Row 1: Filtros (Pill Central) + Botão Add (Direita) */}
+        <div className="w-full max-w-sm flex items-center justify-between pointer-events-auto relative">
+           {/* Spacer to balance center */}
+           <div className="w-10" />
+
+           {/* Pill Central */}
+           <div className={`flex items-center gap-1 rounded-full shadow-lg border p-1 backdrop-blur-xl ${isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white/90 border-white/40'}`}>
+            {(['all', 'today', 'week'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => {
                   setTimeFilter(t);
                   if (t === 'today') setSelectedDay(new Date());
                 }}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all ${
                   timeFilter === t
-                    ? isDark ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-900 text-white shadow-sm'
-                    : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
+                    ? isDark ? 'bg-indigo-500 text-white shadow-sm' : 'bg-slate-900 text-white shadow-sm'
+                    : isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'
                 }`}
               >
-                {t === 'today' ? 'Hoje' : t === 'week' ? 'Semana' : 'Todos'}
+                {t === 'all' ? 'Rede' : t === 'today' ? 'Hoje' : 'Semana'}
               </button>
             ))}
           </div>
 
-          {/* Botão ADD Rota (Roxo) */}
+          {/* Botão Add */}
           <button
             onClick={() => setShowRouteBuilder(true)}
-            className="w-12 h-12 rounded-full bg-[#6366f1] text-white shadow-xl shadow-indigo-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-[#6366f1] text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
           >
-            <Plus size={24} />
+            <Plus size={20} />
           </button>
         </div>
 
-        {/* Barra de Busca */}
-        <div className={`backdrop-blur-md rounded-2xl shadow-lg border p-1 flex items-center pointer-events-auto ${isDark ? 'bg-slate-900/90 border-slate-700' : 'bg-white/90 border-white/20'}`}>
+        {/* Row 2: Barra de Busca (Floating) */}
+        <div className={`w-full max-w-sm backdrop-blur-xl rounded-full shadow-xl border px-1 py-1 flex items-center pointer-events-auto transition-all ${isDark ? 'bg-slate-900/80 border-slate-700 focus-within:ring-2 focus-within:ring-indigo-500/50' : 'bg-white/90 border-white/40 focus-within:ring-2 focus-within:ring-indigo-100'}`}>
           <div className={`w-10 h-10 flex items-center justify-center ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            <Search size={20} />
+            <Search size={18} />
           </div>
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar cliente, rua ou bairro..."
-            className={`flex-1 bg-transparent h-10 text-sm outline-none placeholder:text-slate-400 ${isDark ? 'text-slate-100' : 'text-slate-800'}`}
+            placeholder="Buscar nó na rede..."
+            className={`flex-1 bg-transparent h-10 text-sm font-medium outline-none placeholder:text-slate-400 ${isDark ? 'text-slate-100' : 'text-slate-700'}`}
           />
           {searchTerm && (
-            <button onClick={() => setSearchTerm('')} className={`w-10 h-10 flex items-center justify-center ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-              <X size={16} />
+            <button onClick={() => setSearchTerm('')} className={`w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 ${isDark ? 'text-slate-400 hover:bg-white/10' : 'text-slate-400'}`}>
+              <X size={14} />
             </button>
           )}
         </div>
@@ -644,6 +687,13 @@ const RoutePlanner = () => {
 
       {/* 3. CONTROLES DO MAPA (Direita) */}
       <div className="absolute right-4 bottom-32 z-20 flex flex-col gap-3 pointer-events-auto">
+        <button
+          onClick={() => setShowLabels(!showLabels)}
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform ${isDark ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-50'}`}
+          title={showLabels ? "Ocultar nomes" : "Mostrar nomes"}
+        >
+          {showLabels ? <EyeOff size={22} /> : <Eye size={22} />}
+        </button>
         <button
           onClick={() => {
             if (userLocation && googleMap.current) {
@@ -718,6 +768,97 @@ const RoutePlanner = () => {
                 </div>
               </div>
 
+              {/* Lógica para Rota do Dia (Sugestão Inteligente) */}
+              {(() => {
+                 const nextAppt = getNextAppointment(selectedCustomer.id);
+                 if (!nextAppt) return null;
+
+                 // Buscar todos os agendamentos desse mesmo dia
+                 const dayApps = appointments
+                    .filter(a => a.date === nextAppt.date)
+                    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+                 
+                 // Se tiver mais de 1 cliente no dia (ou seja, vale a pena criar rota)
+                 if (dayApps.length > 0) {
+                    return (
+                        <div className={`mb-6 p-4 rounded-2xl border ${isDark ? 'bg-indigo-900/10 border-indigo-500/30' : 'bg-indigo-50 border-indigo-100'}`}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <Sparkles size={16} className="text-indigo-500" />
+                                <h3 className={`text-sm font-bold ${isDark ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                    Agenda de {format(new Date(nextAppt.date), "EEEE, d 'de' MMM", { locale: ptBR })}
+                                </h3>
+                            </div>
+                            
+                            <div className="space-y-2 mb-4">
+                                {dayApps.map((ap, idx) => {
+                                    const cust = customers.find(c => c.id === ap.customerId);
+                                    if (!cust) return null;
+                                    const isCurrent = cust.id === selectedCustomer.id;
+                                    return (
+                                        <div key={ap.id} className={`flex items-center gap-3 text-sm ${isCurrent ? (isDark ? 'text-white font-bold' : 'text-slate-900 font-bold') : (isDark ? 'text-slate-400' : 'text-slate-600')}`}>
+                                            <span className="font-mono text-xs opacity-70">{ap.startTime}</span>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-indigo-500' : 'bg-slate-400'}`} />
+                                            <span className="truncate">{cust.name}</span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    // 1. Mantém a rota atual (sem duplicar 'user' ou paradas já existentes)
+                                    // Se a rota atual estiver vazia ou só tiver 'user', podemos reiniciá-la para garantir a ordem
+                                    // Mas se o usuário já tinha uma rota, vamos tentar anexar.
+                                    
+                                    // Lógica simplificada e robusta: 
+                                    // 1. Pega a rota atual
+                                    let newRoute = [...routeStops];
+
+                                    // 2. Garante que 'Minha Localização' seja o ponto de partida (se disponível e ainda não estiver na rota)
+                                    // Isso responde à sua dúvida: sim, ele pega sua localização em tempo real e coloca como início!
+                                    if (userLocation && !newRoute.some(p => p.id === 'user')) {
+                                        newRoute.unshift({
+                                            id: 'user',
+                                            type: 'user',
+                                            lat: userLocation.lat,
+                                            lng: userLocation.lng,
+                                            label: 'Minha Localização'
+                                        });
+                                    }
+
+                                    // 3. Adiciona os clientes do dia (que ainda não estão na rota)
+                                    dayApps.forEach(ap => {
+                                        const c = customers.find(cust => cust.id === ap.customerId);
+                                        if (c && c.latitude && c.longitude) {
+                                            // Verifica se JÁ está na rota pelo ID
+                                            if (!newRoute.some(r => r.id === c.id)) {
+                                                newRoute.push({
+                                                    id: c.id,
+                                                    type: 'customer',
+                                                    lat: c.latitude,
+                                                    lng: c.longitude,
+                                                    label: c.name,
+                                                    customer: c
+                                                });
+                                            }
+                                        }
+                                    });
+
+                                    setRouteStops(newRoute);
+                                    setIsSheetExpanded(false); // Fecha o sheet pra ver o mapa
+                                    setSelectedCustomer(null);
+                                }}
+                                className="w-full h-10 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+                            >
+                                <Navigation size={16} />
+                                Adicionar Dia à Rota ({dayApps.length} locais)
+                            </button>
+                        </div>
+                    );
+                 }
+                 return null;
+              })()}
+
               {/* Ações Principais */}
               <div className="space-y-3 mt-auto">
                 {selectedCustomer.latitude && selectedCustomer.longitude ? (
@@ -756,14 +897,12 @@ const RoutePlanner = () => {
                     >
                         <Phone size={18} /> Ligar
                     </a>
-                    <a 
-                      href={`https://maps.google.com/?q=${encodeURIComponent(selectedCustomer.address || '')}`}
-                      target="_blank" 
-                      rel="noreferrer"
+                    <button 
+                      onClick={() => handleNavigate(selectedCustomer.address || '')}
                       className={`h-12 border rounded-xl flex items-center justify-center gap-2 font-semibold transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                     >
                         <ExternalLink size={18} /> Navegar
-                    </a>
+                    </button>
                 </div>
               </div>
             </div>
@@ -777,37 +916,79 @@ const RoutePlanner = () => {
                 </span>
               </div>
 
-              {/* Resumo da Rota Ativa (se houver) */}
+              {/* Resumo da Rota Ativa (Estilo App de Navegação) */}
               {routeStops.length > 0 && (
-                <div className={`mb-6 border rounded-2xl p-4 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-[#f8fafc] border-slate-200'}`}>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">ROTA ATIVA</span>
+                <div className={`mb-6 border rounded-3xl p-5 shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                           <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Prévia da Rota</h3>
+                           <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{routeStops.length} Paradas • Otimizado</p>
+                        </div>
                         <div className="flex gap-2">
-                            <button onClick={() => setIsSheetExpanded(false)} className={`hover:text-indigo-600 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}><ChevronDown size={14}/></button>
-                            <button onClick={resetRoute} className={`hover:text-red-500 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}><RefreshCcw size={14}/></button>
+                           <button onClick={resetRoute} className={`p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors`} title="Limpar rota"><RefreshCcw size={16}/></button>
+                           <button onClick={() => setIsSheetExpanded(false)} className={`p-2 rounded-full hover:bg-slate-100 ${isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400'}`}><ChevronDown size={18}/></button>
                         </div>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{routeSummary?.duration || '--'}</span>
-                        <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{routeSummary?.distance}</span>
-                    </div>
-                    <div className={`flex items-center gap-2 mt-3 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        <span className={`border px-2 py-1 rounded-lg ${isDark ? 'bg-slate-700 border-slate-600' : 'bg-white'}`}>{routeStops.length} Paradas</span>
-                        <span>•</span>
-                        <span>Otimizado por distância</span>
-                    </div>
-                    
-                    {/* Lista de Stops (Reordenável) */}
-                    <div className="mt-4 space-y-2 max-h-[150px] overflow-y-auto">
+
+                    {/* Timeline Visual da Rota */}
+                    <div className="relative pl-4 space-y-6 mb-6">
+                        {/* Linha Vertical Conectora */}
+                        <div className={`absolute left-[23px] top-4 bottom-4 w-0.5 border-l-2 border-dashed ${isDark ? 'border-slate-600' : 'border-slate-300'}`} />
+
                         {routeStops.map((stop, idx) => (
-                            <div key={stop.id} className={`flex items-center justify-between text-sm p-2 rounded-lg border ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-100'}`}>
-                                <div className="flex items-center gap-2">
-                                    <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center ${isDark ? 'bg-slate-700 text-white' : 'bg-slate-900 text-white'}`}>{idx + 1}</span>
-                                    <span className="truncate max-w-[150px]">{stop.label}</span>
+                            <div key={stop.id} className="relative flex items-center gap-4 z-10 group">
+                                {/* Indicador (Bolinha/Pin) */}
+                                <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center text-[9px] font-bold z-20 ${
+                                    idx === 0 
+                                      ? 'bg-emerald-500 border-emerald-500 text-white' // Origem (Verde)
+                                      : idx === routeStops.length - 1 
+                                        ? 'bg-red-500 border-red-500 text-white' // Destino (Vermelho)
+                                        : isDark ? 'bg-slate-800 border-slate-500 text-slate-300' : 'bg-white border-slate-400 text-slate-600'
+                                }`}>
+                                    {idx === 0 ? <div className="w-1.5 h-1.5 bg-white rounded-full"/> : idx + 1}
                                 </div>
-                                <button onClick={() => removeStop(stop.id)} className={`hover:text-red-500 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}><X size={14}/></button>
+                                
+                                {/* Card do Ponto */}
+                                <div className={`flex-1 p-3 rounded-xl border flex justify-between items-center shadow-sm transition-all ${
+                                    isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'
+                                }`}>
+                                    <div className="min-w-0">
+                                        <p className={`text-sm font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                                            {stop.id === 'user' ? 'Minha Localização' : stop.label}
+                                        </p>
+                                        <p className={`text-xs truncate ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            {stop.id === 'user' ? 'Ponto de Partida' : stop.customer?.address || 'Sem endereço'}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => removeStop(stop.id)} className={`ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500`}><X size={14}/></button>
+                                </div>
                             </div>
                         ))}
+                    </div>
+
+                    {/* Footer com Resumo e Ações */}
+                    <div className={`pt-4 border-t ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
+                        <div className="flex justify-between items-end mb-4">
+                             <div>
+                                <p className={`text-xs font-medium mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Evitar pedágios</p>
+                                <div className={`w-10 h-6 rounded-full relative transition-colors ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{routeSummary?.duration || '--'} <span className="text-sm font-medium text-slate-400">min</span></p>
+                                <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{routeSummary?.distance} • {routeSummary?.cost} est. gas</p>
+                             </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                            <button className={`h-12 rounded-xl font-bold text-sm transition-colors border ${isDark ? 'border-slate-600 hover:bg-slate-700 text-white' : 'border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+                                Recalcular
+                            </button>
+                            <button className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all active:scale-95">
+                                Iniciar Navegação
+                            </button>
+                        </div>
                     </div>
                 </div>
               )}
@@ -931,6 +1112,11 @@ const RoutePlanner = () => {
           </div>
         </div>
       )}
+      <NavigationChoiceModal
+        isOpen={navigationModal.isOpen}
+        onClose={() => setNavigationModal({ isOpen: false, address: null })}
+        address={navigationModal.address}
+      />
     </div>
   );
 };
