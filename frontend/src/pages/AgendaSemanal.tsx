@@ -24,7 +24,7 @@ const swipePower = (offset: number, velocity: number) => {
 import {
   ChevronLeft,
   ChevronRight,
-  Phone,
+  MessageCircle,
   MapPin,
   Navigation,
   Send,
@@ -1050,7 +1050,7 @@ const AgendaSemanal = ({
                           <div className="flex flex-col items-center w-12 shrink-0">
                             <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{start}</span>
                             <div className="relative">
-                              <div className="h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500 shadow" />
+                              <div className={`h-3 w-3 rounded-full border-2 ${isDark ? 'border-slate-900' : 'border-white'} bg-emerald-500 shadow`} />
                               {!isLast && <div className={`absolute left-1/2 top-3 h-full w-px -translate-x-1/2 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} aria-hidden />}
                             </div>
                           </div>
@@ -1247,7 +1247,7 @@ const AgendaSemanal = ({
   }
 
   return (
-    <div className={`h-full flex flex-col ${isDark ? 'bg-[#0f172a]' : 'bg-[#f6f7fb]'}`}>
+    <div className={`h-full flex flex-col ${isDark ? 'bg-[#0f172a]' : 'bg-white'}`}>
       <div className="px-4 md:px-8 pt-0 pb-6 space-y-5 sm:space-y-6">
         <div className="-mx-4 md:-mx-8">
           <div className="pt-0 px-4 md:px-8 pb-0 md:py-6 flex flex-col gap-4 md:gap-6 mt-[3px] mb-[3px]">
@@ -1264,7 +1264,7 @@ const AgendaSemanal = ({
                 <button
                   type="button"
                   onClick={openEmptyActions}
-                  className={`h-10 w-10 rounded-full text-white shadow-lg flex items-center justify-center transition ${isDark ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-slate-900 hover:bg-slate-800'}`}
+                  className="h-10 w-10 rounded-full text-white shadow-lg flex items-center justify-center transition bg-emerald-600 hover:bg-emerald-500"
                   aria-label="Adicionar novo"
                 >
                   <Plus size={20} />
@@ -1519,11 +1519,11 @@ const AgendaSemanal = ({
               <div className="grid grid-cols-2 gap-3">
                 {customerInfo.phone && (
                   <a
-                    href={`tel:${customerInfo.phone}`}
+                    href={`sms:${customerInfo.phone.replace(/\D/g, '')}`}
                     className={`flex items-center justify-center gap-2 p-3 rounded-xl border font-semibold transition ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
                   >
-                    <Phone size={18} />
-                    Ligar
+                    <MessageCircle size={18} />
+                    SMS
                   </a>
                 )}
                 {customerInfo.address && (

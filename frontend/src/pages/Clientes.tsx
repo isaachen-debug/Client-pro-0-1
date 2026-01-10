@@ -1,6 +1,23 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Search, Phone, Loader2, Edit3, FileText, Copy, CheckCircle, AlertTriangle, Download, MoreHorizontal, Archive, Trash2, MapPin, Tag } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Phone,
+  Loader2,
+  Edit3,
+  FileText,
+  Copy,
+  CheckCircle,
+  AlertTriangle,
+  Download,
+  MoreHorizontal,
+  Archive,
+  Trash2,
+  MapPin,
+  Tag,
+  MessageCircle
+} from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { useSearchParams } from 'react-router-dom';
 import { useJsApiLoader } from '@react-google-maps/api';
@@ -538,9 +555,12 @@ const Clientes = () => {
       setLoading(true);
       await customersApi.remove(id);
       setClientes((prev) => prev.filter((c) => c.id !== id));
-    } catch (error) {
+      // Re-fetch to ensure sync and update filtered list if needed
+      await fetchClientes(searchTerm, statusFilter);
+    } catch (error: any) {
       console.error('Erro ao excluir:', error);
-      alert('Erro ao excluir cliente.');
+      const msg = error.response?.data?.error || 'Erro ao excluir cliente.';
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -701,11 +721,11 @@ const Clientes = () => {
 
                   <div className={`grid grid-cols-2 gap-2 mt-3 pt-3 border-t ${isDark ? 'border-slate-800' : 'border-slate-50'}`}>
                     <a
-                      href={`tel:${cliente.phone}`}
+                      href={`sms:${cliente.phone?.replace(/\D/g, '')}`}
                       className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
                     >
-                      <Phone size={12} />
-                      Ligar
+                      <MessageCircle size={12} />
+                      SMS
                     </a>
                     <button
                       onClick={() => handleViewHistory(cliente)}

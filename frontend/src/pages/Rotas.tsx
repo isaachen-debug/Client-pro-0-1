@@ -356,7 +356,7 @@ const RoutePlanner = () => {
 
         googleMap.current = new window.google.maps.Map(mapRef.current, {
           center: userLocation ?? { lat: 42.5251, lng: -71.7598 }, // Leominster, MA default
-          zoom: 12,
+          zoom: 9,
           disableDefaultUI: true,
           clickableIcons: false,
           styles: isDark ? darkMapStyles : [], // Retornando ao estilo padrão claro
@@ -705,7 +705,7 @@ const RoutePlanner = () => {
         </button>
         <button
           onClick={() => {
-             if (googleMap.current) googleMap.current.setZoom(12);
+             if (googleMap.current) googleMap.current.setZoom(9);
           }}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform ${isDark ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-50'}`}
         >

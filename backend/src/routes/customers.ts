@@ -231,19 +231,40 @@ router.patch('/:id/status', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const deleted = await prisma.customer.updateMany({
+    const customer = await prisma.customer.findFirst({
       where: { id: req.params.id, userId: req.user!.id },
-      data: { status: 'INACTIVE' },
     });
 
-    if (deleted.count === 0) {
+    if (!customer) {
       return res.status(404).json({ error: 'Cliente não encontrado.' });
     }
 
-    res.json({ message: 'Cliente marcado como inativo.' });
+    // Force delete related records (Cascade)
+    await prisma.appointment.deleteMany({
+      where: { customerId: req.params.id },
+    });
+
+    // Try to delete contracts if they exist in schema (ignoring error if table doesn't exist yet)
+    try {
+        // @ts-ignore
+        if (prisma.contract) {
+             // @ts-ignore
+            await prisma.contract.deleteMany({
+                where: { customerId: req.params.id },
+            });
+        }
+    } catch (e) {
+        // Ignore contract deletion errors
+    }
+
+    await prisma.customer.deleteMany({
+      where: { id: req.params.id, userId: req.user!.id },
+    });
+
+    res.json({ message: 'Cliente e dados vinculados excluídos permanentemente.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao atualizar cliente.' });
+    res.status(500).json({ error: 'Erro ao excluir cliente.' });
   }
 });
 

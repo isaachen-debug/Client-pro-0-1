@@ -403,9 +403,9 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
               }}
               className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${
                 isSelected
-                  ? 'text-white bg-slate-900 dark:bg-emerald-600 shadow-sm'
+                  ? 'text-white bg-emerald-600 shadow-sm'
                   : isToday
-                    ? 'text-primary-700 dark:text-emerald-400 bg-primary-50 dark:bg-emerald-900/20'
+                    ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
                     : inMonth
                       ? 'text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800/50'
                       : 'text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900/50'
@@ -415,9 +415,9 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                 <span
                   className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${
                     isSelected
-                      ? 'bg-slate-800 dark:bg-emerald-500 text-white'
+                      ? 'bg-emerald-500 text-white'
                       : isToday
-                        ? 'bg-primary-100 dark:bg-emerald-900/40 text-primary-700 dark:text-emerald-400'
+                        ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
                         : 'bg-transparent'
                   }`}
                 >

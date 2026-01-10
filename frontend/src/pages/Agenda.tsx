@@ -66,11 +66,11 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
               : {
                   background: isDarkTheme
                     ? '#0f172a' // slate-900
-                    : '#eef2ff',
+                    : '#ffffff',
                   borderRadius: '24px',
                 }
           }
-          className={embedded ? undefined : `pt-[5px] ${heroInner}`}
+          className={embedded ? undefined : `pt-[5px] ${heroInner} ${isDarkTheme ? 'bg-slate-900' : 'bg-white'}`}
         >
           <div>
             {viewMode === 'week' ? (
@@ -160,23 +160,27 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
             <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-12">
               {/* Visão Geral - Dashboard Style */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 rounded-3xl bg-slate-900 dark:bg-slate-950 p-5 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden border border-slate-800 dark:border-slate-900">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                <div className="col-span-2 rounded-3xl bg-white dark:bg-slate-950 p-5 text-slate-900 dark:text-white shadow-xl shadow-indigo-100 dark:shadow-indigo-900/20 relative overflow-hidden border border-slate-100 dark:border-slate-900">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-10 text-slate-900 dark:text-white">
                     <TrendingUp size={120} />
                   </div>
                   <div className="relative z-10">
-                    <p className="text-sm font-medium text-indigo-200 mb-1">Receita Estimada</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-indigo-200 mb-1">Receita Estimada</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-bold tracking-tight">{currencyFormatter.format(weekRevenue)}</span>
                     </div>
                     <div className="mt-4 flex gap-3">
-                      <div className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm">
-                        <Users size={14} className="text-indigo-300" />
-                        <span className="text-xs font-semibold">{weekSummary.uniqueCustomers} clientes</span>
+                      <div className="flex items-center gap-2 rounded-full bg-slate-100 dark:bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                        <Users size={14} className="text-slate-600 dark:text-indigo-300" />
+                        <span className="text-xs font-semibold text-slate-700 dark:text-white">
+                          {weekSummary.uniqueCustomers} clientes
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1.5 backdrop-blur-sm border border-emerald-500/30">
-                        <CheckCircle2 size={14} className="text-emerald-400" />
-                        <span className="text-xs font-semibold text-emerald-100">{weekSummary.scheduledCount} agendados</span>
+                      <div className="flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-500/20 px-3 py-1.5 backdrop-blur-sm border border-emerald-100 dark:border-emerald-500/30">
+                        <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-100">
+                          {weekSummary.scheduledCount} agendados
+                        </span>
                       </div>
                     </div>
                   </div>
