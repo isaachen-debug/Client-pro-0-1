@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { Prisma } from '@prisma/client';
+import { Role, type Prisma } from '@prisma/client';
 import prisma from '../db';
 import { authenticate } from '../middleware/auth';
 import { geocodeAddress } from '../utils/geocode';
@@ -246,15 +246,22 @@ router.delete('/:id', async (req, res) => {
 
     // Try to delete contracts if they exist in schema (ignoring error if table doesn't exist yet)
     try {
+      // @ts-ignore
+      if (prisma.contract && customer.email) {
         // @ts-ignore
-        if (prisma.contract) {
-             // @ts-ignore
-            await prisma.contract.deleteMany({
-                where: { customerId: req.params.id },
-            });
-        }
+        await prisma.contract.deleteMany({
+          where: {
+            ownerId: req.user!.id,
+            client: {
+              email: customer.email,
+              companyId: req.user!.id,
+              role: Role.CLIENT,
+            },
+          },
+        });
+      }
     } catch (e) {
-        // Ignore contract deletion errors
+      // Ignore contract deletion errors
     }
 
     await prisma.customer.deleteMany({
@@ -269,4 +276,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 export default router;
-
