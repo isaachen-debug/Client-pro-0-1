@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus,
   Search,
-  Phone,
   Loader2,
   Edit3,
   FileText,
