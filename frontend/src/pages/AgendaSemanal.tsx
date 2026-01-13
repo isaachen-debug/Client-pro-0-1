@@ -44,13 +44,6 @@ import { LayoutGroup, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { appointmentsApi, customersApi, teamApi, transactionsApi } from '../services/api';
-import { agentIntentApi } from '../services/agentIntent';
-import {
-  emitAgentChatSync,
-  loadAgentChatMessages,
-  saveAgentChatMessages,
-  type AgentChatMessage,
-} from '../utils/agentChat';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import {
   format,
@@ -108,17 +101,6 @@ type AgendaSemanalProps = {
   onWeekSummaryChange?: (summary: WeekSummary | null) => void;
   onWeekDetailsChange?: (details: WeekDetails | null) => void;
 };
-
-const DEFAULT_BOT_MESSAGE: AgentChatMessage = {
-  role: 'assistant',
-  text: 'Olá! Pode me dizer o que precisa agendar? Por exemplo: "cliente amanhã às 14h" ou "visita segunda-feira 10h".',
-};
-
-const normalizeValue = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
 
 const pad = (value: number) => value.toString().padStart(2, '0');
 
@@ -183,11 +165,6 @@ const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: str
   </button>
 );
 
-const getInitialChat = (): AgentChatMessage[] => {
-  const stored = loadAgentChatMessages();
-  return stored.length ? stored : [DEFAULT_BOT_MESSAGE];
-};
-
 const AgendaSemanal = ({
   quickCreateNonce = 0,
   onWeekSummaryChange,
@@ -234,20 +211,7 @@ const AgendaSemanal = ({
   );
   const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'chat'>('week');
   const [googleConnected, setGoogleConnected] = useState(false);
-  const [chatMessages, setChatMessages] = useState<AgentChatMessage[]>(getInitialChat);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const [chatPendingIntent, setChatPendingIntent] = useState<{
-    intent: string;
-    summary?: string;
-    payload?: any;
-  } | null>(null);
-  const chatSyncRef = useRef('');
-  const chatSyncSource = 'agenda-chat';
   const [createYear, setCreateYear] = useState(new Date().getFullYear());
-  const [mentionOpen, setMentionOpen] = useState(false);
-  const [mentionMatches, setMentionMatches] = useState<Customer[]>([]);
-  const [mentionIndex, setMentionIndex] = useState(0);
   const [createForm, setCreateForm] = useState<CreateFormState>({
     customerId: '',
     month: format(new Date(), 'MM'),
@@ -806,14 +770,6 @@ const AgendaSemanal = ({
     CONCLUIDO: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
     CANCELADO: 'bg-red-50 text-red-700 border-red-100 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800',
   };
-  const statusAccents: Record<AppointmentStatus, string> = {
-    AGENDADO: 'border-l-4 border-amber-300 dark:border-amber-600',
-    NAO_CONFIRMADO: 'border-l-4 border-yellow-300 dark:border-yellow-600',
-    EM_ANDAMENTO: 'border-l-4 border-blue-300 dark:border-blue-600',
-    CONCLUIDO: 'border-l-4 border-emerald-300 dark:border-emerald-600',
-    CANCELADO: 'border-l-4 border-red-300 dark:border-red-600',
-  };
-
   const formatStatusLabel = (status: AppointmentStatus) => {
     if (status === 'NAO_CONFIRMADO') return 'Não confirmado';
     if (status === 'AGENDADO') return 'Agendado';
@@ -1061,10 +1017,8 @@ const AgendaSemanal = ({
                 <div className="relative space-y-4">
                   {getAgendamentosForDay(selectedDay, false)
                     .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                    .map((ag, idx, arr) => {
+                    .map((ag, idx) => {
                       const start = ag.startTime || 'Dia todo';
-                      const end = ag.endTime ? ` · ${ag.endTime}` : '';
-                      const isLast = idx === arr.length - 1;
                       const initials = getInitials(ag.customer.name);
                       return (
                         <div

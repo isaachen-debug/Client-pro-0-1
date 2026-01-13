@@ -158,7 +158,7 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
               connect: { id: appointment.assignedHelperId },
             }
             : undefined,
-          checklistSnapshot: appointment.checklistSnapshot as Prisma.JsonValue,
+          checklistSnapshot: appointment.checklistSnapshot ?? undefined,
         },
       }),
     );
@@ -493,6 +493,9 @@ router.post('/', async (req, res) => {
     const recurrenceSeriesId = isRecurring ? randomBytes(8).toString('hex') : null;
 
     const normalizedChecklist = normalizeChecklistSnapshot(checklistSnapshot);
+    const checklistSnapshotValue = normalizedChecklist
+      ? JSON.stringify(normalizedChecklist)
+      : undefined;
 
     const parsedPrice = parseFloat(price);
     let helperFeeValue = parseHelperFeeValue(helperFee);
@@ -526,7 +529,7 @@ router.post('/', async (req, res) => {
             connect: { id: assignedHelperId },
           }
           : undefined,
-        checklistSnapshot: normalizedChecklist ?? undefined,
+        checklistSnapshot: checklistSnapshotValue,
       },
       ...defaultAppointmentInclude,
     });
@@ -592,6 +595,9 @@ router.put('/:id', async (req, res) => {
     }
 
     const normalizedChecklistUpdate = normalizeChecklistSnapshot(checklistSnapshot);
+    const checklistSnapshotValue = normalizedChecklistUpdate
+      ? JSON.stringify(normalizedChecklistUpdate)
+      : undefined;
 
     const nextHelperId =
       assignedHelperId !== undefined ? (assignedHelperId || null) : existing.assignedHelperId;
@@ -633,7 +639,7 @@ router.put('/:id', async (req, res) => {
         estimatedDurationMinutes !== undefined
           ? parseInt(estimatedDurationMinutes, 10)
           : undefined,
-      checklistSnapshot: normalizedChecklistUpdate ?? undefined,
+      checklistSnapshot: checklistSnapshotValue,
     };
 
     if (assignedHelperId !== undefined) {
@@ -768,7 +774,7 @@ router.patch('/:id/status', async (req, res) => {
                     assignedHelper: updated.assignedHelperId
                       ? { connect: { id: updated.assignedHelperId } }
                       : undefined,
-                    checklistSnapshot: updated.checklistSnapshot ? (updated.checklistSnapshot as Prisma.JsonValue) : undefined,
+                    checklistSnapshot: updated.checklistSnapshot ?? undefined,
                   },
                 });
               }

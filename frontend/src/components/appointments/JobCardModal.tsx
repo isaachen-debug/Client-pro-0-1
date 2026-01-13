@@ -1,10 +1,7 @@
-import React from 'react';
 import {
-  X, Clock, Phone, MessageCircle, CheckCircle2, Navigation
+  X, Clock, MessageCircle, CheckCircle2, Navigation
 } from 'lucide-react';
 import { Appointment, User } from '../../types';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 interface JobCardModalProps {
   appointment: Appointment;
@@ -20,18 +17,6 @@ export const JobCardModal = ({ appointment, onClose, onStatusChange, onEdit, hel
     : null;
 
   const getInitials = (name: string) => name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
-
-  const handleWhatsApp = () => {
-    if (appointment.customer.phone) {
-      window.open(`https://wa.me/${appointment.customer.phone.replace(/\D/g, '')}`, '_blank');
-    }
-  };
-
-  const handleCall = () => {
-    if (appointment.customer.phone) {
-      window.location.href = `tel:${appointment.customer.phone}`;
-    }
-  };
 
   // Helper Icon
   const UsersIcon = ({ size, className }: { size: number, className?: string }) => (
