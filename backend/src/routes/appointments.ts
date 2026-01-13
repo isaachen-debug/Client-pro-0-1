@@ -1,4 +1,4 @@
-import { Role, HelperPayoutMode, type User } from '@prisma/client';
+import { type User } from '@prisma/client';
 import { Router } from 'express';
 import type { Prisma, Appointment as AppointmentModel } from '@prisma/client';
 import prisma from '../db';
@@ -38,7 +38,7 @@ const roundCurrency = (amount: number) => Math.round(amount * 100) / 100;
 const computeHelperFeeFromConfig = (price: number, helper?: Pick<User, 'helperPayoutMode' | 'helperPayoutValue'>) => {
   if (!helper || !Number.isFinite(price)) return undefined;
   const raw =
-    helper.helperPayoutMode === HelperPayoutMode.PERCENTAGE
+    helper.helperPayoutMode === 'PERCENTAGE'
       ? (price * helper.helperPayoutValue) / 100
       : helper.helperPayoutValue;
   if (!Number.isFinite(raw)) return undefined;
@@ -74,6 +74,7 @@ const buildUtcDayRange = (value: string) => {
 };
 
 const RECURRENCE_MAX_OCCURRENCES = 4;
+const MAX_RECURRENCE_DURATION_DAYS = 365; // 1 year limit
 
 const getRecurrenceIntervalDays = (rule?: string | null) => {
   if (!rule) return null;
@@ -101,11 +102,21 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
   const intervalDays = getRecurrenceIntervalDays(appointment.recurrenceRule);
   if (!intervalDays) return;
 
+  // Calculate max date (1 year from original appointment)
+  const maxDate = new Date(appointment.date);
+  maxDate.setDate(maxDate.getDate() + MAX_RECURRENCE_DURATION_DAYS);
+
   const tasks: Prisma.PrismaPromise<any>[] = [];
 
   for (let i = 1; i <= RECURRENCE_MAX_OCCURRENCES; i += 1) {
     const nextDate = new Date(appointment.date);
     nextDate.setDate(nextDate.getDate() + intervalDays * i);
+
+    // Stop if we exceed 1 year limit
+    if (nextDate > maxDate) {
+      break;
+    }
+
     const { start, end } = getDayRange(nextDate);
 
     const exists = await prisma.appointment.count({
@@ -129,14 +140,14 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
           },
           customer: appointment.customerId
             ? {
-                connect: { id: appointment.customerId },
-              }
+              connect: { id: appointment.customerId },
+            }
             : undefined,
           date: nextDate,
           startTime: appointment.startTime,
           endTime: appointment.endTime,
           price: appointment.price,
-          status: 'AGENDADO',
+          status: 'NAO_CONFIRMADO', // Changed from 'AGENDADO'
           recurrenceSeriesId: appointment.recurrenceSeriesId ?? appointment.id,
           recurrenceRule: appointment.recurrenceRule,
           notes: appointment.notes,
@@ -144,8 +155,8 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
           isRecurring: false,
           assignedHelper: appointment.assignedHelperId
             ? {
-                connect: { id: appointment.assignedHelperId },
-              }
+              connect: { id: appointment.assignedHelperId },
+            }
             : undefined,
           checklistSnapshot: appointment.checklistSnapshot as Prisma.JsonValue,
         },
@@ -185,8 +196,24 @@ const normalizeChecklistSnapshot = (value: any): { title: string }[] | undefined
 
 const ensureHelperOwnership = async (helperId: string | null | undefined, ownerId: string) => {
   if (!helperId) return null;
+
+  // Allow self-assignment
+  if (helperId === ownerId) {
+    const user = await prisma.user.findUnique({
+      where: { id: ownerId },
+      select: {
+        id: true,
+        name: true,
+        helperPayoutMode: true,
+        helperPayoutValue: true,
+      },
+    });
+    if (!user) throw new Error('HELPER_NOT_FOUND');
+    return user;
+  }
+
   const helper = await prisma.user.findFirst({
-    where: { id: helperId, companyId: ownerId, role: Role.HELPER },
+    where: { id: helperId, companyId: ownerId },
     select: {
       id: true,
       name: true,
@@ -343,7 +370,7 @@ router.get('/week', async (req, res) => {
         // Marca como concluído
         await prisma.appointment.update({
           where: { id: apt.id },
-          data: { 
+          data: {
             status: 'CONCLUIDO',
             finishedAt: new Date()
           }
@@ -480,8 +507,8 @@ router.post('/', async (req, res) => {
         },
         customer: customerId
           ? {
-              connect: { id: customerId },
-            }
+            connect: { id: customerId },
+          }
           : undefined,
         date: appointmentDate,
         startTime,
@@ -496,8 +523,8 @@ router.post('/', async (req, res) => {
         estimatedDurationMinutes: estimatedDurationMinutes ? parseInt(estimatedDurationMinutes, 10) : null,
         assignedHelper: assignedHelperId
           ? {
-              connect: { id: assignedHelperId },
-            }
+            connect: { id: assignedHelperId },
+          }
           : undefined,
         checklistSnapshot: normalizedChecklist ?? undefined,
       },
@@ -591,8 +618,8 @@ router.put('/:id', async (req, res) => {
     const updateData: Prisma.AppointmentUpdateInput = {
       customer: customerId
         ? {
-            connect: { id: customerId },
-          }
+          connect: { id: customerId },
+        }
         : undefined,
       date: nextDate ?? undefined,
       startTime: startTime ?? undefined,
@@ -612,8 +639,8 @@ router.put('/:id', async (req, res) => {
     if (assignedHelperId !== undefined) {
       updateData.assignedHelper = nextHelperId
         ? {
-            connect: { id: nextHelperId },
-          }
+          connect: { id: nextHelperId },
+        }
         : { disconnect: true };
     }
 
@@ -682,6 +709,73 @@ router.patch('/:id/status', async (req, res) => {
 
     if (status === 'CONCLUIDO') {
       await ensureRevenueTransaction(updated.id, req.user!.id, updated.price, updated.date);
+
+      // Generate next occurrence if this is part of a recurring series
+      if (updated.recurrenceSeriesId && updated.recurrenceRule) {
+        const intervalDays = getRecurrenceIntervalDays(updated.recurrenceRule);
+        if (intervalDays) {
+          // Find all future appointments in this series
+          const futureAppointments = await prisma.appointment.findMany({
+            where: {
+              recurrenceSeriesId: updated.recurrenceSeriesId,
+              userId: updated.userId,
+              date: { gt: updated.date },
+            },
+            orderBy: { date: 'desc' },
+          });
+
+          // If we have less than 4 future occurrences, generate the next one
+          if (futureAppointments.length < RECURRENCE_MAX_OCCURRENCES) {
+            const lastDate = futureAppointments.length > 0
+              ? new Date(futureAppointments[0].date)
+              : new Date(updated.date);
+
+            const nextDate = new Date(lastDate);
+            nextDate.setDate(nextDate.getDate() + intervalDays);
+
+            // Check 1-year limit from original appointment
+            const maxDate = new Date(updated.date);
+            maxDate.setDate(maxDate.getDate() + MAX_RECURRENCE_DURATION_DAYS);
+
+            if (nextDate <= maxDate) {
+              const { start, end } = getDayRange(nextDate);
+
+              // Check if appointment already exists
+              const exists = await prisma.appointment.count({
+                where: {
+                  userId: updated.userId,
+                  customerId: updated.customerId,
+                  date: { gte: start, lte: end },
+                  startTime: updated.startTime,
+                },
+              });
+
+              if (exists === 0) {
+                await prisma.appointment.create({
+                  data: {
+                    owner: { connect: { id: updated.userId } },
+                    customer: { connect: { id: updated.customerId } },
+                    date: nextDate,
+                    startTime: updated.startTime,
+                    endTime: updated.endTime,
+                    price: updated.price,
+                    status: 'NAO_CONFIRMADO',
+                    recurrenceSeriesId: updated.recurrenceSeriesId,
+                    recurrenceRule: updated.recurrenceRule,
+                    notes: updated.notes,
+                    estimatedDurationMinutes: updated.estimatedDurationMinutes,
+                    isRecurring: false,
+                    assignedHelper: updated.assignedHelperId
+                      ? { connect: { id: updated.assignedHelperId } }
+                      : undefined,
+                    checklistSnapshot: updated.checklistSnapshot ? (updated.checklistSnapshot as Prisma.JsonValue) : undefined,
+                  },
+                });
+              }
+            }
+          }
+        }
+      }
     } else if (status === 'CANCELADO') {
       // Remove transações pendentes relacionadas ao serviço cancelado
       await prisma.transaction.deleteMany({

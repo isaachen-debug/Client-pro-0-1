@@ -99,6 +99,16 @@ export interface User {
   reviewLinks?: OwnerReviewLinks | null;
   companyWebsite?: string | null;
   companyShowcase?: CompanyShowcase | null;
+  teamEnabled?: boolean;
+  clientPortalEnabled?: boolean;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: 'Leader' | 'Helper' | 'Driver';
+  avatarColor: string;
+  status: 'Working' | 'Available' | 'Break';
 }
 
 export type CustomerStatus = 'ACTIVE' | 'PAUSED' | 'INACTIVE';
@@ -126,7 +136,12 @@ export interface Customer {
   avatarUrl?: string | null;
 }
 
-export type AppointmentStatus = 'AGENDADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
+export type AppointmentStatus =
+  | 'AGENDADO'
+  | 'NAO_CONFIRMADO'
+  | 'EM_ANDAMENTO'
+  | 'CONCLUIDO'
+  | 'CANCELADO';
 
 export interface Appointment {
   id: string;
@@ -139,6 +154,7 @@ export interface Appointment {
     name: string;
     email?: string;
   } | null;
+  assignedTo?: string[]; // New field for Team Mode
   date: string;
   startTime: string;
   endTime?: string;

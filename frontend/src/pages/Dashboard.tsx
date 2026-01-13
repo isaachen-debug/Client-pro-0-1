@@ -1,463 +1,183 @@
-import { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, Clock, Calendar, BellRing, X as CloseIcon, ChevronDown, ChevronRight } from 'lucide-react';
-import { dashboardApi, transactionsApi } from '../services/api';
-import { PageHeader, SurfaceCard, StatusBadge } from '../components/OwnerUI';
+import React, { useState, useEffect } from 'react';
+import { 
+  Users, Briefcase, XCircle, DollarSign, Wallet, 
+  TrendingUp, Calendar, ChevronDown, Bell 
+} from 'lucide-react';
+import { StatCard } from '../components/dashboard/StatCard';
+import { ActivityFeed, ActivityItem } from '../components/dashboard/ActivityFeed';
+import { FinancialChart } from '../components/dashboard/FinancialChart';
 import { pageGutters } from '../styles/uiTokens';
-import { DashboardOverview, TransactionStatus } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { dashboardApi } from '../services/api';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { parseDateFromInput } from '../utils/date';
-import usePushNotifications from '../hooks/usePushNotifications';
-import { useNavigate } from 'react-router-dom';
 
-const DASHBOARD_SUMMARY_STORAGE_KEY = 'clientepro:dashboard-summary';
-const DASHBOARD_UPDATE_EVENT = 'clientepro:dashboard-update';
+// Dados simulados para preencher o visual "Pro" enquanto não temos histórico real no backend
+const MOCK_ACTIVITY: ActivityItem[] = [
+  { id: '1', type: 'contract', title: 'Michelle assinou contrato', description: 'Plano mensal recorrente', time: '14:10', user: 'Michelle' },
+  { id: '2', type: 'payment', title: 'Pagamento recebido', description: 'Limpeza residencial - Stephen B.', time: 'Ontem', amount: 'R$ 260,00' },
+  { id: '3', type: 'job_completed', title: 'Serviço concluído', description: 'Team 1 finalizou na Rua Malburn', time: 'Ontem', user: 'Team 1' },
+  { id: '4', type: 'invoice', title: 'Fatura enviada', description: 'Para Ani Basak (#000977)', time: 'Ontem' },
+];
+
+const MOCK_CHART_DATA = [
+  { name: 'Seg', income: 4000, expense: 2400, balance: 1600 },
+  { name: 'Ter', income: 3000, expense: 1398, balance: 3202 },
+  { name: 'Qua', income: 2000, expense: 9800, balance: -4598 },
+  { name: 'Qui', income: 2780, expense: 3908, balance: -1128 },
+  { name: 'Sex', income: 1890, expense: 4800, balance: -2910 },
+  { name: 'Sáb', income: 2390, expense: 3800, balance: -1410 },
+  { name: 'Dom', income: 3490, expense: 4300, balance: -810 },
+];
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-
-  const [data, setData] = useState<DashboardOverview | null>(null);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const pushNotifications = usePushNotifications();
-  const [pushPromptDismissed, setPushPromptDismissed] = useState(false);
-  const [completedExpanded, setCompletedExpanded] = useState(false);
-  const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<any>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = localStorage.getItem('clientepro:pushPromptDismissed');
-    if (stored === 'true') {
-      setPushPromptDismissed(true);
-    }
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        // Em um cenário real, o backend retornaria esses deltas
+        const data = await dashboardApi.getMetrics();
+        setMetrics(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
-  useEffect(() => {
-    if (pushNotifications.status === 'enabled') {
-      setPushPromptDismissed(true);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('clientepro:pushPromptDismissed', 'true');
-      }
-    }
-  }, [pushNotifications.status]);
-
-  const shouldShowPushPrompt = pushNotifications.status !== 'enabled' && !pushPromptDismissed;
-
-  const handleDismissPushPrompt = () => {
-    setPushPromptDismissed(true);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('clientepro:pushPromptDismissed', 'true');
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const response = await dashboardApi.getMetrics();
-      setData(response);
-      const snapshot = {
-        activeClientsCount: response.activeClientsCount,
-        scheduledServicesCount: response.scheduledServicesCount,
-        totalRevenueMonth: response.totalRevenueMonth,
-        pendingPaymentsMonth: response.pendingPaymentsMonth,
-      };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(DASHBOARD_SUMMARY_STORAGE_KEY, JSON.stringify(snapshot));
-        window.dispatchEvent(new CustomEvent(DASHBOARD_UPDATE_EVENT, { detail: snapshot }));
-      }
-    } catch (error) {
-      console.error('Erro ao buscar dados do dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const revenueValues = data?.revenueByWeek?.map((week) => week.value) ?? [];
-  const maxRevenueValue =
-    revenueValues.length > 0 ? Math.max(...revenueValues) : 0;
-  const chartBase = 800;
-  const chartMaxTarget = Math.max(data?.totalRevenueMonth ?? 0, maxRevenueValue, chartBase);
-  const chartCeiling = Math.ceil(chartMaxTarget / 100) * 100 || chartBase;
-  const formatCurrency = (value: number) =>
-    value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-
-  const completedList = data?.recentCompletedAppointments ?? [];
-  const visibleCompleted = completedExpanded ? completedList : completedList.slice(0, 3);
-
-  const handleToggleCompletedPayment = async (
-    appointmentId: string,
-    transactionId: string | null,
-    currentStatus: TransactionStatus,
-  ) => {
-    if (!transactionId) {
-      alert('Não há cobrança vinculada a este serviço.');
-      return;
-    }
-    const nextStatus: TransactionStatus = currentStatus === 'PAGO' ? 'PENDENTE' : 'PAGO';
-    try {
-      setUpdatingPaymentId(appointmentId);
-      await transactionsApi.updateStatus(transactionId, nextStatus);
-      setData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          recentCompletedAppointments: prev.recentCompletedAppointments.map((item) =>
-            item.id === appointmentId ? { ...item, transactionStatus: nextStatus } : item,
-          ),
-        };
-      });
-    } catch (error) {
-      console.error('Erro ao atualizar status do pagamento:', error);
-      alert('Não foi possível atualizar o status. Tente novamente.');
-    } finally {
-      setUpdatingPaymentId(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Erro ao carregar dados</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex h-screen items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div></div>;
 
   return (
-    <div className={`${pageGutters} max-w-full md:max-w-6xl mx-auto`}>
-      <div className="hidden sm:block">
-        <PageHeader
-          title="Dashboard"
-          subtitle="Resumo da sua empresa hoje."
-          subtitleHiddenOnMobile
-          actions={
-            <div className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-3 py-2 shadow-sm text-sm font-semibold text-slate-700">
-              <Calendar size={16} className="text-primary-600" />
-              {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
-            </div>
-          }
-        />
-      </div>
-
-      {shouldShowPushPrompt && (
-        <SurfaceCard className="border-dashed border-slate-200 bg-white/90">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-              <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <BellRing size={16} className="text-primary-600" />
-              Receba lembretes no seu celular
-              <button
-                type="button"
-                onClick={handleDismissPushPrompt}
-                  className="text-slate-400 hover:text-slate-600"
-                aria-label="Fechar lembrete de notificações"
-              >
-                <CloseIcon size={16} />
-              </button>
-            </p>
-              <p className="text-xs text-slate-500">
-              Avisaremos um dia antes das limpezas para confirmar Clients e orientar Partners.
-            </p>
-            {pushNotifications.status === 'unsupported' && (
-              <p className="text-xs text-red-500 mt-1">
-                O navegador atual não suporta notificações push. Tente usar o Chrome/Edge.
-              </p>
-            )}
-            {pushNotifications.status === 'denied' && (
-              <p className="text-xs text-amber-600 mt-1">
-                Você bloqueou notificações. Reative nas configurações do navegador e tente novamente.
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={pushNotifications.enable}
-            disabled={pushNotifications.status === 'loading'}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors disabled:opacity-60"
-          >
-            {pushNotifications.status === 'loading' ? 'Ativando...' : 'Ativar notificações'}
+    <div className={`${pageGutters} max-w-7xl mx-auto pb-24`}>
+      {/* Header Executivo */}
+      <div className="py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+            Visão Geral <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-lg">PRO</span>
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">Bem-vindo de volta, {user?.name?.split(' ')[0]}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-600 shadow-sm hover:bg-slate-50">
+            <Calendar size={16} />
+            <span>Este Mês</span>
+            <ChevronDown size={14} />
+          </button>
+          <button className="p-2 bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-colors">
+            <Bell size={20} />
           </button>
         </div>
-        </SurfaceCard>
-      )}
+      </div>
 
-      <div className="space-y-4 md:space-y-6">
-        <div className="rounded-[28px] border border-slate-100 shadow-[0_18px_50px_rgba(15,23,42,0.08)] p-4 md:p-5 bg-gradient-to-br from-white via-white to-white">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.3em] font-semibold text-slate-600">Receita deste mês</p>
-              <p className="text-4xl font-bold leading-tight text-slate-900">{formatCurrency(data.totalRevenueMonth)}</p>
-              <p className="text-sm text-slate-700">Total confirmado até agora.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/app/financeiro')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary-600 text-white font-semibold shadow-md hover:-translate-y-0.5 transition"
-            >
-              Ver financeiro
-              <ChevronRight size={16} />
-            </button>
-          </div>
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 owner-grid-tight">
-            <SurfaceCard className="rounded-2xl border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-slate-600">Pagamentos pendentes</p>
-              <p className="text-2xl font-semibold mt-2 text-slate-900">{formatCurrency(data.pendingPaymentsMonth)}</p>
-              <p className="text-xs text-slate-600">À espera de confirmação neste mês.</p>
-            </SurfaceCard>
-            <button
-              type="button"
-              onClick={() => navigate('/app/clientes')}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left hover:shadow-sm transition"
-            >
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-600 font-semibold">Clientes ativos</p>
-              <p className="text-2xl font-semibold mt-2 text-slate-900">{data.activeClientsCount}</p>
-              <p className="text-xs text-slate-600">Base atualizada.</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/app/start')}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left hover:shadow-sm transition"
-            >
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-600 font-semibold">Serviços (24h)</p>
-              <p className="text-2xl font-semibold mt-2 text-slate-900">{data.scheduledServicesCount}</p>
-              <p className="text-xs text-slate-600">Hoje e próximas 24 horas.</p>
-            </button>
-            <SurfaceCard className="rounded-2xl border-slate-200 bg-white px-4 py-3 flex items-center gap-3 shadow-sm">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                <Calendar size={18} className="text-slate-700" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">Hoje</p>
-                <p className="text-base font-semibold text-slate-900">{data.scheduledServicesCount} serviços</p>
-            </div>
-            </SurfaceCard>
+      <div className="space-y-8 animate-fade-in">
+        
+        {/* Seção 1: Indicadores de Cliente e Job (KPIs Operacionais) */}
+        <div>
+          <h2 className="text-sm font-bold text-purple-900 uppercase tracking-wider mb-4 opacity-70">Operacional</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard 
+              title="Novos Clientes" 
+              value={metrics?.activeClientsCount || 0} 
+              comparison={{ value: 16, percent: -12.5, label: 'mês anterior' }}
+              icon={<Users size={20} />}
+              color="blue"
+            />
+            <StatCard 
+              title="Total Clientes" 
+              value="126" 
+              comparison={{ value: 120, percent: 5, label: 'mês anterior' }}
+              icon={<Briefcase size={20} />}
+              color="blue"
+            />
+            <StatCard 
+              title="Jobs Realizados" 
+              value={metrics?.scheduledServicesCount || 0} 
+              comparison={{ value: 105, percent: -9, label: 'mês anterior' }}
+              icon={<Briefcase size={20} />}
+              color="purple"
+            />
+            <StatCard 
+              title="Cancelamentos" 
+              value="4" 
+              comparison={{ value: 2, percent: -50, label: 'mês anterior' }} // Negativo aqui é ruim visualmente, mas bom pro negócio. O componente trata genericamente.
+              icon={<XCircle size={20} />}
+              color="purple"
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-4 md:gap-6 owner-grid-tight">
-          <SurfaceCard className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Financeiro</p>
-                <p className="text-lg font-semibold text-slate-900">Status rápido</p>
-        </div>
-          <button
-            type="button"
-                onClick={() => navigate('/app/financeiro')}
-                className="text-sm font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
-              >
-                Abrir financeiro <ChevronRight size={14} />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 owner-grid-tight">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900">Pagamentos pendentes</p>
-                  <Clock size={18} className="text-amber-500" />
-                </div>
-                <p className="text-2xl font-bold mt-2 text-slate-900">{formatCurrency(data.pendingPaymentsMonth)}</p>
-                <p className="text-xs text-slate-500 mt-1">À espera de confirmação neste mês.</p>
-              </div>
-              <div className="rounded-2xl border border-slate-100 bg-white p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900">Receita confirmada</p>
-                  <DollarSign size={18} className="text-emerald-600" />
-                </div>
-                <p className="text-2xl font-bold mt-2 text-slate-900">{formatCurrency(data.totalRevenueMonth)}</p>
-                <p className="text-xs text-slate-500 mt-1">Total no mês</p>
-              </div>
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Operação de hoje</p>
-                <p className="text-lg font-semibold text-slate-900">Serviços e andamento</p>
-              </div>
-          <button
-            type="button"
-                onClick={() => navigate('/app/start')}
-                className="text-sm font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
-              >
-                Ver Today <ChevronRight size={14} />
-              </button>
-            </div>
-            <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Hoje você tem {data.scheduledServicesCount} serviços
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {completedList.length} concluídos, {Math.max(data.scheduledServicesCount - completedList.length, 0)} pendentes
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500 font-semibold">Progresso</p>
-                  <p className="text-lg font-bold text-primary-600">
-                    {data.scheduledServicesCount ? Math.min(100, Math.round((completedList.length / data.scheduledServicesCount) * 100)) : 0}%
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 h-2 rounded-full bg-slate-200 overflow-hidden">
-                <div
-                  className="h-full bg-primary-500 rounded-full transition-all"
-                  style={{
-                    width: `${data.scheduledServicesCount ? Math.min(100, Math.round((completedList.length / data.scheduledServicesCount) * 100)) : 0}%`,
-                  }}
-                  aria-label="Progresso de conclusão"
+        {/* Seção 2: Financeiro e Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div>
+              <h2 className="text-sm font-bold text-emerald-900 uppercase tracking-wider mb-4 opacity-70">Financeiro</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <StatCard 
+                  title="Receita Total" 
+                  value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics?.totalRevenueMonth || 0)}
+                  comparison={{ value: 'R$ 13.5k', percent: -15.9, label: 'vs meta' }}
+                  icon={<DollarSign size={20} />}
+                  color="emerald"
+                />
+                <StatCard 
+                  title="Ticket Médio" 
+                  value="R$ 185" 
+                  comparison={{ value: 'R$ 180', percent: 2.4, label: 'mês anterior' }}
+                  icon={<TrendingUp size={20} />}
+                  color="emerald"
                 />
               </div>
+              <FinancialChart data={MOCK_CHART_DATA} />
             </div>
-            <div className="space-y-3">
-              {data.upcomingAppointments.slice(0, 3).length === 0 && (
-                <div className="text-sm text-slate-500 text-center py-6">
-                  Nenhum serviço para hoje. Que tal criar um novo?
-                </div>
-              )}
-              {data.upcomingAppointments.slice(0, 3).map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
-                >
-                  <div className="w-10 h-10 rounded-full bg-primary-50 text-primary-700 flex items-center justify-center font-semibold">
-                    {appointment.customer.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às {appointment.startTime}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <StatusBadge tone="primary">{appointment.startTime}</StatusBadge>
-                    <p className="text-sm font-semibold text-slate-900">{formatCurrency(appointment.price)}</p>
-                  </div>
-                </div>
-              ))}
-        </div>
-          </SurfaceCard>
-        </div>
+          </div>
 
-        <SurfaceCard>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 owner-grid-tight">
-            <div className="lg:col-span-2">
-              <div className="flex items-center justify-between mb-4">
-          <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Receita</p>
-                  <p className="text-lg font-semibold text-slate-900">Semanas do mês</p>
-          </div>
-          </div>
-              <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={data.revenueByWeek}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2f8" />
-                  <XAxis dataKey="label" stroke="#94a3b8" />
-              <YAxis
-                    stroke="#94a3b8"
-                domain={[0, chartCeiling]}
-                tickFormatter={(value) => formatCurrency(value)}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 12px 30px rgba(15,23,42,0.08)',
-                }}
-                    formatter={(value: number) => [formatCurrency(value), 'Receita']}
-              />
-                  <Bar dataKey="value" fill="#22c55e" radius={[10, 10, 6, 6]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+          {/* Seção 3: Lateral (Atividade e Pendências) */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 opacity-70">Atividade</h2>
+              <ActivityFeed items={MOCK_ACTIVITY} />
+            </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-slate-500">Clientes concluídos</p>
-                  <p className="text-sm text-slate-600">Últimos serviços</p>
-                </div>
-                <StatusBadge tone="neutral">{completedList.length}</StatusBadge>
-            </div>
-              <div className="space-y-3">
-              {visibleCompleted.map((appointment) => {
-                const paid = appointment.transactionStatus === 'PAGO';
-                return (
-                    <div
-                      key={appointment.id}
-                      className="rounded-2xl border border-slate-100 bg-white px-3 py-2 flex items-start gap-3 shadow-sm"
-                    >
-                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700">
-                      {appointment.customer.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 truncate">{appointment.customer.name}</p>
-                        <p className="text-xs text-slate-500">
-                        {format(parseDateFromInput(appointment.date), "dd 'de' MMM", { locale: ptBR })} às{' '}
-                        {appointment.startTime}
-                      </p>
-                    </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <p className="text-sm font-semibold text-slate-900">{formatCurrency(appointment.price)}</p>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleToggleCompletedPayment(
-                            appointment.id,
-                            appointment.transactionId,
-                            appointment.transactionStatus,
-                          )
-                        }
-                        disabled={!appointment.transactionId || updatingPaymentId === appointment.id}
-                          className={`text-[11px] font-semibold px-3 py-1 rounded-full border ${
-                            paid
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              : 'bg-amber-50 text-amber-700 border-amber-100'
-                          } ${!appointment.transactionId ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md'} ${
-                            updatingPaymentId === appointment.id ? 'opacity-70' : ''
-                          }`}
-                      >
-                        {updatingPaymentId === appointment.id ? 'Atualizando...' : paid ? 'Pago' : 'Pendente'}
-                      </button>
-                    </div>
+            <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-purple-200 text-xs font-bold uppercase tracking-widest">Saldo a receber</p>
+                    <h3 className="text-3xl font-black mt-1">R$ {metrics?.pendingPaymentsMonth || '0,00'}</h3>
                   </div>
-                );
-              })}
-              {completedList.length === 0 && (
-                  <div className="text-sm text-slate-500 text-center py-6">Nenhum serviço concluído recentemente</div>
-              )}
+                  <div className="p-3 bg-white/10 rounded-xl backdrop-blur-md">
+                    <Wallet size={24} className="text-purple-300" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                    <span className="text-purple-200">Faturas em aberto</span>
+                    <span className="font-bold">14</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                    <span className="text-purple-200">Atrasados (+7 dias)</span>
+                    <span className="font-bold text-rose-300">3</span>
+                  </div>
+                </div>
+                <button className="w-full mt-6 py-3 bg-white text-purple-900 font-bold rounded-xl hover:bg-purple-50 transition-colors shadow-lg">
+                  Cobrar Pendentes
+                </button>
+              </div>
+              
+              {/* Background Decoration */}
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500 rounded-full blur-[60px] opacity-50"></div>
             </div>
-            {completedList.length > 3 && (
-              <button
-                type="button"
-                onClick={() => setCompletedExpanded((prev) => !prev)}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
-              >
-                {completedExpanded ? 'Mostrar menos' : 'Ver todos'}
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform ${completedExpanded ? 'rotate-180' : ''}`}
-                />
-              </button>
-            )}
           </div>
         </div>
-        </SurfaceCard>
       </div>
     </div>
   );
 };
 
 export default Dashboard;
-

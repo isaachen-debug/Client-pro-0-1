@@ -14,6 +14,8 @@ export interface UpdateProfilePayload {
   reviewLinks?: OwnerReviewLinks | null;
   companyWebsite?: string | null;
   companyShowcase?: CompanyShowcase | null;
+  teamEnabled?: boolean;
+  clientPortalEnabled?: boolean;
 }
 
 export interface UpdatePasswordPayload {

@@ -236,6 +236,16 @@ export const importCalendarEvents = async (userId: string, options: ImportOption
       }
 
       const summary = (event.summary || 'Evento Google').trim() || 'Evento Google';
+      const lowercaseSummary = summary.toLowerCase();
+      let detectedServiceType = 'Google Calendar';
+      if (lowercaseSummary.includes('deep clean')) {
+        detectedServiceType = 'Deep Clean';
+      } else if (lowercaseSummary.includes('regular clean') || lowercaseSummary.includes('standard clean')) {
+        detectedServiceType = 'Limpeza Regular';
+      } else if (lowercaseSummary.includes('move in') || lowercaseSummary.includes('move out')) {
+        detectedServiceType = 'Move-in/out';
+      }
+
       const attendeeEmails = (event.attendees ?? [])
         .map((att: any) => att?.email)
         .filter(Boolean) as string[];
@@ -276,7 +286,7 @@ export const importCalendarEvents = async (userId: string, options: ImportOption
             userId,
             name: summary,
             email: attendeeEmails[0] ?? null,
-            serviceType: 'Google Calendar',
+            serviceType: detectedServiceType,
           },
         }));
 

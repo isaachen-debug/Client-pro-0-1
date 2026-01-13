@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Role, type Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import prisma from '../db';
 import { authenticate } from '../middleware/auth';
 import { geocodeAddress } from '../utils/geocode';
@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
     const filters: any = {
       userId: req.user!.id,
     };
-    
+
 
     if (status && status !== 'ALL' && isValidStatus(status)) {
       filters.status = status;
@@ -255,7 +255,7 @@ router.delete('/:id', async (req, res) => {
             client: {
               email: customer.email,
               companyId: req.user!.id,
-              role: Role.CLIENT,
+              role: 'CLIENT',
             },
           },
         });

@@ -13,7 +13,8 @@ import {
   Trash2,
   Wallet,
   TrendingUp,
-  Target
+  Target,
+  Clock
 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { transactionsApi } from '../services/api';
@@ -347,11 +348,11 @@ const Financeiro = () => {
                   <p className="text-lg font-bold">{showBalance ? formatCurrency(summary.total) : '•••'}</p>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 text-rose-400 mb-1">
-                    <ArrowDownRight size={16} />
-                    <span className="text-xs font-bold uppercase">Saídas</span>
+                  <div className="flex items-center gap-2 text-amber-400 mb-1">
+                    <Clock size={16} />
+                    <span className="text-xs font-bold uppercase">Pendentes</span>
                   </div>
-                  <p className="text-lg font-bold">{showBalance ? formatCurrency(summary.expensesTotal) : '•••'}</p>
+                  <p className="text-lg font-bold">{showBalance ? formatCurrency(summary.revenuePending) : '•••'}</p>
                 </div>
               </div>
             </div>
@@ -472,6 +473,34 @@ const Financeiro = () => {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* Pending Clients Section */}
+          {pendingTransactions.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Aguardando Pagamento</h3>
+                <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{pendingTransactions.length} clientes</span>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {pendingTransactions.map((t) => (
+                  <div 
+                    key={t.id}
+                    className={`shrink-0 w-48 p-4 rounded-2xl border shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
+                  >
+                    <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Cliente</p>
+                    <p className={`font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{t.appointment?.customer?.name || 'Venda'}</p>
+                    <p className={`text-lg font-black mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatCurrency(t.amount)}</p>
+                    <button
+                      onClick={() => handleStatusToggle(t)}
+                      className={`w-full mt-3 py-2 rounded-xl text-xs font-bold transition-all ${isDark ? 'bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+                    >
+                      Marcar como Pago
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Transactions List */}
           <div className="space-y-4">

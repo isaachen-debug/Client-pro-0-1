@@ -1,4 +1,4 @@
-import { AppointmentPhotoType, Role } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -38,7 +38,7 @@ const fetchHelper = async (userId: string) => {
   if (!user) {
     throw new Error('USER_NOT_FOUND');
   }
-  if (user.role !== Role.HELPER) {
+  if (user.role !== 'HELPER') {
     throw new Error('FORBIDDEN');
   }
   return user;
@@ -221,7 +221,7 @@ router.post('/appointments/:id/photos', upload.single('photo'), async (req, res)
       data: {
         appointmentId: appointment.id,
         uploadedById: helper.id,
-        type: type as AppointmentPhotoType,
+        type: type,
         url: relativePath.startsWith('/') ? relativePath : `/${relativePath}`,
       },
     });

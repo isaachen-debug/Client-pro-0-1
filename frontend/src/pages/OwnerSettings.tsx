@@ -12,6 +12,7 @@ import {
   Sparkles,
   Trash2,
   Volume2,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
@@ -158,17 +159,15 @@ const OwnerSettings = () => {
             <button
               type="button"
               onClick={handleToggleNotifications}
-              className={`w-12 h-6 rounded-full border transition ${
-                notificationsEnabled 
+              className={`w-12 h-6 rounded-full border transition ${notificationsEnabled
                   ? (isDark ? 'bg-emerald-600 border-emerald-600' : 'bg-slate-900 border-slate-900')
                   : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
-              } ${pushNotifications.status === 'loading' ? 'opacity-60' : ''}`}
+                } ${pushNotifications.status === 'loading' ? 'opacity-60' : ''}`}
               aria-pressed={notificationsEnabled}
             >
               <span
-                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
-                  notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
@@ -185,17 +184,15 @@ const OwnerSettings = () => {
             <button
               type="button"
               onClick={handleToggleTheme}
-              className={`w-12 h-6 rounded-full border transition ${
-                isDark 
-                  ? (isDark ? 'bg-purple-600 border-purple-600' : 'bg-slate-900 border-slate-900') 
+              className={`w-12 h-6 rounded-full border transition ${isDark
+                  ? (isDark ? 'bg-purple-600 border-purple-600' : 'bg-slate-900 border-slate-900')
                   : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
-              } ${savingTheme ? 'opacity-60' : ''}`}
+                } ${savingTheme ? 'opacity-60' : ''}`}
               aria-pressed={isDark}
             >
               <span
-                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
-                  isDark ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${isDark ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
@@ -212,17 +209,77 @@ const OwnerSettings = () => {
             <button
               type="button"
               onClick={handleToggleSounds}
-              className={`w-12 h-6 rounded-full border transition ${
-                soundsEnabled 
+              className={`w-12 h-6 rounded-full border transition ${soundsEnabled
                   ? (isDark ? 'bg-orange-600 border-orange-600' : 'bg-slate-900 border-slate-900')
                   : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
-              }`}
+                }`}
               aria-pressed={soundsEnabled}
             >
               <span
-                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${
-                  soundsEnabled ? 'translate-x-6' : 'translate-x-1'
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${soundsEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                <Users size={16} />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Modo Equipe</p>
+                  <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase">Premium</span>
+                </div>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gerenciar ajudantes e rotas</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                const nextTeam = !user.teamEnabled;
+                await updateProfile({ teamEnabled: nextTeam });
+              }}
+              className={`w-12 h-6 rounded-full border transition ${user.teamEnabled
+                  ? (isDark ? 'bg-emerald-600 border-emerald-600' : 'bg-slate-900 border-slate-900')
+                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
                 }`}
+              aria-pressed={user.teamEnabled}
+            >
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${user.teamEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className={`h-9 w-9 rounded-full flex items-center justify-center ${isDark ? 'bg-sky-900/30 text-sky-400' : 'bg-sky-50 text-sky-600'}`}>
+                <Users size={16} />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Visualizador Cliente</p>
+                  <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded uppercase">Novo</span>
+                </div>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Portal para clientes verem agendamentos e serviços</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                const nextVal = !user.clientPortalEnabled;
+                await updateProfile({ clientPortalEnabled: nextVal });
+              }}
+              className={`w-12 h-6 rounded-full border transition ${user.clientPortalEnabled
+                  ? (isDark ? 'bg-sky-600 border-sky-600' : 'bg-slate-900 border-slate-900')
+                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
+                }`}
+              aria-pressed={user.clientPortalEnabled}
+            >
+              <span
+                className={`block h-5 w-5 rounded-full bg-white shadow transform transition ${user.clientPortalEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
@@ -307,11 +364,10 @@ const OwnerSettings = () => {
         <div className={`px-4 py-3 border-b flex items-center justify-between ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
           <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Integrações</p>
           <span
-            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-              googleStatus.connected 
+            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${googleStatus.connected
                 ? (isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-50 text-emerald-700')
                 : (isDark ? 'bg-amber-900/30 text-amber-400' : 'bg-amber-50 text-amber-700')
-            }`}
+              }`}
           >
             {googleStatus.connected ? 'Conectado' : 'Desconectado'}
           </span>
@@ -325,11 +381,10 @@ const OwnerSettings = () => {
               type="button"
               onClick={handleGoogleConnect}
               disabled={googleLoading}
-              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${
-                isDark 
+              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${isDark
                   ? 'border-emerald-800 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30'
                   : 'border-primary-100 bg-white text-primary-700 hover:bg-primary-50'
-              }`}
+                }`}
             >
               <Link2 size={16} />
               {googleLoading ? 'Redirecionando...' : googleStatus.connected ? 'Reconectar' : 'Conectar Google'}
@@ -338,21 +393,19 @@ const OwnerSettings = () => {
               type="button"
               onClick={handleGoogleImport}
               disabled={importingGoogle || !googleStatus.connected}
-              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${
-                isDark
+              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${isDark
                   ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
                   : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
+                }`}
             >
               {importingGoogle ? 'Importando...' : 'Importar eventos'}
             </button>
             <button
               type="button"
-              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                isDark
+              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${isDark
                   ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
                   : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
+                }`}
             >
               <Sparkles size={16} className="text-amber-500" />
               Ver integrações

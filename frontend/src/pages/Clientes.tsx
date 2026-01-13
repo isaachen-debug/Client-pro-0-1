@@ -117,7 +117,14 @@ const statusFilterOptions: Array<{ label: string; value: 'ALL' | CustomerStatus 
   { label: 'Inativos', value: 'INACTIVE' },
 ];
 
-const serviceTypeOptions = ['Semanal', 'Quinzenal', 'Mensal', 'Único'];
+const serviceTypeOptions = [
+  'Limpeza Regular',
+  'Deep Clean',
+  'Move-in/out',
+  'Limpeza Comercial',
+  'Pós-Obra',
+  'Outro'
+];
 
 const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
   PENDENTE: 'Pendente',

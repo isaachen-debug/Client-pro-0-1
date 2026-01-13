@@ -46,6 +46,10 @@ export const appointmentsApi = {
     const { data } = await api.get<Appointment[]>('/appointments/today');
     return data;
   },
+  async get(id: string) {
+    const { data } = await api.get<Appointment & { transactions?: any[] }>(`/appointments/${id}`);
+    return data;
+  },
   async create(payload: AppointmentPayload) {
     const { data } = await api.post<Appointment>('/appointments', payload);
     return data;

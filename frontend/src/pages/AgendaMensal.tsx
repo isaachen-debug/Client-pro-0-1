@@ -329,18 +329,21 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
 
   const statusSurfaces: Record<AppointmentStatus, string> = {
     AGENDADO: 'text-slate-800 dark:text-slate-200',
+    NAO_CONFIRMADO: 'text-slate-800 dark:text-slate-200',
     EM_ANDAMENTO: 'text-slate-800 dark:text-slate-200',
     CONCLUIDO: 'text-slate-800 dark:text-slate-200',
     CANCELADO: 'text-slate-800 dark:text-slate-200',
   };
   const statusAccents: Record<AppointmentStatus, string> = {
     AGENDADO: 'border-l-4 border-amber-300 dark:border-amber-600',
+    NAO_CONFIRMADO: 'border-l-4 border-yellow-300 dark:border-yellow-600',
     EM_ANDAMENTO: 'border-l-4 border-blue-300 dark:border-blue-600',
     CONCLUIDO: 'border-l-4 border-blue-300 dark:border-blue-600',
     CANCELADO: 'border-l-4 border-red-300 dark:border-red-600',
   };
   const statusDotBg: Record<AppointmentStatus, string> = {
     AGENDADO: 'bg-amber-400',
+    NAO_CONFIRMADO: 'bg-yellow-400',
     EM_ANDAMENTO: 'bg-blue-500',
     CONCLUIDO: 'bg-blue-500',
     CANCELADO: 'bg-red-500',
@@ -401,25 +404,23 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                 setSelectedDay(day);
                 onDateChange?.(day);
               }}
-              className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${
-                isSelected
+              className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${isSelected
                   ? 'text-white bg-emerald-600 shadow-sm'
                   : isToday
                     ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
                     : inMonth
                       ? 'text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800/50'
                       : 'text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900/50'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center w-full">
                 <span
-                  className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${
-                    isSelected
+                  className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${isSelected
                       ? 'bg-emerald-500 text-white'
                       : isToday
                         ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
                         : 'bg-transparent'
-                  }`}
+                    }`}
                 >
                   {format(day, 'd')}
                 </span>

@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
@@ -27,10 +28,13 @@ import ClientHome from './pages/client/Home';
 import ClientLayout from './pages/client/Layout';
 import ClientSettings from './pages/client/Settings';
 import OwnerSettings from './pages/OwnerSettings';
+import AddMember from './pages/team/AddMember';
 
 const AppIndexRedirect = () => <Navigate to="agenda" replace />;
 
 function App() {
+  const [isTeamMode, setIsTeamMode] = useState(false);
+
   return (
     <Router>
       <AuthProvider>
@@ -44,7 +48,7 @@ function App() {
               element={
                 <PrivateRoute>
                   <RoleRoute allowedRoles={['OWNER']}>
-                    <Layout />
+                    <Layout isTeamMode={isTeamMode} setIsTeamMode={setIsTeamMode} />
                   </RoleRoute>
                 </PrivateRoute>
               }
@@ -62,6 +66,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<OwnerSettings />} />
               <Route path="team" element={<Team />} />
+              <Route path="team/add" element={<AddMember />} />
               <Route path="apps" element={<Apps />} />
               <Route path="helper-resources" element={<HelperResources />} />
               <Route path="invoice/:id" element={<Invoice />} />
@@ -100,7 +105,7 @@ function App() {
 
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+          </Routes>
         </PreferencesProvider>
       </AuthProvider>
     </Router>

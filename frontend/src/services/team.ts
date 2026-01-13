@@ -111,5 +111,18 @@ export const teamApi = {
     });
     return data;
   },
+  async calculateHelperFee(helperId: string, price: number) {
+    const { data } = await api.post<{
+      helperFee: number;
+      explanation: string;
+      helper: {
+        id: string;
+        name: string;
+        payoutMode: string;
+        payoutValue: number;
+      };
+    }>(`/team/helpers/${helperId}/calculate-fee`, { price });
+    return data;
+  },
 };
 

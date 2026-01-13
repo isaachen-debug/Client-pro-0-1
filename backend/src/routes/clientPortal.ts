@@ -1,4 +1,4 @@
-import { Role, ContractStatus } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { Router } from 'express';
 import prisma from '../db';
 import { authenticate } from '../middleware/auth';
@@ -13,7 +13,7 @@ const ensureClient = async (userId: string) => {
   if (!user) {
     throw new Error('USER_NOT_FOUND');
   }
-  if (user.role !== Role.CLIENT) {
+  if (user.role !== 'CLIENT') {
     throw new Error('FORBIDDEN');
   }
   return user;
@@ -215,14 +215,14 @@ router.post('/contracts/:id/accept', async (req, res) => {
       return res.status(404).json({ error: 'Contrato não encontrado.' });
     }
 
-    if (contract.status === ContractStatus.ACEITO) {
+    if (contract.status === 'ACEITO') {
       return res.status(400).json({ error: 'Contrato já foi aceito.' });
     }
 
     const updated = await prisma.contract.update({
       where: { id: contract.id },
       data: {
-        status: ContractStatus.ACEITO,
+        status: 'ACEITO',
         acceptedAt: new Date(),
         clientNotes: req.body?.clientNotes,
       },

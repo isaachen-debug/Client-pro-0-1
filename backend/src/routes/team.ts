@@ -1,4 +1,4 @@
-import { Role, HelperPayoutMode, ContractStatus } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
@@ -42,7 +42,7 @@ const ensureOwner = async (userId: string) => {
   if (!user) {
     throw new Error('USER_NOT_FOUND');
   }
-  if (user.role !== Role.OWNER) {
+  if (user.role !== 'OWNER') {
     throw new Error('FORBIDDEN');
   }
   return user;
@@ -66,7 +66,7 @@ const ensureContractClient = async (
 ) => {
   if (params.clientId) {
     const directClient = await prisma.user.findFirst({
-      where: { id: params.clientId, companyId: owner.id, role: Role.CLIENT },
+      where: { id: params.clientId, companyId: owner.id, role: 'CLIENT' },
       select: CLIENT_CONTRACT_SELECT,
     });
     if (!directClient) {
@@ -97,7 +97,7 @@ const ensureContractClient = async (
   });
 
   if (existingUser) {
-    if (existingUser.companyId !== owner.id || existingUser.role !== Role.CLIENT) {
+    if (existingUser.companyId !== owner.id || existingUser.role !== 'CLIENT') {
       throw new Error('EMAIL_IN_USE');
     }
     return { client: existingUser, temporaryPassword: null };
@@ -111,7 +111,7 @@ const ensureContractClient = async (
       name: customer.name || 'Cliente',
       email: customer.email,
       passwordHash,
-      role: Role.CLIENT,
+      role: 'CLIENT',
       companyId: owner.id,
       planStatus: owner.planStatus,
       trialStart: owner.trialStart,
@@ -125,8 +125,28 @@ const ensureContractClient = async (
 };
 
 const ensureHelperForOwner = async (ownerId: string, helperId: string) => {
+  // Case 1: Self-assignment (Owner assigning to themselves)
+  if (helperId === ownerId) {
+    const user = await prisma.user.findUnique({
+      where: { id: ownerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        helperPayoutMode: true,
+        helperPayoutValue: true,
+      },
+    });
+    if (!user) throw new Error('HELPER_NOT_FOUND');
+    return user;
+  }
+
+  // Case 2: Subordinate assignment (Helper belongs to owner's company)
   const helper = await prisma.user.findFirst({
-    where: { id: helperId, companyId: ownerId, role: Role.HELPER },
+    where: {
+      id: helperId,
+      companyId: ownerId
+    },
     select: {
       id: true,
       name: true,
@@ -145,11 +165,11 @@ const roundCurrency = (value: number) => Math.round(value * 100) / 100;
 
 const computeHelperPayout = (
   price: number,
-  helper: { helperPayoutMode: HelperPayoutMode; helperPayoutValue: number },
+  helper: { helperPayoutMode: string; helperPayoutValue: number },
 ) => {
   if (!Number.isFinite(price)) return 0;
   const base =
-    helper.helperPayoutMode === HelperPayoutMode.PERCENTAGE
+    helper.helperPayoutMode === 'PERCENTAGE'
       ? (price * helper.helperPayoutValue) / 100
       : helper.helperPayoutValue;
   return Math.max(0, roundCurrency(base));
@@ -196,6 +216,52 @@ router.get('/', async (req, res) => {
     }
     console.error(error);
     return res.status(500).json({ error: 'Erro ao carregar equipe.' });
+  }
+});
+
+router.post('/helpers/:helperId/calculate-fee', async (req, res) => {
+  try {
+    const owner = await ensureOwner(req.user!.id);
+    const helper = await ensureHelperForOwner(owner.id, req.params.helperId);
+    const { price } = req.body as { price?: number };
+
+    if (!price || !Number.isFinite(price) || price <= 0) {
+      return res.status(400).json({ error: 'Informe um preço válido.' });
+    }
+
+    const calculatedFee = computeHelperPayout(price, helper);
+    const explanation =
+      helper.helperPayoutMode === 'PERCENTAGE'
+        ? `${helper.helperPayoutValue}% de $${price.toFixed(2)}`
+        : `Valor fixo`;
+
+    res.json({
+      helperFee: calculatedFee,
+      explanation,
+      helper: {
+        id: helper.id,
+        name: helper.name,
+        payoutMode: helper.helperPayoutMode,
+        payoutValue: helper.helperPayoutValue,
+      },
+    });
+  } catch (error: any) {
+    console.log('Error in calculate-fee:', error.message);
+    if (error.message === 'HELPER_NOT_FOUND') {
+      console.log('Helpers debug info:', {
+        reqHelperId: req.params.helperId,
+        reqUserId: req.user!.id
+      });
+    }
+
+    if (error.message === 'FORBIDDEN') {
+      return res.status(403).json({ error: 'Acesso restrito aos administradores.' });
+    }
+    if (error.message === 'HELPER_NOT_FOUND') {
+      return res.status(404).json({ error: 'Helper não encontrada.' });
+    }
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao calcular pagamento da helper.' });
   }
 });
 
@@ -262,7 +328,7 @@ router.post('/clients/contracts', async (req, res) => {
         pdfUrl,
         placeholders,
         gallery,
-        status: ContractStatus.PENDENTE,
+        status: 'PENDENTE',
       },
       include: CONTRACT_INCLUDE,
     });
@@ -273,11 +339,11 @@ router.post('/clients/contracts', async (req, res) => {
       ...contract,
       meta: temporaryPassword
         ? {
-            provisionalAccess: {
-              email: client.email,
-              temporaryPassword,
-            },
-          }
+          provisionalAccess: {
+            email: client.email,
+            temporaryPassword,
+          },
+        }
         : undefined,
     });
   } catch (error: any) {
@@ -313,9 +379,9 @@ router.post('/clients/contracts', async (req, res) => {
 router.patch('/clients/contracts/:id/status', async (req, res) => {
   try {
     const owner = await ensureOwner(req.user!.id);
-    const { status, ownerNotes } = req.body as { status: ContractStatus; ownerNotes?: string };
+    const { status, ownerNotes } = req.body as { status: string; ownerNotes?: string };
 
-    if (!Object.values(ContractStatus).includes(status)) {
+    if (!['PENDENTE', 'ACEITO', 'RECUSADO'].includes(status)) {
       return res.status(400).json({ error: 'Status inválido.' });
     }
 
@@ -332,7 +398,7 @@ router.patch('/clients/contracts/:id/status', async (req, res) => {
       data: {
         status,
         ownerNotes,
-        acceptedAt: status === ContractStatus.ACEITO ? new Date() : contract.acceptedAt,
+        acceptedAt: status === 'ACEITO' ? new Date() : contract.acceptedAt,
       },
       include: CONTRACT_INCLUDE,
     });
@@ -372,7 +438,7 @@ router.post('/helpers', async (req, res) => {
         name,
         email,
         passwordHash,
-        role: Role.HELPER,
+        role: 'HELPER',
         companyId: owner.id,
         planStatus: owner.planStatus,
         trialStart: owner.trialStart,
@@ -428,7 +494,7 @@ router.post('/clients/:customerId/portal-user', async (req, res) => {
     let portalUser;
 
     if (existingUser) {
-      if (existingUser.companyId !== owner.id || existingUser.role !== Role.CLIENT) {
+      if (existingUser.companyId !== owner.id || existingUser.role !== 'CLIENT') {
         return res.status(400).json({ error: 'Este email já está em uso em outra conta.' });
       }
 
@@ -451,7 +517,7 @@ router.post('/clients/:customerId/portal-user', async (req, res) => {
           name: displayName,
           email,
           passwordHash,
-          role: Role.CLIENT,
+          role: 'CLIENT',
           companyId: owner.id,
           planStatus: owner.planStatus,
           trialStart: owner.trialStart,
@@ -496,7 +562,7 @@ router.get('/helpers/status', async (req, res) => {
     const helpers = await prisma.user.findMany({
       where: {
         companyId: req.user!.id,
-        role: Role.HELPER,
+        role: 'HELPER',
         isActive: true,
       },
       select: {
@@ -532,9 +598,9 @@ router.get('/helpers/status', async (req, res) => {
 
       const checklist = activeAppointment
         ? {
-            total: activeAppointment.checklistItems.length,
-            completed: activeAppointment.checklistItems.filter((item) => item.completedAt).length,
-          }
+          total: activeAppointment.checklistItems.length,
+          completed: activeAppointment.checklistItems.filter((item) => item.completedAt).length,
+        }
         : null;
 
       const summary = helperAppointments.reduce(
@@ -552,19 +618,19 @@ router.get('/helpers/status', async (req, res) => {
         helper,
         activeAppointment: activeAppointment
           ? {
-              id: activeAppointment.id,
-              startTime: activeAppointment.startTime,
-              endTime: activeAppointment.endTime,
-              status: activeAppointment.status,
-              customer: {
-                id: activeAppointment.customer.id,
-                name: activeAppointment.customer.name,
-                address: activeAppointment.customer.address,
-              },
-              checklist,
-              startedAt: activeAppointment.startedAt,
-              finishedAt: activeAppointment.finishedAt,
-            }
+            id: activeAppointment.id,
+            startTime: activeAppointment.startTime,
+            endTime: activeAppointment.endTime,
+            status: activeAppointment.status,
+            customer: {
+              id: activeAppointment.customer.id,
+              name: activeAppointment.customer.name,
+              address: activeAppointment.customer.address,
+            },
+            checklist,
+            startedAt: activeAppointment.startedAt,
+            finishedAt: activeAppointment.finishedAt,
+          }
           : null,
         summary,
       };
@@ -590,7 +656,7 @@ router.get('/helpers/:helperId/day', async (req, res) => {
       where: {
         id: req.params.helperId,
         companyId: owner.id,
-        role: Role.HELPER,
+        role: 'HELPER',
       },
       select: {
         id: true,
@@ -633,9 +699,9 @@ router.put('/helpers/:helperId/payout', async (req, res) => {
   try {
     const owner = await ensureOwner(req.user!.id);
     const helper = await ensureHelperForOwner(owner.id, req.params.helperId);
-    const { mode, value } = req.body as { mode?: HelperPayoutMode; value?: number };
+    const { mode, value } = req.body as { mode?: string; value?: number };
 
-    if (!mode || !Object.values(HelperPayoutMode).includes(mode)) {
+    if (!mode || !['FIXED', 'PERCENTAGE'].includes(mode)) {
       return res.status(400).json({ error: 'Escolha FIXED ou PERCENTAGE.' });
     }
 
@@ -645,7 +711,7 @@ router.put('/helpers/:helperId/payout', async (req, res) => {
     }
 
     const normalizedValue =
-      mode === HelperPayoutMode.PERCENTAGE ? Math.min(100, roundCurrency(parsedValue)) : roundCurrency(parsedValue);
+      mode === 'PERCENTAGE' ? Math.min(100, roundCurrency(parsedValue)) : roundCurrency(parsedValue);
 
     const updated = await prisma.user.update({
       where: { id: helper.id },
