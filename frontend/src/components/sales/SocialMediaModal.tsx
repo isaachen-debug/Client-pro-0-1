@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Upload, Sparkles, Copy, Check, Instagram, Image as ImageIcon, Layout, Grid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateSocialPost } from '../../services/growth';
@@ -6,12 +6,11 @@ import { generateSocialPost } from '../../services/growth';
 type SocialMediaModalProps = {
     isOpen: boolean;
     onClose: () => void;
-    isDark: boolean;
 };
 
 type PostFormat = 'before-after' | 'single' | 'gallery' | null;
 
-export const SocialMediaModal = ({ isOpen, onClose, isDark }: SocialMediaModalProps) => {
+export const SocialMediaModal = ({ isOpen, onClose }: SocialMediaModalProps) => {
     const [step, setStep] = useState<'format' | 'upload' | 'generating' | 'result'>('format');
     const [format, setFormat] = useState<PostFormat>(null);
     const [images, setImages] = useState<string[]>([]);
@@ -47,8 +46,9 @@ export const SocialMediaModal = ({ isOpen, onClose, isDark }: SocialMediaModalPr
             if (format === 'before-after' && images.length >= 2) {
                 // Use real Gemini API for before/after
                 result = await generateSocialPost(images[0], images[1]);
-                setGeneratedCaption(result.caption);
-                setGeneratedHashtags(result.hashtags);
+                const typedResult = result as { caption: string; hashtags: string[] };
+                setGeneratedCaption(typedResult.caption);
+                setGeneratedHashtags(typedResult.hashtags);
             } else {
                 // Fallback for single/gallery (could enhance later)
                 await new Promise(resolve => setTimeout(resolve, 2500));

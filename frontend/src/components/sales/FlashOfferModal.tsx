@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Zap, MapPin, Users, Send, Clock, Navigation, MessageSquare } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { X, MapPin, Send, Clock, Navigation } from 'lucide-react';
 import { findNearbyOpportunities } from '../../services/growth';
 
 type FlashOfferModalProps = {

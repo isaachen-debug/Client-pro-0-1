@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, X, Camera, Image as ImageIcon, Send, Rocket, MessageSquare } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { Sparkles, X, Camera, Image as ImageIcon, Rocket, MessageSquare } from 'lucide-react';
 import { analyzeOpportunity } from '../../services/growth';
 
 type AIOpportunityModalProps = {

@@ -14,8 +14,7 @@ import {
   Archive,
   Trash2,
   MapPin,
-  Tag,
-  MessageCircle
+  Tag
 } from 'lucide-react';
 import { appointmentsApi, customersApi, teamApi } from '../services/api';
 import { useSearchParams } from 'react-router-dom';
@@ -985,6 +984,7 @@ type HistoryModalProps = {
 
 const appointmentStatusLabels: Record<AppointmentStatus, string> = {
   AGENDADO: 'A confirmar',
+  NAO_CONFIRMADO: 'Não confirmado',
   EM_ANDAMENTO: 'Agendado',
   CONCLUIDO: 'Concluído',
   CANCELADO: 'Cancelado',
@@ -992,6 +992,7 @@ const appointmentStatusLabels: Record<AppointmentStatus, string> = {
 
 const appointmentStatusClasses: Record<AppointmentStatus, string> = {
   AGENDADO: 'bg-amber-100 text-amber-800 border-amber-200',
+  NAO_CONFIRMADO: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   EM_ANDAMENTO: 'bg-blue-100 text-blue-800 border-blue-200',
   CONCLUIDO: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   CANCELADO: 'bg-red-100 text-red-800 border-red-200',

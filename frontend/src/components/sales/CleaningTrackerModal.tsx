@@ -1,6 +1,5 @@
 import { X } from 'lucide-react';
 import { CleaningTracker } from '../appointments/CleaningTracker';
-import { Appointment } from '../../types';
 
 interface CleaningTrackerModalProps {
     isOpen: boolean;
@@ -10,26 +9,7 @@ interface CleaningTrackerModalProps {
 export const CleaningTrackerModal = ({ isOpen, onClose }: CleaningTrackerModalProps) => {
     if (!isOpen) return null;
 
-    // Mock appointment for preview
-    const mockAppointment: Appointment = {
-        id: 'preview-123',
-        customer: {
-            id: 'cust-1',
-            name: 'Ana Silva',
-            address: 'Rua das Flores, 123 - Apt 402',
-            phone: '(11) 99999-9999',
-            status: 'ACTIVE',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        },
-        service: 'Limpeza Pesada',
-        date: new Date().toISOString(),
-        startTime: '08:00',
-        endTime: '12:00',
-        price: 250,
-        status: 'EM_ANDAMENTO',
-        helperId: 'helper-1'
-    };
+    const mockAppointmentId = 'preview-123';
 
     return (
         <div
@@ -60,7 +40,7 @@ export const CleaningTrackerModal = ({ isOpen, onClose }: CleaningTrackerModalPr
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto">
-                    <CleaningTracker appointmentId={mockAppointment.id} />
+                    <CleaningTracker appointmentId={mockAppointmentId} />
                 </div>
 
                 {/* Footer Hint */}

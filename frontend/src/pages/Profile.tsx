@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { MOCK_TEAM } from '../constants/mocks';
-import { Bell, LogOut, Moon, Settings, HelpCircle, Crown, ChevronRight, Mail, CheckCircle2, X, Phone, TrendingUp, Users, Calendar, MessageCircle, Link2 } from 'lucide-react';
+import { Bell, LogOut, Moon, Settings, HelpCircle, Crown, ChevronRight, Mail, CheckCircle2, X, Phone, Users, MessageCircle, Link2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import usePushNotifications from '../hooks/usePushNotifications';
 import { pageGutters } from '../styles/uiTokens';
-import { dashboardApi, teamApi, customersApi } from '../services/api';
-import { DashboardOverview, Customer } from '../types';
+import { teamApi, customersApi } from '../services/api';
+import { Customer } from '../types';
 import OwnerSettings from './OwnerSettings';
 
 const APP_VERSION = '1.0.0';
@@ -25,32 +25,13 @@ const Profile = () => {
   const [savingTheme, setSavingTheme] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
-  const [metrics, setMetrics] = useState<DashboardOverview | null>(null);
-  const [loadingMetrics, setLoadingMetrics] = useState(false);
-
   // Portal Access State
   const [portalOpen, setPortalOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [customersLoading, setCustomersLoading] = useState(false);
   const [portalForm, setPortalForm] = useState({ customerId: '', name: '', email: '', password: '' });
   const [portalSaving, setPortalSaving] = useState(false);
   const [portalMessage, setPortalMessage] = useState<{ email: string; password: string } | null>(null);
   const [portalError, setPortalError] = useState('');
-
-  useEffect(() => {
-    const loadMetrics = async () => {
-      try {
-        setLoadingMetrics(true);
-        const data = await dashboardApi.getMetrics();
-        setMetrics(data);
-      } catch (err) {
-        console.error('Erro ao carregar métricas:', err);
-      } finally {
-        setLoadingMetrics(false);
-      }
-    };
-    loadMetrics();
-  }, []);
 
   // Load customers when portal modal opens
   useEffect(() => {
@@ -60,14 +41,11 @@ const Profile = () => {
   }, [portalOpen]);
 
   const loadCustomers = async () => {
-    setCustomersLoading(true);
     try {
       const data = await customersApi.list();
       setCustomers(data);
     } catch (err) {
       console.error(err);
-    } finally {
-      setCustomersLoading(false);
     }
   };
 
@@ -113,9 +91,6 @@ const Profile = () => {
         .substring(0, 2)
         .toUpperCase()
       : 'CP';
-
-  const roleLabel =
-    user.role === 'OWNER' ? 'Administrador' : user.role === 'HELPER' ? 'Helper' : 'Cliente';
 
   const isDark = user.preferredTheme === 'dark';
   const notificationsEnabled = pushNotifications.status === 'enabled';

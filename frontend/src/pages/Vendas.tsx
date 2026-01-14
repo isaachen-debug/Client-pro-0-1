@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Search, Sparkles, Zap, Camera, Layout, Image as ImageIcon, ArrowRight } from 'lucide-react';
+import { Sparkles, Zap, Camera, Layout, Image as ImageIcon, ArrowRight } from 'lucide-react';
 import { AIOpportunityModal } from '../components/sales/AIOpportunityModal';
 import { CleaningTrackerModal } from '../components/sales/CleaningTrackerModal';
 import { SocialMediaModal } from '../components/sales/SocialMediaModal';

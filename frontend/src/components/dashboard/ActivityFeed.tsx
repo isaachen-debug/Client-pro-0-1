@@ -1,5 +1,4 @@
-import React from 'react';
-import { CheckCircle2, Clock, FileText, UserPlus, DollarSign } from 'lucide-react';
+import { CheckCircle2, Clock, FileText, DollarSign } from 'lucide-react';
 
 export interface ActivityItem {
   id: string;

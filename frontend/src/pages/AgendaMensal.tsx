@@ -327,13 +327,6 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
     onDateChange?.(today);
   };
 
-  const statusSurfaces: Record<AppointmentStatus, string> = {
-    AGENDADO: 'text-slate-800 dark:text-slate-200',
-    NAO_CONFIRMADO: 'text-slate-800 dark:text-slate-200',
-    EM_ANDAMENTO: 'text-slate-800 dark:text-slate-200',
-    CONCLUIDO: 'text-slate-800 dark:text-slate-200',
-    CANCELADO: 'text-slate-800 dark:text-slate-200',
-  };
   const statusAccents: Record<AppointmentStatus, string> = {
     AGENDADO: 'border-l-4 border-amber-300 dark:border-amber-600',
     NAO_CONFIRMADO: 'border-l-4 border-yellow-300 dark:border-yellow-600',

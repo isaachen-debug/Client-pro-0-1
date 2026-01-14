@@ -770,15 +770,15 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
     },
   ];
   const extraMenuItems = [
-    { key: 'dashboard', label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
-    { key: 'start', label: 'Hoje', path: '/app/start', icon: PlayCircle },
-    { key: 'explore', label: 'Explorar', path: '/app/explore', icon: Grid },
-    { key: 'rotas', label: 'Rotas', path: '/app/rotas', icon: Navigation },
-    { key: 'empresa', label: 'Empresa', path: '/app/empresa', icon: Building2 },
-    { key: 'team', label: 'Equipe', path: '/app/team', icon: Users },
-    { key: 'settings', label: 'Configurações', path: '/app/settings', icon: SettingsIcon },
-    { key: 'helper-resources', label: 'Helpers', path: '/app/helper-resources', icon: HelpCircle },
-    { key: 'apps', label: 'Apps', path: '/app/apps', icon: LayoutGrid },
+    { key: 'dashboard', label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard, type: 'route' as const },
+    { key: 'start', label: 'Hoje', path: '/app/start', icon: PlayCircle, type: 'route' as const },
+    { key: 'explore', label: 'Explorar', path: '/app/explore', icon: Grid, type: 'route' as const },
+    { key: 'rotas', label: 'Rotas', path: '/app/rotas', icon: Navigation, type: 'route' as const },
+    { key: 'empresa', label: 'Empresa', path: '/app/empresa', icon: Building2, type: 'route' as const },
+    { key: 'team', label: 'Equipe', path: '/app/team', icon: Users, type: 'route' as const },
+    { key: 'settings', label: 'Configurações', path: '/app/settings', icon: SettingsIcon, type: 'route' as const },
+    { key: 'helper-resources', label: 'Helpers', path: '/app/helper-resources', icon: HelpCircle, type: 'route' as const },
+    { key: 'apps', label: 'Apps', path: '/app/apps', icon: LayoutGrid, type: 'route' as const },
   ];
   const [extraSlot, setExtraSlot] = useState(() => extraMenuItems[0]);
   useEffect(() => {
@@ -798,6 +798,16 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
   const navItems: NavItem[] = useMemo(() => [...mobileNavItems], [mobileNavItems]);
   const handleMobileNav = (item: { path: string }) => {
     navigate(item.path);
+  };
+  const handleExtraSelect = (item: NavItem) => {
+    setExtraSlot(item);
+    setExtraMenuOpen(false);
+    try {
+      localStorage.setItem(EXTRA_SLOT_STORAGE_KEY, item.key);
+    } catch (e) {
+      // ignore
+    }
+    handleMobileNav(item);
   };
 
 

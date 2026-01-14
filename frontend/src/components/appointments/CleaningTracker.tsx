@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Clock, Sparkles, Share2, Camera } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, Sparkles, Share2, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STEPS = [
@@ -13,17 +13,13 @@ const STEPS = [
 
 export const CleaningTracker = ({ appointmentId }: { appointmentId: string }) => {
     const [activeStep, setActiveStep] = useState(1);
-    const [showTip, setShowTip] = useState(true);
 
     // Auto-advance simulation for demo
     const handleMarkDone = () => {
         if (activeStep < STEPS.length) {
             setActiveStep(prev => prev + 1);
-            setShowTip(true);
         }
     };
-
-    const currentStepData = STEPS[activeStep - 1];
 
     return (
         <div className="space-y-6 pt-2">

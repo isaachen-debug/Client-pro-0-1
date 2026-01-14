@@ -1,4 +1,4 @@
-import { X, Clock, Navigation, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { X, Clock, Navigation, CheckCircle2 } from 'lucide-react';
 import { Appointment, User } from '../../types';
 import { useOutletContext } from 'react-router-dom';
 import { CleaningTracker } from './CleaningTracker';

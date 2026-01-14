@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   CheckCircle2, 
   DollarSign, 
@@ -35,7 +35,6 @@ const CompletionModal: React.FC<CompletionModalProps> = ({
   const isDark = theme === 'dark';
   
   const [finalPrice, setFinalPrice] = useState(appointment.price.toString());
-  const [paymentStatus, setPaymentStatus] = useState<'PENDENTE' | 'PAGO'>('PAGO');
   const [sendInvoice, setSendInvoice] = useState(false);
   const [shareVia, setShareVia] = useState<'none' | 'sms' | 'email'>('none');
   const [showInvoiceOptions, setShowInvoiceOptions] = useState(false);
