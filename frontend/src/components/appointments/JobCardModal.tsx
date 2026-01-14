@@ -1,7 +1,8 @@
-import {
-  X, Clock, MessageCircle, CheckCircle2, Navigation
-} from 'lucide-react';
+import { X, Clock, Navigation, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { Appointment, User } from '../../types';
+import { useOutletContext } from 'react-router-dom';
+import { CleaningTracker } from './CleaningTracker';
+import { ClientMessageMenu } from '../clients/ClientMessageMenu';
 
 interface JobCardModalProps {
   appointment: Appointment;
@@ -9,9 +10,11 @@ interface JobCardModalProps {
   onStatusChange?: (status: any) => void;
   onEdit?: () => void;
   helpers?: User[];
+  isTeamMode?: boolean;
 }
 
-export const JobCardModal = ({ appointment, onClose, onStatusChange, onEdit, helpers = [] }: JobCardModalProps) => {
+export const JobCardModal = ({ appointment, onClose, onStatusChange, onEdit, helpers = [], isTeamMode = false }: JobCardModalProps) => {
+
   const helper = appointment.assignedHelperId
     ? helpers.find(h => h.id === appointment.assignedHelperId)
     : null;
@@ -101,7 +104,7 @@ export const JobCardModal = ({ appointment, onClose, onStatusChange, onEdit, hel
         <div className="px-6 py-4 space-y-6 overflow-y-auto flex-1">
 
           {/* Team Assigned Section - Matches Reference Image */}
-          {helper && (
+          {isTeamMode && helper && (
             <div className="bg-[#F0F4FF] dark:bg-indigo-900/20 rounded-2xl p-4 border border-indigo-50 dark:border-indigo-800/30">
               <div className="flex items-center gap-2 mb-3">
                 <UsersIcon className="text-indigo-500" size={14} />
@@ -124,17 +127,7 @@ export const JobCardModal = ({ appointment, onClose, onStatusChange, onEdit, hel
 
           {/* Action Buttons - Green Style as per image */}
           <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => {
-                if (appointment.customer.phone) {
-                  window.location.href = `sms:${appointment.customer.phone.replace(/\D/g, '')}`;
-                }
-              }}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
-            >
-              <MessageCircle size={18} />
-              SMS
-            </button>
+            <ClientMessageMenu customer={appointment.customer} isDark={false} />
             <button
               onClick={handleNavigate}
               className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
@@ -163,6 +156,10 @@ export const JobCardModal = ({ appointment, onClose, onStatusChange, onEdit, hel
             </div>
           )}
 
+          {/* Vertical Timeline Tracker - Controlled by Vendas Page */}
+          {/* We strictly check for the global tracker state here */}
+          <TrackerSection appointment={appointment} />
+
         </div>
 
         {/* Footer Button - Added extensive padding bottom to handle iPhone home indicator area safely */}
@@ -189,4 +186,15 @@ const getDuration = (start: string, end: string) => {
   const h = Math.floor(diff / 60);
   const m = diff % 60;
   return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+};
+
+// Helper component to safely access context
+const TrackerSection = ({ appointment }: { appointment: any }) => {
+  try {
+    const { isTrackerActive } = useOutletContext<any>();
+    if (!isTrackerActive) return null;
+    return <CleaningTracker appointmentId={appointment.id} />;
+  } catch (e) {
+    return null;
+  }
 };

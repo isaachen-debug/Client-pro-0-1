@@ -524,7 +524,7 @@ router.post('/execute', async (req: Request, res: Response) => {
 
     // tentativa exata
     const exact = await prisma.customer.findFirst({
-      where: { userId: req.user!.id, name: cleanName },
+      where: { userId: req.user!.id, name: { equals: cleanName, mode: 'insensitive' } },
     });
     if (exact) return exact;
 

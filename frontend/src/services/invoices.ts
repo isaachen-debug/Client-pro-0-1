@@ -29,5 +29,15 @@ export const invoicesApi = {
     const { data } = await api.get<Invoice>(`/invoices/${id}`);
     return data;
   },
+
+  async create(appointmentId: string) {
+    const { data } = await api.post<Invoice>(`/invoices`, { appointmentId });
+    return data;
+  },
+
+  async send(appointmentId: string, method: 'email' | 'sms' | 'both') {
+    const { data } = await api.post(`/invoices/send`, { appointmentId, method });
+    return data;
+  },
 };
 

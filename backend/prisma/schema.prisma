@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -48,6 +48,8 @@ model User {
   googleRefreshToken String?
   googleTokenExpiry DateTime?
   googleCalendarId  String?
+  twilioNumbers     TwilioNumber[]
+  conversations     Conversation[]
 }
 
 model Customer {
@@ -56,6 +58,8 @@ model Customer {
   name         String
   email        String?
   phone        String?
+  phoneE164    String?       @map("phone_e164")
+  smsOptOut    Boolean       @default(false) @map("sms_opt_out")
   address      String?
   latitude     Float?
   longitude    Float?
@@ -66,8 +70,12 @@ model Customer {
   clientPreferences String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  accessToken  String?       @unique
   appointments Appointment[]
+  conversations Conversation[]
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([phoneE164])
 }
 
 model Appointment {
@@ -200,4 +208,75 @@ model PushSubscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// Add these models to the END of your schema.prisma file
+
+model TwilioNumber {
+  id              String    @id @default(uuid())
+  phoneNumber     String    @unique @map("phone_number")
+  isShared        Boolean   @default(true) @map("is_shared")
+  userId          String?   @map("user_id")
+  user            User?     @relation(fields: [userId], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  @@map("twilio_numbers")
+}
+
+model Conversation {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id])
+  customerId      String    @map("customer_id")
+  customer        Customer  @relation(fields: [customerId], references: [id])
+  status          String    @default("ACTIVE")
+  messages        Message[]
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@index([userId, customerId])
+  @@map("conversations")
+}
+
+model Message {
+  id                    String       @id @default(uuid())
+  conversationId        String       @map("conversation_id")
+  conversation          Conversation @relation(fields: [conversationId], references: [id])
+  direction             String       // INBOUND, OUTBOUND
+  body                  String
+  providerMessageSid    String       @unique @map("provider_message_sid")
+  status                String       // QUEUED, SENT, DELIVERED, FAILED, RECEIVED
+  errorCode             Int?         @map("error_code")
+  createdAt             DateTime     @default(now()) @map("created_at")
+  
+  @@index([providerMessageSid])
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model InboundRouterLink {
+  id              String    @id @default(uuid())
+  phoneE164       String    @unique @map("phone_e164")
+  userId          String    @map("user_id")
+  confidence      String    // HIGH, MEDIUM
+  source          String    // UNIQUE_MATCH, MANUAL_RESOLUTION
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  @@index([phoneE164])
+  @@map("inbound_router_links")
+}
+
+model InboundConflict {
+  id                    String    @id @default(uuid())
+  fromPhone             String    @map("from_phone")
+  toPhone               String    @map("to_phone")
+  candidateUserIds      String    @map("candidate_user_ids") // JSON array as string
+  messagePreview        String    @map("message_preview")
+  reason                String
+  status                String    @default("PENDING")
+  resolvedUserId        String?   @map("resolved_user_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  
+  @@index([status, createdAt])
+  @@map("inbound_conflicts")
 }

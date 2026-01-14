@@ -12,6 +12,7 @@ import userRouter from './routes/user';
 import invoicesRouter from './routes/invoices';
 import helperRouter from './routes/helper';
 import teamRouter from './routes/team';
+import portalRoutes from './routes/portal';
 import clientPortalRouter from './routes/clientPortal';
 import notificationsRouter from './routes/notifications';
 import aiRouter from './routes/ai';
@@ -21,6 +22,8 @@ import templatesRouter from './routes/templates';
 import agentAudioRouter from './routes/agentAudio';
 import googleCalendarRouter from './routes/googleCalendar';
 import geoRouter from './routes/geo';
+import smsRouter from './routes/sms';
+import webhooksRouter from './routes/webhooks';
 import { initDailyReminderJob } from './jobs/dailyReminders';
 
 dotenv.config();
@@ -80,6 +83,7 @@ app.use('/api/dashboard', dashboardRouter);
 app.use('/api/invoices', invoicesRouter);
 app.use('/api/helper', helperRouter);
 app.use('/api/team', teamRouter);
+app.use('/api/portal', portalRoutes);
 app.use('/api/client', clientPortalRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/agent', aiRouter);
@@ -89,6 +93,8 @@ app.use('/api/faqs', faqsRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api/google', googleCalendarRouter);
 app.use('/api/geo', geoRouter);
+app.use('/api/sms', smsRouter);
+app.use('/webhooks', webhooksRouter);
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);

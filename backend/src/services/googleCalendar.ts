@@ -254,13 +254,13 @@ export const importCalendarEvents = async (userId: string, options: ImportOption
         ? await prisma.customer.findFirst({
             where: {
               userId,
-              OR: attendeeEmails.map((email) => ({ email: { equals: email } })),
+              OR: attendeeEmails.map((email) => ({ email: { equals: email, mode: 'insensitive' } })),
             },
           })
         : null;
 
       const customerByName = await prisma.customer.findFirst({
-        where: { userId, name: { equals: summary } },
+        where: { userId, name: { equals: summary, mode: 'insensitive' } },
       });
 
       const startRaw = event.start?.dateTime || event.start?.date;

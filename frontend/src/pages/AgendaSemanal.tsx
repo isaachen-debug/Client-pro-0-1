@@ -44,6 +44,13 @@ import { LayoutGroup, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { appointmentsApi, customersApi, teamApi, transactionsApi } from '../services/api';
+import { agentIntentApi } from '../services/agentIntent';
+import {
+  emitAgentChatSync,
+  loadAgentChatMessages,
+  saveAgentChatMessages,
+  type AgentChatMessage,
+} from '../utils/agentChat';
 import { Appointment, AppointmentStatus, Customer, User } from '../types';
 import {
   format,
@@ -98,9 +105,21 @@ export type WeekDetails = {
 type AgendaSemanalProps = {
   embedded?: boolean;
   quickCreateNonce?: number;
+  initialMode?: 'today' | 'week' | 'month' | 'chat';
   onWeekSummaryChange?: (summary: WeekSummary | null) => void;
   onWeekDetailsChange?: (details: WeekDetails | null) => void;
 };
+
+const DEFAULT_BOT_MESSAGE: AgentChatMessage = {
+  role: 'assistant',
+  text: 'Olá! Pode me dizer o que precisa agendar? Por exemplo: "cliente amanhã às 14h" ou "visita segunda-feira 10h".',
+};
+
+const normalizeValue = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 
 const pad = (value: number) => value.toString().padStart(2, '0');
 
@@ -165,8 +184,14 @@ const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: str
   </button>
 );
 
+const getInitialChat = (): AgentChatMessage[] => {
+  const stored = loadAgentChatMessages();
+  return stored.length ? stored : [DEFAULT_BOT_MESSAGE];
+};
+
 const AgendaSemanal = ({
   quickCreateNonce = 0,
+  initialMode,
   onWeekSummaryChange,
   onWeekDetailsChange,
 }: AgendaSemanalProps) => {
@@ -209,9 +234,24 @@ const AgendaSemanal = ({
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
     [],
   );
-  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'chat'>('week');
+  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'chat'>(
+    () => initialMode ?? 'week',
+  );
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [chatMessages, setChatMessages] = useState<AgentChatMessage[]>(getInitialChat);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatPendingIntent, setChatPendingIntent] = useState<{
+    intent: string;
+    summary?: string;
+    payload?: any;
+  } | null>(null);
+  const chatSyncRef = useRef('');
+  const chatSyncSource = 'agenda-chat';
   const [createYear, setCreateYear] = useState(new Date().getFullYear());
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionMatches, setMentionMatches] = useState<Customer[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
   const [createForm, setCreateForm] = useState<CreateFormState>({
     customerId: '',
     month: format(new Date(), 'MM'),
@@ -770,6 +810,14 @@ const AgendaSemanal = ({
     CONCLUIDO: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
     CANCELADO: 'bg-red-50 text-red-700 border-red-100 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800',
   };
+  const statusAccents: Record<AppointmentStatus, string> = {
+    AGENDADO: 'border-l-4 border-amber-300 dark:border-amber-600',
+    NAO_CONFIRMADO: 'border-l-4 border-yellow-300 dark:border-yellow-600',
+    EM_ANDAMENTO: 'border-l-4 border-blue-300 dark:border-blue-600',
+    CONCLUIDO: 'border-l-4 border-emerald-300 dark:border-emerald-600',
+    CANCELADO: 'border-l-4 border-red-300 dark:border-red-600',
+  };
+
   const formatStatusLabel = (status: AppointmentStatus) => {
     if (status === 'NAO_CONFIRMADO') return 'Não confirmado';
     if (status === 'AGENDADO') return 'Agendado';
@@ -1017,8 +1065,10 @@ const AgendaSemanal = ({
                 <div className="relative space-y-4">
                   {getAgendamentosForDay(selectedDay, false)
                     .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                    .map((ag, idx) => {
+                    .map((ag, idx, arr) => {
                       const start = ag.startTime || 'Dia todo';
+                      const end = ag.endTime ? ` · ${ag.endTime}` : '';
+                      const isLast = idx === arr.length - 1;
                       const initials = getInitials(ag.customer.name);
                       return (
                         <div
@@ -1105,27 +1155,12 @@ const AgendaSemanal = ({
   };
 
   const renderTodayTimeline = () => {
-    const dayAppointments = getAgendamentosForDay(selectedDay).sort(
+    const dayAppointments = getAgendamentosForDay(selectedDay, false).sort(
       (a, b) => (a.startTime || '').localeCompare(b.startTime || ''),
     );
 
-    const dotsColor = (status: AppointmentStatus) => {
-      switch (status) {
-        case 'CONCLUIDO':
-          return 'border-emerald-500';
-        case 'EM_ANDAMENTO':
-          return 'border-blue-500';
-        case 'AGENDADO':
-          return 'border-amber-500';
-        case 'CANCELADO':
-          return 'border-red-500';
-        default:
-          return 'border-primary-500';
-      }
-    };
-
     return (
-      <div className="px-4 md:px-5 space-y-4">
+      <div className="px-2 md:px-5 space-y-3">
         {dayAppointments.length === 0 ? (
           <EmptyState
             title="Nada agendado para hoje."
@@ -1134,35 +1169,74 @@ const AgendaSemanal = ({
           />
         ) : (
           <div className="relative space-y-4">
-            {dayAppointments.map((ag, idx, arr) => {
+            {dayAppointments.map((ag, idx) => {
               const start = ag.startTime || 'Dia todo';
-              const isLast = idx === arr.length - 1;
+              const initials = getInitials(ag.customer.name);
               return (
-                <div key={ag.id} className="relative pl-4">
-                  <div className={`absolute left-[7px] top-2 bottom-0 w-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} aria-hidden />
-                  {isLast && <div className={`absolute left-[7px] bottom-0 w-px h-full ${isDark ? 'bg-slate-900' : 'bg-white'}`} aria-hidden />}
-                  <div className="relative flex gap-3">
-                    <div className={`absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full border-2 ${isDark ? 'bg-slate-900' : 'bg-white'} ${dotsColor(ag.status)} shadow-sm z-10`} />
-                    <div className="flex-1 pb-4">
+                <div key={ag.id} className="relative animate-cascade" style={{ animationDelay: `${idx * 100}ms` }}>
+                  <div className="relative flex gap-3 pb-2">
+                    <div className="flex flex-col items-end w-10 text-right shrink-0">
+                      <span className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{start}</span>
+                      <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {getDuration(start, ag.endTime)}
+                      </span>
+                    </div>
+                    <div className={`relative border-l-2 ${isDark ? 'border-slate-800' : 'border-slate-200'} ml-3 pl-3 pb-4 flex-1`}>
+                      <div className={`absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full ${statusDotBg[ag.status] ?? 'bg-slate-400'}`} />
                       <button
                         type="button"
                         onClick={() => openCustomerInfo(ag)}
-                        className={`w-full text-left rounded-2xl p-4 shadow-sm border transition active:scale-95 ${statusSurfaces[ag.status]}`}
+                        className={`w-full text-left rounded-xl p-3 shadow-sm border transition-transform duration-150 active:scale-95 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
                       >
-                        <div className="flex justify-between items-start mb-1 overflow-hidden gap-2">
-                          {renderCustomerName(ag.customer.name)}
-                          <span className="text-[10px] font-bold uppercase tracking-wide opacity-70 shrink-0 whitespace-nowrap">{ag.status}</span>
+                        <div className="flex justify-between items-start mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm bg-indigo-500`}>
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className={`font-bold text-sm truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{ag.customer.name}</h3>
+                              <p className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{ag.customer.serviceType || 'Limpeza Padrão'}</p>
+                              {isTeamMode && ag.assignedTo && ag.assignedTo.length > 0 ? (
+                                <div className="flex -space-x-1.5 mt-1.5">
+                                  {MOCK_TEAM.filter(m => ag.assignedTo?.includes(m.id)).map(member => (
+                                    <div key={member.id} className={`h-5 w-5 rounded-full ring-2 ${isDark ? 'ring-slate-900' : 'ring-white'} flex items-center justify-center text-[8px] font-bold text-white shadow-sm ${member.avatarColor}`} title={member.name}>
+                                      {member.name.substring(0, 1)}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : ag.assignedHelper && (
+                                <div className="mt-1">
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isDark ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-700'}`}>
+                                    {ag.assignedHelper.name}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className={`flex items-center gap-2 text-xs opacity-80 mb-2 ${isDark ? 'text-slate-300' : ''}`}>
-                          <Clock3 size={12} />
-                          <span>{start} {ag.endTime ? `- ${ag.endTime}` : ''}</span>
-                        </div>
+
                         {ag.customer.address && (
-                          <div className={`flex items-start gap-1.5 text-xs opacity-70 ${isDark ? 'text-slate-400' : ''}`}>
-                            <MapPin size={12} className="mt-0.5 shrink-0" />
-                            <span className="line-clamp-1">{ag.customer.address}</span>
+                          <div className={`flex items-center gap-1.5 text-[10px] mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            <MapPin size={10} className="shrink-0" />
+                            <span className="truncate">{ag.customer.address}</span>
                           </div>
                         )}
+
+                        <div className="flex items-center justify-between pt-2 border-t border-dashed border-slate-100 dark:border-slate-800">
+                          <span className={`font-bold text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                            {currencyFormatter.format(ag.price)}
+                          </span>
+                          <span className={`text-[9px] font-bold uppercase tracking-wider ${ag.status === 'AGENDADO'
+                            ? 'text-amber-500'
+                            : ag.status === 'CONCLUIDO'
+                              ? 'text-emerald-500'
+                              : ag.status === 'CANCELADO'
+                                ? 'text-red-500'
+                                : 'text-blue-500'
+                            }`}>
+                            {ag.status === 'AGENDADO' ? 'CONFIRMADO' : formatStatusLabel(ag.status).toUpperCase()}
+                          </span>
+                        </div>
                       </button>
                     </div>
                   </div>
@@ -1263,15 +1337,15 @@ const AgendaSemanal = ({
 
   return (
     <div className={`h-full flex flex-col ${isDark ? 'bg-[#0f172a]' : 'bg-white'}`}>
-      <div className="px-4 md:px-8 pt-0 pb-6 space-y-5 sm:space-y-6">
+      <div className="px-4 md:px-8 pt-0 pb-4 space-y-4">
         <div className="-mx-4 md:-mx-8">
-          <div className="pt-0 px-4 md:px-8 pb-0 md:py-6 flex flex-col gap-4 md:gap-6 mt-[3px] mb-[3px]">
+          <div className="pt-0 px-4 md:px-8 pb-0 md:py-3 flex flex-col gap-3 mt-[3px] mb-[3px]">
             <div className="flex items-start justify-between mt-[5px]">
               <div>
-                <p className={`text-[11px] uppercase tracking-[0.28em] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`text-[10px] uppercase tracking-[0.28em] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {createYear}
                 </p>
-                <h1 className={`text-2xl md:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h1 className={`text-lg md:text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {viewLabel}
                 </h1>
               </div>
@@ -1279,18 +1353,18 @@ const AgendaSemanal = ({
                 <button
                   type="button"
                   onClick={openEmptyActions}
-                  className="h-10 w-10 rounded-full text-white shadow-lg flex items-center justify-center transition bg-emerald-600 hover:bg-emerald-500"
+                  className="h-9 w-9 rounded-full text-white shadow-lg flex items-center justify-center transition bg-emerald-600 hover:bg-emerald-500"
                   aria-label="Adicionar novo"
                 >
-                  <Plus size={20} />
+                  <Plus size={18} />
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-3 -mt-4">
-          <div className={`-mx-4 md:-mx-8 rounded-b-[28px] rounded-t-[0px] border shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 pt-[5px] pb-[1px] space-y-[5px] -mt-4 -mb-4 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+        <div className="space-y-3 -mt-2">
+          <div className={`-mx-4 md:-mx-8 rounded-b-[28px] rounded-t-[0px] border shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)] px-4 pt-[5px] pb-[1px] space-y-[5px] -mt-3 -mb-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
             {isTeamMode && (
               <div className={`-mx-4 md:-mx-8 px-4 py-2 border-b flex items-center gap-3 overflow-x-auto no-scrollbar ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
                 <button
@@ -1364,10 +1438,10 @@ const AgendaSemanal = ({
                 <button
                   type="button"
                   onClick={() => navigate('/app/rotas')}
-                  className={`h-9 px-3 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2 ${isDark ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                  className={`h-9 px-4 rounded-xl text-xs font-bold shadow-lg shadow-emerald-900/20 text-white transition hover:-translate-y-0.5 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700`}
                 >
                   <MapPin size={14} />
-                  Rota
+                  Maps
                 </button>
               </div>
             </div>
@@ -1644,6 +1718,7 @@ const AgendaSemanal = ({
               }
             }}
             helpers={helpers}
+            isTeamMode={isTeamMode}
           />
         )}
 

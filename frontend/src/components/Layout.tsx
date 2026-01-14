@@ -30,6 +30,7 @@ import {
   Mic,
   Square,
   Navigation,
+  Rocket,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -72,6 +73,7 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isTrackerActive, setIsTrackerActive] = useState(false);
   const { user, logout } = useAuth();
   const { canInstall, install, dismissed, dismiss } = useInstallPrompt();
   const { t, theme } = usePreferences();
@@ -746,17 +748,17 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
       type: 'route' as const,
     },
     {
+      key: 'vendas',
+      label: 'Vendas',
+      path: '/app/vendas',
+      icon: Rocket,
+      type: 'route' as const,
+    },
+    {
       key: 'financeiro',
       label: 'Financeiro',
       path: '/app/financeiro',
       icon: DollarSign,
-      type: 'route' as const,
-    },
-    {
-      key: 'rotas',
-      label: 'Rotas',
-      path: '/app/rotas',
-      icon: Navigation,
       type: 'route' as const,
     },
     {
@@ -797,20 +799,13 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
   const handleMobileNav = (item: { path: string }) => {
     navigate(item.path);
   };
-  const handleExtraSelect = (item: (typeof extraMenuItems)[number]) => {
-    setExtraSlot(item);
-    setExtraMenuOpen(false);
-    try {
-      localStorage.setItem(EXTRA_SLOT_STORAGE_KEY, item.key);
-    } catch (e) {
-      // ignore
-    }
-    navigate(item.path);
-  };
 
 
   return (
     <QuickActionProvider value={quickActionContextValue}>
+
+
+      {/* Mobile Navigation */}
       <div
         className={`min-h-screen flex transition-colors duration-200 ${isDarkTheme ? 'bg-slate-950 text-slate-100' : 'bg-[#f6f7fb] text-gray-900'
           }`}
@@ -1131,7 +1126,7 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
                 </div>
               </div>
             )}
-            <Outlet context={{ isTeamMode, setIsTeamMode }} />
+            <Outlet context={{ isTeamMode, setIsTeamMode, isTrackerActive, setIsTrackerActive }} />
           </main>
         </div>
 
@@ -1162,16 +1157,27 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
                             handleMobileNav(item);
                           }
                         }}
-                        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-all duration-200 active:scale-95 ${isActive ? (isDarkTheme ? 'text-white' : 'text-slate-900') : (isDarkTheme ? 'text-slate-500' : 'text-slate-400')
-                          } ${isDynamicSlot && extraMenuOpen ? (isDarkTheme ? 'text-white' : 'text-slate-900') : ''}`}
+                        className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition-all duration-200 active:scale-95 
+                          ${isActive
+                            ? (isDarkTheme ? 'text-white' : 'text-slate-900')
+                            : (item.key === 'vendas'
+                              ? 'text-emerald-500 scale-110' // Special inactive state for Vendas
+                              : (isDarkTheme ? 'text-slate-500' : 'text-slate-400')
+                            )
+                          } 
+                          ${isDynamicSlot && extraMenuOpen ? (isDarkTheme ? 'text-white' : 'text-slate-900') : ''}`}
                       >
                         <div
-                          className={`h-9 w-9 rounded-full flex items-center justify-center transform transition-all duration-200 ${isActive || (isDynamicSlot && extraMenuOpen)
-                            ? (isDarkTheme ? 'bg-slate-800 text-white shadow-lg shadow-black/20 -translate-y-1' : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 -translate-y-1')
-                            : (isDarkTheme ? 'bg-transparent text-slate-500' : 'bg-slate-100 text-slate-500')
+                          className={`h-9 w-9 rounded-full flex items-center justify-center transform transition-all duration-200 
+                            ${isActive || (isDynamicSlot && extraMenuOpen)
+                              ? (isDarkTheme ? 'bg-slate-800 text-white shadow-lg shadow-black/20 -translate-y-1' : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 -translate-y-1')
+                              : (item.key === 'vendas'
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 scale-110' // Special bubble for inactive Vendas
+                                : (isDarkTheme ? 'bg-transparent text-slate-500' : 'bg-slate-100 text-slate-500')
+                              )
                             }`}
                         >
-                          <Icon size={18} />
+                          <Icon size={item.key === 'vendas' ? 20 : 18} />
                         </div>
                         <span
                           className={`transition-all duration-200 ${isActive || (isDynamicSlot && extraMenuOpen)

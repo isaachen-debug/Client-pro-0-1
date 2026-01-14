@@ -21,6 +21,7 @@ import { transactionsApi } from '../services/api';
 import { pageGutters } from '../styles/uiTokens';
 import type { Transaction, TransactionStatus } from '../types';
 import { format } from 'date-fns';
+import { InvoiceDrawer } from '../components/finance/InvoiceDrawer';
 import { ptBR } from 'date-fns/locale';
 import { usePreferences } from '../contexts/PreferencesContext';
 
@@ -45,6 +46,7 @@ const Financeiro = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
   const [goalValue, setGoalValue] = useState<string>('');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const brlFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
@@ -302,11 +304,10 @@ const Financeiro = () => {
               </button>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`h-10 w-10 rounded-2xl border flex items-center justify-center shadow-sm transition-all ${
-                  showFilters 
-                    ? isDark ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-900 border-slate-900 text-white' 
-                    : isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
+                className={`h-10 w-10 rounded-2xl border flex items-center justify-center shadow-sm transition-all ${showFilters
+                  ? isDark ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-900 border-slate-900 text-white'
+                  : isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
               >
                 <Filter size={20} />
               </button>
@@ -317,7 +318,7 @@ const Financeiro = () => {
           <div className={`relative overflow-hidden rounded-[2.5rem] p-8 text-white shadow-2xl ${isDark ? 'bg-slate-900 shadow-slate-900/50 border border-slate-800' : 'bg-slate-900 shadow-slate-900/20'}`}>
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] translate-x-20 -translate-y-20" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 rounded-full blur-[60px] -translate-x-10 translate-y-10" />
-            
+
             <div className="relative z-10 flex flex-col gap-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -326,7 +327,7 @@ const Financeiro = () => {
                     <span className="text-4xl sm:text-5xl font-black tracking-tight">
                       {showBalance ? formatCurrency(summary.balance) : '••••••'}
                     </span>
-                    <button 
+                    <button
                       onClick={() => setShowBalance(!showBalance)}
                       className="text-slate-500 hover:text-white transition-colors"
                     >
@@ -371,11 +372,10 @@ const Financeiro = () => {
                   <button
                     key={item.key}
                     onClick={() => setStatusFiltro(item.key as typeof statusFiltro)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${
-                      statusFiltro === item.key
-                        ? isDark ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-900 border-slate-900 text-white shadow-md'
-                        : isDark ? 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${statusFiltro === item.key
+                      ? isDark ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-900 border-slate-900 text-white shadow-md'
+                      : isDark ? 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
                   >
                     {item.label}
                   </button>
@@ -421,8 +421,8 @@ const Financeiro = () => {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.35} />
@@ -430,30 +430,30 @@ const Financeiro = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fontSize: 10, fill: isDark ? '#94a3b8' : '#94a3b8', fontWeight: 600}} 
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#94a3b8', fontWeight: 600 }}
                     dy={10}
                   />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
-                      borderRadius: '12px', 
-                      border: isDark ? '1px solid #334155' : 'none', 
+                      borderRadius: '12px',
+                      border: isDark ? '1px solid #334155' : 'none',
                       backgroundColor: isDark ? '#1e293b' : '#fff',
                       color: isDark ? '#fff' : '#000',
                       boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'
                     }}
-                    itemStyle={{fontSize: '12px', fontWeight: 600}}
+                    itemStyle={{ fontSize: '12px', fontWeight: 600 }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="balance" 
-                    stroke="#10b981" 
+                  <Area
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#10b981"
                     strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorBalance)" 
+                    fillOpacity={1}
+                    fill="url(#colorBalance)"
                   />
                   <Area
                     type="monotone"
@@ -483,9 +483,10 @@ const Financeiro = () => {
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {pendingTransactions.map((t) => (
-                  <div 
+                  <div
                     key={t.id}
-                    className={`shrink-0 w-48 p-4 rounded-2xl border shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
+                    onClick={() => setSelectedTransaction(t)}
+                    className={`shrink-0 w-48 p-4 rounded-2xl border shadow-sm cursor-pointer transition-all hover:shadow-md ${isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-100 hover:shadow-lg hover:border-slate-300'}`}
                   >
                     <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Cliente</p>
                     <p className={`font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{t.appointment?.customer?.name || 'Venda'}</p>
@@ -506,7 +507,7 @@ const Financeiro = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between px-2">
               <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Histórico</h3>
-              <button 
+              <button
                 onClick={() => setResetModalOpen(true)}
                 className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
               >
@@ -527,16 +528,15 @@ const Financeiro = () => {
                 {orderedTransactions.slice(0, 50).map((t) => {
                   const isExpense = t.type === 'DESPESA';
                   const isPaid = t.status === 'PAGO';
-                  
+
                   return (
-                    <div 
+                    <div
                       key={t.id}
                       className={`group p-4 rounded-2xl border shadow-sm transition-all flex items-center justify-between gap-4 ${isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-100 hover:shadow-md hover:border-slate-200'}`}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                          isExpense ? (isDark ? 'bg-rose-900/20 text-rose-400' : 'bg-rose-50 text-rose-500') : (isDark ? 'bg-emerald-900/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
-                        }`}>
+                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${isExpense ? (isDark ? 'bg-rose-900/20 text-rose-400' : 'bg-rose-50 text-rose-500') : (isDark ? 'bg-emerald-900/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+                          }`}>
                           {isExpense ? <ArrowDownRight size={20} /> : <ArrowUpRight size={20} />}
                         </div>
                         <div>
@@ -548,18 +548,17 @@ const Financeiro = () => {
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="text-right">
                         <p className={`font-bold text-sm ${isExpense ? (isDark ? 'text-rose-400' : 'text-rose-600') : (isDark ? 'text-emerald-400' : 'text-emerald-600')}`}>
                           {isExpense ? '-' : '+'} {formatCurrency(t.amount)}
                         </p>
                         <button
                           onClick={() => handleStatusToggle(t)}
-                          className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full transition-colors ${
-                            isPaid 
-                              ? (isDark ? 'bg-slate-800 text-slate-400 group-hover:bg-slate-700' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200')
-                              : (isDark ? 'bg-amber-900/20 text-amber-400 group-hover:bg-amber-900/30' : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100')
-                          }`}
+                          className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full transition-colors ${isPaid
+                            ? (isDark ? 'bg-slate-800 text-slate-400 group-hover:bg-slate-700' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200')
+                            : (isDark ? 'bg-amber-900/20 text-amber-400 group-hover:bg-amber-900/30' : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100')
+                            }`}
                         >
                           {isPaid ? 'Pago' : 'Pendente'}
                         </button>
@@ -575,7 +574,7 @@ const Financeiro = () => {
 
       {/* Modais (Expense, Reset, Goal) mantidos com estrutura similar mas classes CSS atualizadas dentro deles se necessário */}
       {/* ... (ExpenseModal, ResetModal e GoalModal podem ser simplificados ou reutilizados do código anterior, apenas garantindo consistência visual) ... */}
-      
+
       {/* Expense Modal (Simplificado para o exemplo) */}
       {expenseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -584,7 +583,7 @@ const Financeiro = () => {
             <div className="space-y-4">
               <div>
                 <label className={`text-xs font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Descrição</label>
-                <input 
+                <input
                   value={expenseDescription}
                   onChange={(e) => setExpenseDescription(e.target.value)}
                   className={`w-full mt-1 px-4 py-3 rounded-xl border-none font-medium focus:ring-2 focus:ring-slate-900 ${isDark ? 'bg-slate-800 text-white placeholder:text-slate-500' : 'bg-slate-50'}`}
@@ -595,7 +594,7 @@ const Financeiro = () => {
                 <label className={`text-xs font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Valor</label>
                 <div className="relative">
                   <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>$</span>
-                  <input 
+                  <input
                     type="number"
                     value={expenseAmount}
                     onChange={(e) => setExpenseAmount(e.target.value)}
@@ -605,13 +604,13 @@ const Financeiro = () => {
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button 
+                <button
                   onClick={() => setExpenseModalOpen(false)}
                   className={`flex-1 py-3 rounded-xl border font-bold ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={handleCreateExpense}
                   disabled={expenseLoading}
                   className="flex-1 py-3 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600 shadow-lg shadow-rose-200 dark:shadow-rose-900/20"
@@ -628,50 +627,58 @@ const Financeiro = () => {
       {goalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className={`w-full max-w-sm rounded-3xl shadow-2xl p-6 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-             <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Meta Mensal</h3>
-             <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Defina um objetivo de saldo para este mês.</p>
-             <input 
-                type="number"
-                value={goalValue}
-                onChange={(e) => setGoalValue(e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl border-none font-bold text-lg mb-6 focus:ring-2 focus:ring-slate-900 ${isDark ? 'bg-slate-800 text-white placeholder:text-slate-600' : 'bg-slate-50 text-slate-900'}`}
-                placeholder="R$ 0,00"
-             />
-             <div className="flex gap-3">
-                <button onClick={() => setGoalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}>Cancelar</button>
-                <button onClick={() => setGoalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl shadow-lg ${isDark ? 'bg-slate-800 text-white hover:bg-slate-700 shadow-black/20' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20'}`}>Definir Meta</button>
-             </div>
+            <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Meta Mensal</h3>
+            <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Defina um objetivo de saldo para este mês.</p>
+            <input
+              type="number"
+              value={goalValue}
+              onChange={(e) => setGoalValue(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border-none font-bold text-lg mb-6 focus:ring-2 focus:ring-slate-900 ${isDark ? 'bg-slate-800 text-white placeholder:text-slate-600' : 'bg-slate-50 text-slate-900'}`}
+              placeholder="R$ 0,00"
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setGoalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}>Cancelar</button>
+              <button onClick={() => setGoalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl shadow-lg ${isDark ? 'bg-slate-800 text-white hover:bg-slate-700 shadow-black/20' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20'}`}>Definir Meta</button>
+            </div>
           </div>
         </div>
       )}
 
       {resetModalOpen && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className={`w-full max-w-sm rounded-3xl shadow-2xl p-6 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-              <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-4 ${isDark ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-500'}`}>
-                <AlertTriangle size={24} />
-              </div>
-              <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Resetar Tudo?</h3>
-              <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Isso apagará permanentemente todas as transações. Digite <strong>APAGAR</strong> para confirmar.</p>
-              <input 
-                value={resetConfirmText}
-                onChange={(e) => setResetConfirmText(e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl border font-bold mb-6 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isDark ? 'bg-red-900/10 border-red-900/30 text-red-200' : 'bg-red-50/50 border-red-100 text-red-900'}`}
-                placeholder="APAGAR"
-              />
-              <div className="flex gap-3">
-                <button onClick={() => setResetModalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}>Cancelar</button>
-                <button 
-                  onClick={handleResetFinanceiro}
-                  disabled={resetConfirmText !== 'APAGAR' || resetLoading}
-                  className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-200 dark:shadow-red-900/20 disabled:opacity-50"
-                >
-                  {resetLoading ? 'Apagando...' : 'Confirmar'}
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-sm rounded-3xl shadow-2xl p-6 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+            <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-4 ${isDark ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-500'}`}>
+              <AlertTriangle size={24} />
             </div>
-         </div>
+            <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Resetar Tudo?</h3>
+            <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Isso apagará permanentemente todas as transações. Digite <strong>APAGAR</strong> para confirmar.</p>
+            <input
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border font-bold mb-6 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isDark ? 'bg-red-900/10 border-red-900/30 text-red-200' : 'bg-red-50/50 border-red-100 text-red-900'}`}
+              placeholder="APAGAR"
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setResetModalOpen(false)} className={`flex-1 py-3 font-bold rounded-xl ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}>Cancelar</button>
+              <button
+                onClick={handleResetFinanceiro}
+                disabled={resetConfirmText !== 'APAGAR' || resetLoading}
+                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-200 dark:shadow-red-900/20 disabled:opacity-50"
+              >
+                {resetLoading ? 'Apagando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
+
+      {/* Invoice Drawer */}
+      <InvoiceDrawer
+        isOpen={selectedTransaction !== null}
+        onClose={() => setSelectedTransaction(null)}
+        transaction={selectedTransaction}
+        isDark={isDark}
+      />
     </>
   );
 };

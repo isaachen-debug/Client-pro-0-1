@@ -351,41 +351,52 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
 
   const headerCard = (
     <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 space-y-3">
-      {!embedded && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const next = subMonths(currentDate, 1);
-                setCurrentDate(next);
-                onDateChange?.(next);
-              }}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span className="text-lg font-semibold text-slate-900 dark:text-white">
-              {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
-            </span>
-            <button
-              onClick={() => {
-                const next = addMonths(currentDate, 1);
-                setCurrentDate(next);
-                onDateChange?.(next);
-              }}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleToday}
-            className="px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+            onClick={() => {
+              const next = subMonths(currentDate, 1);
+              setCurrentDate(next);
+              onDateChange?.(next);
+            }}
+            className="h-8 w-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400"
           >
-            Hoje
+            <ChevronLeft size={16} />
+          </button>
+          <span className="text-base font-bold text-slate-900 dark:text-white capitalize">
+            {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
+          </span>
+          <button
+            onClick={() => {
+              const next = addMonths(currentDate, 1);
+              setCurrentDate(next);
+              onDateChange?.(next);
+            }}
+            className="h-8 w-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400"
+          >
+            <ChevronRight size={16} />
           </button>
         </div>
-      )}
+        <button
+          onClick={handleToday}
+          className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+        >
+          Hoje
+        </button>
+      </div>
+
+      {/* Weekday Headers */}
+      <div className="grid grid-cols-7 gap-1.5 px-0 mb-2">
+        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+          <div key={day} className="text-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {day}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-1.5 px-0">
         {monthGridDays.map((day) => {
           const inMonth = isSameMonth(day, currentDate);
@@ -404,36 +415,39 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                 setSelectedDay(day);
                 onDateChange?.(day);
               }}
-              className={`h-20 rounded-xl transition flex flex-col items-center justify-between px-2 py-2 text-sm ${isSelected
-                  ? 'text-white bg-emerald-600 shadow-sm'
-                  : isToday
-                    ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
-                    : inMonth
-                      ? 'text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800/50'
-                      : 'text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900/50'
+              className={`h-16 rounded-xl transition-all flex flex-col items-center justify-between p-1.5 text-sm border ${isSelected
+                ? 'text-white bg-emerald-600 border-emerald-600 shadow-md shadow-emerald-500/20'
+                : isToday
+                  ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                  : inMonth
+                    ? 'text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600'
+                    : 'text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900/50 border-slate-50 dark:border-slate-900'
                 }`}
             >
               <div className="flex items-center justify-center w-full">
                 <span
-                  className={`inline-flex items-center justify-center rounded-full w-10 h-10 text-base font-semibold ${isSelected
-                      ? 'bg-emerald-500 text-white'
-                      : isToday
-                        ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
-                        : 'bg-transparent'
+                  className={`inline-flex items-center justify-center rounded-full w-7 h-7 text-sm font-bold ${isSelected
+                    ? 'bg-emerald-500 text-white'
+                    : isToday
+                      ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
+                      : 'bg-transparent'
                     }`}
                 >
                   {format(day, 'd')}
                 </span>
               </div>
-              <div className="flex items-center justify-center gap-1 mt-1">
+              <div className="flex items-center justify-center gap-0.5 min-h-[8px]">
                 {dots.map((appt, idx) => (
                   <span
                     key={idx}
-                    className={`h-1.5 w-1.5 rounded-full ${statusDotBg[appt.status] ?? 'bg-slate-400'}`}
+                    className={`h-1 w-1 rounded-full ${isSelected ? 'bg-white/80' : statusDotBg[appt.status] ?? 'bg-slate-400'
+                      }`}
                   />
                 ))}
                 {dayAppointments.length > 3 && (
-                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">+{dayAppointments.length - 3}</span>
+                  <span className={`text-[9px] font-bold ml-0.5 ${isSelected ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'}`}>
+                    +{dayAppointments.length - 3}
+                  </span>
                 )}
               </div>
             </button>
@@ -447,26 +461,26 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Eventos do dia</p>
-          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Eventos do dia</p>
+          <p className="text-base font-bold text-slate-900 dark:text-white capitalize">
             {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
           </p>
         </div>
         <button
           onClick={() => handleAddAppointmentForDay(selectedDay)}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-semibold transition"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition"
         >
-          <Plus size={16} />
+          <Plus size={14} />
           Novo
         </button>
       </div>
 
       {getAgendamentosForDay(selectedDay).length === 0 ? (
-        <div className="text-sm text-slate-500 dark:text-slate-400 text-center py-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-          Nenhum evento
+        <div className="text-xs text-slate-500 dark:text-slate-400 text-center py-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+          Nenhum evento neste dia
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
           {getAgendamentosForDay(selectedDay)
             .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
             .map((appointment) => (
@@ -474,18 +488,26 @@ const AgendaMensal = ({ embedded = false, externalDate, onDateChange }: AgendaMe
                 key={appointment.id}
                 type="button"
                 onClick={() => openEditModal(appointment)}
-                className={`w-full text-left rounded-xl border px-4 py-3 shadow-sm ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200 dark:border-slate-700'} ${statusSurfaces[appointment.status] ?? 'border-slate-200 dark:border-slate-700'} ${isSameDay(parseDateFromInput(appointment.date), selectedDay) ? 'bg-white dark:bg-slate-800' : 'bg-slate-50 dark:bg-slate-800/50'} pl-4`}
+                className={`w-full text-left rounded-xl border px-3 py-2.5 transition-all hover:shadow-md ${statusAccents[appointment.status] ?? 'border-l-4 border-slate-200 dark:border-slate-700'
+                  } bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{appointment.customer.name}</span>
-                  <span className="text-xs text-slate-700 dark:text-slate-300">
-                    {appointment.startTime}
-                    {appointment.endTime ? ` · ${appointment.endTime}` : ''}
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                    {appointment.customer.name}
                   </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`h-1.5 w-1.5 rounded-full ${statusDotBg[appointment.status] ?? 'bg-slate-400'}`} />
+                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                      {appointment.startTime}
+                      {appointment.endTime ? ` - ${appointment.endTime}` : ''}
+                    </span>
+                  </div>
                 </div>
-                {appointment.notes ? (
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{appointment.notes}</p>
-                ) : null}
+                {appointment.notes && (
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-1">
+                    {appointment.notes}
+                  </p>
+                )}
               </button>
             ))}
         </div>

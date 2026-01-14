@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, TrendingUp, Users, XCircle, Sparkles } from 'lucide-react';
-import AgendaMensal from './AgendaMensal';
 import AgendaSemanal, { type WeekDetails, type WeekSummary } from './AgendaSemanal';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { usePreferences } from '../contexts/PreferencesContext';
@@ -8,8 +7,6 @@ import { heroInner, heroOuter } from '../styles/uiTokens';
 import { pageGutters } from '../styles/uiTokens';
 
 type AgendaView = 'week' | 'month';
-
-const STORAGE_KEY = 'clientepro:agenda-view-mode';
 
 type AgendaPageProps = {
   initialMode?: AgendaView;
@@ -19,23 +16,6 @@ type AgendaPageProps = {
 const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
   const { theme } = usePreferences();
   const isDarkTheme = theme === 'dark';
-
-  const [viewMode, setViewMode] = useState<AgendaView>(() => {
-    if (typeof window === 'undefined') {
-      return initialMode || 'week';
-    }
-    if (initialMode) {
-      return initialMode;
-    }
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored === 'month' || stored === 'week' ? (stored as AgendaView) : 'week';
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, viewMode);
-    }
-  }, [viewMode]);
 
   const [quickCreateNonce, setQuickCreateNonce] = useState(0);
   const [weekSummary, setWeekSummary] = useState<WeekSummary | null>(null);
@@ -51,7 +31,6 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
     [],
   );
   const handleAgendaQuickCreate = useCallback(() => {
-    setViewMode('week');
     setQuickCreateNonce((nonce) => nonce + 1);
   }, []);
   useRegisterQuickAction('agenda:add', handleAgendaQuickCreate);
@@ -73,21 +52,18 @@ const Agenda = ({ initialMode, embedded = false }: AgendaPageProps) => {
           className={embedded ? undefined : `pt-[5px] ${heroInner} ${isDarkTheme ? 'bg-slate-900' : 'bg-white'}`}
         >
           <div>
-            {viewMode === 'week' ? (
-              <AgendaSemanal
-                embedded
-                quickCreateNonce={quickCreateNonce}
-                onWeekSummaryChange={setWeekSummary}
-                onWeekDetailsChange={setWeekDetails}
-              />
-            ) : (
-              <AgendaMensal embedded />
-            )}
+            <AgendaSemanal
+              embedded={embedded}
+              initialMode={initialMode}
+              quickCreateNonce={quickCreateNonce}
+              onWeekSummaryChange={setWeekSummary}
+              onWeekDetailsChange={setWeekDetails}
+            />
           </div>
         </div>
       </div>
 
-      {!embedded && viewMode === 'week' && weekSummary && !weekBannerDismissed && (
+      {!embedded && weekSummary && !weekBannerDismissed && (
         <div 
           onClick={() => setWeekSummaryOpen(true)}
           role="button"

@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { 
-  BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area 
 } from 'recharts';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 export const FinancialChart = ({ data }: { data: any[] }) => {
+  const { theme } = usePreferences();
+  const isDark = theme === 'dark';
   const [view, setView] = useState<'revenue' | 'balance'>('revenue');
 
   return (

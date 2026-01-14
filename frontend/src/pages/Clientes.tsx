@@ -41,6 +41,7 @@ import ContractWizard from '../components/contracts/ContractWizard';
 import { useRegisterQuickAction } from '../contexts/QuickActionContext';
 import { NavigationChoiceModal } from '../components/ui/NavigationChoiceModal';
 import AudioQuickAdd from '../components/AudioQuickAdd';
+import { ClientMessageMenu } from '../components/clients/ClientMessageMenu';
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
@@ -143,7 +144,7 @@ const GOOGLE_LIBS: ("places" | "geometry" | "drawing" | "visualization")[] = ['p
 const Clientes = () => {
   const { theme } = usePreferences();
   const isDark = theme === 'dark';
-  
+
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -190,7 +191,7 @@ const Clientes = () => {
   const [formData, setFormData] = useState<CustomerFormState>(initialFormState);
   const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState<'list' | 'contracts'>('list');
 
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -210,7 +211,7 @@ const Clientes = () => {
   );
 
   useEffect(() => {
-    return () => {};
+    return () => { };
   }, []);
 
   useEffect(() => {
@@ -228,7 +229,7 @@ const Clientes = () => {
 
   useEffect(() => {
     if (!showModal || !isLoaded || !window.google) return;
-    
+
     const query = formData.address;
     if (!query || query.length < 3) {
       setAddressSuggestions([]);
@@ -363,10 +364,10 @@ const Clientes = () => {
       services || '- Custom plan',
       ...(addons.length
         ? [
-            '',
-            'Paid add-ons:',
-            ...addons.map((addon) => `- ${addon.label} (+${usdFormatter.format(addon.price)})`),
-          ]
+          '',
+          'Paid add-ons:',
+          ...addons.map((addon) => `- ${addon.label} (+${usdFormatter.format(addon.price)})`),
+        ]
         : []),
       '',
       'Payment terms:',
@@ -597,7 +598,7 @@ const Clientes = () => {
           <h1 className={`text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Meus Clientes</h1>
           <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gerencie contatos, contratos e histórico.</p>
         </div>
-        
+
         <div className={`flex p-1 rounded-full border shadow-sm w-fit ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
           {[
             { key: 'list', label: 'Lista' },
@@ -606,11 +607,10 @@ const Clientes = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as 'list' | 'contracts')}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
-                activeTab === tab.key
-                  ? isDark ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-900 text-white shadow-md'
-                  : isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-50'
-              }`}
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${activeTab === tab.key
+                ? isDark ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-900 text-white shadow-md'
+                : isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-50'
+                }`}
             >
               {tab.label}
             </button>
@@ -640,18 +640,17 @@ const Clientes = () => {
                 <Plus size={24} />
               </button>
             </div>
-            
+
             {/* Filter Pills */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {statusFilterOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => setStatusFilter(option.value)}
-                  className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                    statusFilter === option.value
-                      ? isDark ? 'bg-slate-800 border-slate-700 text-white shadow-sm' : 'bg-white border-slate-900 text-slate-900 shadow-sm'
-                      : isDark ? 'bg-slate-900/50 border-transparent text-slate-500 hover:bg-slate-800 hover:border-slate-700' : 'bg-white/50 border-transparent text-slate-500 hover:bg-white hover:border-slate-200'
-                  }`}
+                  className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold border transition-all ${statusFilter === option.value
+                    ? isDark ? 'bg-slate-800 border-slate-700 text-white shadow-sm' : 'bg-white border-slate-900 text-slate-900 shadow-sm'
+                    : isDark ? 'bg-slate-900/50 border-transparent text-slate-500 hover:bg-slate-800 hover:border-slate-700' : 'bg-white/50 border-transparent text-slate-500 hover:bg-white hover:border-slate-200'
+                    }`}
                 >
                   {option.label}
                 </button>
@@ -697,11 +696,10 @@ const Clientes = () => {
                           onDelete={() => handleDeleteCustomer(cliente.id)}
                         />
                       </div>
-                      
+
                       <div className="flex items-center gap-2 mt-0.5 mb-2">
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          cliente.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'
-                        }`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${cliente.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'
+                          }`} />
                         <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{STATUS_LABELS[cliente.status]}</span>
                       </div>
 
@@ -726,13 +724,7 @@ const Clientes = () => {
                   </div>
 
                   <div className={`grid grid-cols-2 gap-2 mt-3 pt-3 border-t ${isDark ? 'border-slate-800' : 'border-slate-50'}`}>
-                    <a
-                      href={`sms:${cliente.phone?.replace(/\D/g, '')}`}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
-                    >
-                      <MessageCircle size={12} />
-                      SMS
-                    </a>
+                    <ClientMessageMenu customer={cliente} isDark={isDark} />
                     <button
                       onClick={() => handleViewHistory(cliente)}
                       className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg border text-xs font-bold transition-colors ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
@@ -750,11 +742,10 @@ const Clientes = () => {
         // Contracts Tab Content
         <div className="animate-fade-in space-y-6">
           {wizardStatus && (
-            <div className={`p-4 rounded-2xl border flex items-center gap-3 ${
-              wizardStatus.type === 'success' 
-                ? isDark ? 'bg-emerald-900/20 border-emerald-800 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-800' 
-                : isDark ? 'bg-red-900/20 border-red-800 text-red-400' : 'bg-red-50 border-red-100 text-red-800'
-            }`}>
+            <div className={`p-4 rounded-2xl border flex items-center gap-3 ${wizardStatus.type === 'success'
+              ? isDark ? 'bg-emerald-900/20 border-emerald-800 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-800'
+              : isDark ? 'bg-red-900/20 border-red-800 text-red-400' : 'bg-red-50 border-red-100 text-red-800'
+              }`}>
               {wizardStatus.type === 'success' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
               <p className="text-sm font-medium">{wizardStatus.message}</p>
             </div>
@@ -798,7 +789,7 @@ const Clientes = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     <button
                       onClick={() => handleDownloadContract(contract)}
@@ -845,7 +836,7 @@ const Clientes = () => {
                       placeholder="Nome completo"
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={`block text-xs font-bold uppercase tracking-wide mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Telefone</label>
@@ -877,11 +868,11 @@ const Clientes = () => {
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         onFocus={() => {
-                           if (addressSuggestions.length > 0) setShowAddressSuggestions(true);
+                          if (addressSuggestions.length > 0) setShowAddressSuggestions(true);
                         }}
                         onBlur={() => {
-                           // Delay hide to allow click
-                           setTimeout(() => setShowAddressSuggestions(false), 200);
+                          // Delay hide to allow click
+                          setTimeout(() => setShowAddressSuggestions(false), 200);
                         }}
                         className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all font-medium ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:bg-slate-800' : 'border-slate-200 bg-slate-50 focus:bg-white'}`}
                         placeholder="Endereço completo"
@@ -894,11 +885,10 @@ const Clientes = () => {
                               key={prediction.place_id}
                               type="button"
                               onClick={() => handleAddressSelect(prediction.description)}
-                              className={`w-full text-left px-4 py-3 text-sm transition-colors border-b last:border-0 ${
-                                isDark 
-                                  ? 'border-slate-700 text-slate-200 hover:bg-slate-700' 
-                                  : 'border-slate-100 text-slate-700 hover:bg-slate-50'
-                              }`}
+                              className={`w-full text-left px-4 py-3 text-sm transition-colors border-b last:border-0 ${isDark
+                                ? 'border-slate-700 text-slate-200 hover:bg-slate-700'
+                                : 'border-slate-100 text-slate-700 hover:bg-slate-50'
+                                }`}
                             >
                               <div className="flex items-center gap-2">
                                 <MapPin size={14} className="shrink-0 opacity-50" />
@@ -907,7 +897,7 @@ const Clientes = () => {
                             </button>
                           ))}
                           <div className={`px-2 py-1 text-[10px] text-right ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                             Powered by Google
+                            Powered by Google
                           </div>
                         </div>
                       )}
@@ -974,7 +964,7 @@ const Clientes = () => {
       )}
 
       <AudioQuickAdd />
-      
+
       <NavigationChoiceModal
         isOpen={navigationModal.isOpen}
         onClose={() => setNavigationModal({ isOpen: false, address: null })}
@@ -995,7 +985,6 @@ type HistoryModalProps = {
 
 const appointmentStatusLabels: Record<AppointmentStatus, string> = {
   AGENDADO: 'A confirmar',
-  NAO_CONFIRMADO: 'Não confirmado',
   EM_ANDAMENTO: 'Agendado',
   CONCLUIDO: 'Concluído',
   CANCELADO: 'Cancelado',
@@ -1003,7 +992,6 @@ const appointmentStatusLabels: Record<AppointmentStatus, string> = {
 
 const appointmentStatusClasses: Record<AppointmentStatus, string> = {
   AGENDADO: 'bg-amber-100 text-amber-800 border-amber-200',
-  NAO_CONFIRMADO: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   EM_ANDAMENTO: 'bg-blue-100 text-blue-800 border-blue-200',
   CONCLUIDO: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   CANCELADO: 'bg-red-100 text-red-800 border-red-200',
@@ -1012,58 +1000,58 @@ const appointmentStatusClasses: Record<AppointmentStatus, string> = {
 const HistoryModal = ({ customer, appointments, loading, onClose }: HistoryModalProps) => {
   const { theme } = usePreferences();
   const isDark = theme === 'dark';
-  
-  return (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/30">
-    <div className={`rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col animate-scale-in ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-      <div className={`p-6 border-b flex justify-between items-center ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-slate-50/50'}`}>
-        <div>
-          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Histórico</h2>
-          <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{customer.name}</p>
-        </div>
-        <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}>
-          <AlertTriangle className="rotate-45" size={20} /> {/* Usando icone X se tivesse importado, mas Alert funciona como placeholder ou X do lucide */}
-        </button>
-      </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        {loading ? (
-          <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" size={32} /></div>
-        ) : appointments.length === 0 ? (
-          <div className="text-center py-10 text-slate-400">
-            <FileText size={48} className="mx-auto mb-3 opacity-20" />
-            <p>Nenhum serviço registrado.</p>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/30">
+      <div className={`rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col animate-scale-in ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+        <div className={`p-6 border-b flex justify-between items-center ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-slate-50/50'}`}>
+          <div>
+            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Histórico</h2>
+            <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{customer.name}</p>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {appointments.map((app) => (
-              <div key={app.id} className="flex gap-4 relative">
-                <div className="flex flex-col items-center">
-                  <div className={`w-3 h-3 rounded-full mt-1.5 ${
-                    app.status === 'CONCLUIDO' ? 'bg-emerald-400' : 'bg-slate-300'
-                  }`} />
-                  <div className={`w-0.5 flex-1 my-1 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`} />
-                </div>
-                <div className="flex-1 pb-4">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                      {format(parseDateFromInput(app.date), "dd 'de' MMM, yyyy", { locale: ptBR })}
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${appointmentStatusClasses[app.status]}`}>
-                      {appointmentStatusLabels[app.status]}
-                    </span>
+          <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}>
+            <AlertTriangle className="rotate-45" size={20} /> {/* Usando icone X se tivesse importado, mas Alert funciona como placeholder ou X do lucide */}
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" size={32} /></div>
+          ) : appointments.length === 0 ? (
+            <div className="text-center py-10 text-slate-400">
+              <FileText size={48} className="mx-auto mb-3 opacity-20" />
+              <p>Nenhum serviço registrado.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {appointments.map((app) => (
+                <div key={app.id} className="flex gap-4 relative">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-3 h-3 rounded-full mt-1.5 ${app.status === 'CONCLUIDO' ? 'bg-emerald-400' : 'bg-slate-300'
+                      }`} />
+                    <div className={`w-0.5 flex-1 my-1 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`} />
                   </div>
-                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{app.customer.serviceType || 'Serviço padrão'}</p>
-                  <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{usdFormatter.format(app.price)}</p>
+                  <div className="flex-1 pb-4">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                        {format(parseDateFromInput(app.date), "dd 'de' MMM, yyyy", { locale: ptBR })}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${appointmentStatusClasses[app.status]}`}>
+                        {appointmentStatusLabels[app.status]}
+                      </span>
+                    </div>
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{app.customer.serviceType || 'Serviço padrão'}</p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{usdFormatter.format(app.price)}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-)};
+  )
+};
 
 
 const ClientMenu = ({
@@ -1152,10 +1140,10 @@ const ClientMenu = ({
     if (isOpen && menuRef.current) {
       const rect = menuRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      
+
       const isTop = spaceBelow < 220;
       setMenuPosition(isTop ? 'top' : 'bottom');
-      
+
       setFixedPos({
         top: isTop ? rect.top : rect.bottom + 4,
         right: window.innerWidth - rect.right
@@ -1174,35 +1162,35 @@ const ClientMenu = ({
 
       {isOpen && fixedPos && createPortal(
         <>
-        <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
-        <div 
-          className={`fixed w-48 rounded-xl shadow-xl border z-[9999] overflow-hidden animate-fade-in ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
-          style={{
-             top: menuPosition === 'bottom' ? fixedPos.top : 'auto',
-             bottom: menuPosition === 'top' ? (window.innerHeight - fixedPos.top) + 4 : 'auto',
-             right: fixedPos.right,
-          }}
-        >
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              onEdit();
+          <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
+          <div
+            className={`fixed w-48 rounded-xl shadow-xl border z-[9999] overflow-hidden animate-fade-in ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
+            style={{
+              top: menuPosition === 'bottom' ? fixedPos.top : 'auto',
+              bottom: menuPosition === 'top' ? (window.innerHeight - fixedPos.top) + 4 : 'auto',
+              right: fixedPos.right,
             }}
-            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-2 transition-colors ${isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}
           >
-            <Edit3 size={16} /> Editar
-          </button>
-          {renderStatusOptions()}
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              onDelete();
-            }}
-            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-2 border-t transition-colors ${isDark ? 'text-red-400 hover:bg-red-900/20 border-slate-800' : 'text-red-600 hover:bg-red-50 border-slate-50'}`}
-          >
-            <Trash2 size={16} /> Excluir
-          </button>
-        </div>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onEdit();
+              }}
+              className={`w-full text-left px-4 py-3 text-sm flex items-center gap-2 transition-colors ${isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}
+            >
+              <Edit3 size={16} /> Editar
+            </button>
+            {renderStatusOptions()}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onDelete();
+              }}
+              className={`w-full text-left px-4 py-3 text-sm flex items-center gap-2 border-t transition-colors ${isDark ? 'text-red-400 hover:bg-red-900/20 border-slate-800' : 'text-red-600 hover:bg-red-50 border-slate-50'}`}
+            >
+              <Trash2 size={16} /> Excluir
+            </button>
+          </div>
         </>,
         document.body
       )}

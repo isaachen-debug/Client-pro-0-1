@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Briefcase, XCircle, DollarSign, Wallet, 
   TrendingUp, Calendar, ChevronDown, Bell 
@@ -9,6 +9,8 @@ import { FinancialChart } from '../components/dashboard/FinancialChart';
 import { pageGutters } from '../styles/uiTokens';
 import { useAuth } from '../contexts/AuthContext';
 import { dashboardApi } from '../services/api';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 // Dados simulados para preencher o visual "Pro" enquanto não temos histórico real no backend
 const MOCK_ACTIVITY: ActivityItem[] = [

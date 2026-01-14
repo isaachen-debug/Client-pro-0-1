@@ -8,6 +8,7 @@ import Financeiro from './pages/Financeiro';
 import Empresa from './pages/Empresa';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import PortalAccess from './pages/PortalAccess';
 import Profile from './pages/Profile';
 import Invoice from './pages/Invoice';
 import Explore from './pages/Explore';
@@ -29,6 +30,7 @@ import ClientLayout from './pages/client/Layout';
 import ClientSettings from './pages/client/Settings';
 import OwnerSettings from './pages/OwnerSettings';
 import AddMember from './pages/team/AddMember';
+import Vendas from './pages/Vendas';
 
 const AppIndexRedirect = () => <Navigate to="agenda" replace />;
 
@@ -40,6 +42,9 @@ function App() {
       <AuthProvider>
         <PreferencesProvider>
           <Routes>
+            {/* Public Magic Link Portal Route */}
+            <Route path="/portal/:token" element={<PortalAccess />} />
+
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
@@ -57,6 +62,7 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="explore" element={<Explore />} />
               <Route path="clientes" element={<Clientes />} />
+              <Route path="vendas" element={<Vendas />} />
               <Route path="agenda" element={<Agenda />} />
               <Route path="semana" element={<Agenda initialMode="week" />} />
               <Route path="financeiro" element={<Financeiro />} />

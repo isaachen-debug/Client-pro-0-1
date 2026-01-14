@@ -92,6 +92,15 @@ export const teamApi = {
     );
     return data;
   },
+  async generatePortalLink(customerId: string) {
+    const { data } = await api.post<{
+      success: boolean;
+      link: string;
+      token: string;
+      customer: { id: string; name: string };
+    }>(`/team/customers/${customerId}/portal-link`);
+    return data;
+  },
   async listContracts() {
     const { data } = await api.get<Contract[]>('/team/clients/contracts');
     return data;

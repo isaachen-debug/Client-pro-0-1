@@ -35,7 +35,7 @@ const CompletionModal: React.FC<CompletionModalProps> = ({
   const isDark = theme === 'dark';
   
   const [finalPrice, setFinalPrice] = useState(appointment.price.toString());
-  const [paymentStatus] = useState<'PENDENTE' | 'PAGO'>('PENDENTE');
+  const [paymentStatus, setPaymentStatus] = useState<'PENDENTE' | 'PAGO'>('PAGO');
   const [sendInvoice, setSendInvoice] = useState(false);
   const [shareVia, setShareVia] = useState<'none' | 'sms' | 'email'>('none');
   const [showInvoiceOptions, setShowInvoiceOptions] = useState(false);
@@ -44,7 +44,7 @@ const CompletionModal: React.FC<CompletionModalProps> = ({
     e.preventDefault();
     await onConfirm({
       finalPrice: Number(finalPrice),
-      paymentStatus,
+      paymentStatus: 'PENDENTE',
       sendInvoice,
       shareVia
     });
