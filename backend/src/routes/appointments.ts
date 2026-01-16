@@ -158,7 +158,11 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
               connect: { id: appointment.assignedHelperId },
             }
             : undefined,
-          checklistSnapshot: appointment.checklistSnapshot as Prisma.JsonValue,
+          checklistSnapshot: appointment.checklistSnapshot 
+            ? (typeof appointment.checklistSnapshot === 'string' 
+              ? appointment.checklistSnapshot 
+              : JSON.stringify(appointment.checklistSnapshot))
+            : undefined,
         },
       }),
     );
@@ -526,7 +530,7 @@ router.post('/', async (req, res) => {
             connect: { id: assignedHelperId },
           }
           : undefined,
-        checklistSnapshot: normalizedChecklist ?? undefined,
+        checklistSnapshot: normalizedChecklist ? JSON.stringify(normalizedChecklist) : undefined,
       },
       ...defaultAppointmentInclude,
     });
@@ -633,7 +637,7 @@ router.put('/:id', async (req, res) => {
         estimatedDurationMinutes !== undefined
           ? parseInt(estimatedDurationMinutes, 10)
           : undefined,
-      checklistSnapshot: normalizedChecklistUpdate ?? undefined,
+      checklistSnapshot: normalizedChecklistUpdate ? JSON.stringify(normalizedChecklistUpdate) : undefined,
     };
 
     if (assignedHelperId !== undefined) {
@@ -768,7 +772,11 @@ router.patch('/:id/status', async (req, res) => {
                     assignedHelper: updated.assignedHelperId
                       ? { connect: { id: updated.assignedHelperId } }
                       : undefined,
-                    checklistSnapshot: updated.checklistSnapshot ? (updated.checklistSnapshot as Prisma.JsonValue) : undefined,
+                    checklistSnapshot: updated.checklistSnapshot 
+                      ? (typeof updated.checklistSnapshot === 'string' 
+                        ? updated.checklistSnapshot 
+                        : JSON.stringify(updated.checklistSnapshot))
+                      : undefined,
                   },
                 });
               }

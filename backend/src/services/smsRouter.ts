@@ -73,9 +73,7 @@ export async function routeInboundSMS(
         }
 
         // Create router link for future fast routing
-        await prisma.inbound
-
-        RouterLink.upsert({
+        await prisma.inboundRouterLink.upsert({
             where: { phoneE164 },
             create: {
                 phoneE164,
