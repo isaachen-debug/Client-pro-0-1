@@ -29,6 +29,17 @@ model User {
   reviewLinks       String?
   companyWebsite    String?
   companyShowcase   String?
+  
+  // Payment method configuration
+  zelleEmail           String?
+  venmoUsername        String?
+  cashAppUsername      String?
+  stripeAccountId      String?
+  stripeConnected      Boolean                 @default(false)
+  enabledPaymentMethods String?                // JSON array: ["ZELLE", "VENMO", "STRIPE"]
+  businessLogo         String?                 // Cloudinary URL
+  paymentInstructions  String?                 // Custom instructions for cash payments
+  
   company           User?                   @relation("CompanyMembers", fields: [companyId], references: [id])
   teamMembers       User[]                  @relation("CompanyMembers")
   appointments      Appointment[]           @relation("AppointmentOwner")
@@ -163,6 +174,20 @@ model Transaction {
   paidAt        DateTime?
   description   String?
   createdAt     DateTime     @default(now())
+  
+  // Payment tracking fields
+  invoiceToken         String?  @unique
+  paymentLink          String?  // Stripe payment link URL (if Stripe used)
+  paymentLinkId        String?  // Stripe payment link ID
+  paymentMethod        String?  // 'ZELLE', 'VENMO', 'CASH_APP', 'STRIPE', 'CASH'
+  stripeSessionId      String?  // Stripe checkout session ID
+  paymentMetadata      String?  // JSON with payment details
+  
+  // Customer confirmation workflow
+  customerMarkedPaid   Boolean  @default(false)
+  customerPaidAt       DateTime?
+  confirmationNotes    String?  // Customer's payment confirmation notes
+  
   appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
