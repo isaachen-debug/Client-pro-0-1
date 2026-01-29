@@ -7,8 +7,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-12-18.acacia',
-    })
+    apiVersion: '2025-12-15.clover' as any,
+  })
   : null;
 
 export interface CreatePaymentLinkParams {
@@ -104,10 +104,10 @@ export const handleWebhookEvent = async (event: Stripe.Event): Promise<void> => 
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      
+
       // Get transaction ID from metadata
       const transactionId = session.metadata?.transactionId;
-      
+
       if (!transactionId) {
         console.warn('❌ No transactionId in session metadata');
         return;
