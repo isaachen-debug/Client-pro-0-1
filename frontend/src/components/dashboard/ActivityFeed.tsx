@@ -1,14 +1,6 @@
 import { CheckCircle2, Clock, FileText, DollarSign } from 'lucide-react';
 
-export interface ActivityItem {
-  id: string;
-  type: 'contract' | 'payment' | 'job_completed' | 'job_created' | 'invoice';
-  title: string;
-  description: string;
-  time: string;
-  user?: string;
-  amount?: string;
-}
+import { ActivityItem } from '../../types';
 
 const ActivityIcon = ({ type }: { type: ActivityItem['type'] }) => {
   switch (type) {
@@ -18,8 +10,10 @@ const ActivityIcon = ({ type }: { type: ActivityItem['type'] }) => {
       return <div className="p-2 rounded-full bg-emerald-100 text-emerald-600"><DollarSign size={16} /></div>;
     case 'job_completed':
       return <div className="p-2 rounded-full bg-blue-100 text-blue-600"><CheckCircle2 size={16} /></div>;
-    case 'job_created':
-      return <div className="p-2 rounded-full bg-amber-100 text-amber-600"><Clock size={16} /></div>;
+    case 'invoice':
+      return <div className="p-2 rounded-full bg-amber-100 text-amber-600"><FileText size={16} /></div>;
+    case 'new_client':
+      return <div className="p-2 rounded-full bg-blue-100 text-blue-600"><Clock size={16} /></div>;
     default:
       return <div className="p-2 rounded-full bg-slate-100 text-slate-600"><FileText size={16} /></div>;
   }

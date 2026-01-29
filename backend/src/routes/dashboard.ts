@@ -72,128 +72,231 @@ router.get('/overview', async (req, res) => {
       return res.status(400).json({ error: 'Parâmetros de mês ou ano inválidos.' });
     }
 
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59);
+    // --- Helper for Month Ranges ---
+    const getMonthRange = (date: Date) => {
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+      return { start, end };
+    };
 
+    const currentMonth = getMonthRange(new Date(year, month - 1));
+    const previousMonth = getMonthRange(new Date(year, month - 2));
+
+    // --- 1. Finance & Active Clients ---
+    // Revenue Current Month
     const revenueTransactions = await prisma.transaction.findMany({
       where: {
         userId,
         type: 'RECEITA',
-        dueDate: {
-          gte: monthStart,
-          lte: monthEnd,
-        },
+        dueDate: { gte: currentMonth.start, lte: currentMonth.end },
       },
+      include: { appointment: true }, // Needed for ticket calculation
     });
 
     const totalRevenueMonth = revenueTransactions
       .filter((item) => item.status === 'PAGO')
       .reduce((sum, item) => sum + item.amount, 0);
+
     const pendingPaymentsMonth = revenueTransactions
       .filter((item) => item.status === 'PENDENTE')
       .reduce((sum, item) => sum + item.amount, 0);
 
-    const activeClientsCount = await prisma.customer.count({
-      where: { userId, status: 'ACTIVE' },
+    // Average Ticket (Current Month)
+    const paidServicesCount = revenueTransactions.filter(t => t.status === 'PAGO' && t.appointmentId).length;
+    const averageTicket = paidServicesCount > 0 ? totalRevenueMonth / paidServicesCount : 0;
+
+    // --- Comparisons (Previous Month) ---
+    const prevRevenueTransactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'RECEITA',
+        dueDate: { gte: previousMonth.start, lte: previousMonth.end },
+        status: 'PAGO'
+      }
     });
 
+    // 2. Client Metrics (Active & New)
+    const activeClientsCount = await prisma.customer.count({
+      where: { userId, status: 'ACTIVE' }
+    });
+
+    // For "Active Clients previous month" logic is tricky without history table, 
+    // but we can estimate or use New Clients count as a proxy for growth.
+    // Let's use New Clients count for precision.
+    const newClientsCurrent = await prisma.customer.count({
+      where: {
+        userId,
+        createdAt: { gte: currentMonth.start, lte: currentMonth.end }
+      }
+    });
+
+    const newClientsPrev = await prisma.customer.count({
+      where: {
+        userId,
+        createdAt: { gte: previousMonth.start, lte: previousMonth.end }
+      }
+    });
+
+    // 3. Jobs & Cancellations
+    const jobsCurrent = await prisma.appointment.count({
+      where: { userId, date: { gte: currentMonth.start, lte: currentMonth.end }, status: 'CONCLUIDO' }
+    });
+
+    const jobsPrev = await prisma.appointment.count({
+      where: { userId, date: { gte: previousMonth.start, lte: previousMonth.end }, status: 'CONCLUIDO' }
+    });
+
+    const cancelsCurrent = await prisma.appointment.count({
+      where: { userId, date: { gte: currentMonth.start, lte: currentMonth.end }, status: 'CANCELADO' }
+    });
+
+    const cancelsPrev = await prisma.appointment.count({
+      where: { userId, date: { gte: previousMonth.start, lte: previousMonth.end }, status: 'CANCELADO' }
+    });
+
+    // Average Ticket Prev
+    const prevRevenueTotal = prevRevenueTransactions.reduce((acc, t) => acc + t.amount, 0);
+    const prevPaidCount = prevRevenueTransactions.filter(t => t.appointmentId).length;
+    const averageTicketPrev = prevPaidCount > 0 ? prevRevenueTotal / prevPaidCount : 0;
+
+    // --- Helper for Comparison Object ---
+    const calcComparison = (current: number, previous: number, label: string = 'mês anterior') => {
+      let percent = 0;
+      if (previous > 0) {
+        percent = ((current - previous) / previous) * 100;
+      } else if (current > 0) {
+        percent = 100;
+      }
+      return { value: previous, percent: Number(percent.toFixed(1)), label };
+    };
+
+    // --- 4. Chart Data (Revenue vs Expense by Day of Week for current view) ---
+    // If month view, maybe aggregate by week? The current UI expects day names (Seg/Ter...).
+    // Let's aggregate by day for the current week if "This Month" is selected? 
+    // Or actually, the mock data was daily per week. Let's stick to "Current Week" for the chart to keep it detailed.
     const weekStart = startOfWeek(today, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(today, { weekStartsOn: 0 });
 
-    const scheduledServicesCount = await prisma.appointment.count({
-      where: {
-        userId,
-        date: {
-          gte: weekStart,
-          lte: weekEnd,
-        },
-        status: {
-          not: 'CANCELADO',
-        },
-      },
+    const weekRevenue = await prisma.transaction.findMany({
+      where: { userId, type: 'RECEITA', status: 'PAGO', dueDate: { gte: weekStart, lte: weekEnd } }
+    });
+    const weekExpense = await prisma.helperExpense.findMany({
+      where: { ownerId: userId, date: { gte: weekStart, lte: weekEnd } }
     });
 
-    const weekRanges = buildWeekRanges(monthStart, monthEnd);
-    const revenueByWeek = weekRanges.map((range) => {
-      const value = revenueTransactions
-        .filter(
-          (transaction) =>
-            transaction.status === 'PAGO' &&
-            transaction.dueDate >= range.start &&
-            transaction.dueDate <= range.end,
-        )
-        .reduce((sum, item) => sum + item.amount, 0);
-      return { label: range.label, value };
+    const daysMap = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const chartData = daysMap.map((dayLabel, idx) => {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + idx);
+
+      // Match day
+      const income = weekRevenue
+        .filter(t => new Date(t.dueDate).getDate() === dayDate.getDate())
+        .reduce((s, t) => s + t.amount, 0);
+
+      // Expenses logic is simplified here as schema has 'amount' on helperExpense
+      const expense = weekExpense
+        .filter(e => new Date(e.date).getDate() === dayDate.getDate())
+        .reduce((s, e) => s + e.amount, 0);
+
+      return {
+        label: dayLabel,
+        value: income, // For legacy support if needed
+        income,
+        expense,
+        balance: income - expense
+      };
     });
 
+
+    // --- 5. Activity Feed (Aggregated) ---
+    // Fetch recent 10 items from different sources and sort
+    const recentContracts = await prisma.contract.findMany({
+      where: { ownerId: userId, status: 'ACEITO' },
+      include: { client: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 3
+    });
+
+    const recentPayments = await prisma.transaction.findMany({
+      where: { userId, type: 'RECEITA', status: 'PAGO' },
+      include: { appointment: { include: { customer: true } } },
+      orderBy: { paidAt: 'desc' },
+      take: 3
+    });
+
+    const recentJobs = await prisma.appointment.findMany({
+      where: { userId, status: 'CONCLUIDO' },
+      include: { customer: true, assignedHelper: true },
+      orderBy: { finishedAt: 'desc' },
+      take: 3
+    });
+
+    // Merge & Map
+    const activityFeed: any[] = [];
+
+    recentContracts.forEach(c => {
+      activityFeed.push({
+        id: `contract-${c.id}`,
+        type: 'contract',
+        title: `${c.client?.name || 'Cliente'} assinou contrato`,
+        description: c.title,
+        time: c.updatedAt, // Raw date locally, format in frontend
+        user: c.client?.name
+      });
+    });
+
+    recentPayments.forEach(t => {
+      activityFeed.push({
+        id: `payment-${t.id}`,
+        type: 'payment',
+        title: 'Pagamento recebido',
+        description: t.description || `Serviço - ${t.appointment?.customer?.name || 'Cliente'}`,
+        time: t.paidAt || t.createdAt,
+        amount: t.amount,
+      });
+    });
+
+    recentJobs.forEach(j => {
+      activityFeed.push({
+        id: `job-${j.id}`,
+        type: 'job_completed',
+        title: 'Serviço concluído',
+        description: `${j.customer.name} - ${j.assignedHelper?.name || 'Equipe'}`,
+        time: j.finishedAt || j.date,
+        user: j.assignedHelper?.name
+      });
+    });
+
+    // Sort by time desc
+    activityFeed.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+
+    // --- 6. Lists (Existing logic kept or slightly optimized) ---
     const upcomingAppointments = await prisma.appointment.findMany({
       where: {
         userId,
-        date: {
-          gte: new Date(),
-        },
-        status: {
-          not: 'CANCELADO',
-        },
+        date: { gte: new Date() },
+        status: { not: 'CANCELADO' },
       },
-      include: {
-        customer: true,
-      },
+      include: { customer: true },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
       take: 5,
     });
-
-    // #region agent log
-    appendDebugLog({
-      sessionId: 'debug-session',
-      runId: 'pre-fix',
-      hypothesisId: 'H2',
-      location: 'backend/src/routes/dashboard.ts:upcomingAppointments',
-      message: 'Upcoming appointments payload',
-      data: {
-        total: upcomingAppointments.length,
-        missingCustomer: upcomingAppointments.filter((appointment) => !appointment.customer).length,
-      },
-      timestamp: Date.now(),
-    });
-    // #endregion
 
     const recentCompletedAppointmentsRaw = await prisma.appointment.findMany({
       where: {
         userId,
         status: 'CONCLUIDO',
-        date: {
-          lte: new Date(),
-        },
+        date: { lte: new Date() },
       },
       include: {
         customer: true,
-        transactions: {
-          where: {
-            type: 'RECEITA',
-          },
-        },
+        transactions: { where: { type: 'RECEITA' } },
       },
       orderBy: [{ finishedAt: 'desc' }, { date: 'desc' }],
       take: 5,
     });
-
-    // #region agent log
-    appendDebugLog({
-      sessionId: 'debug-session',
-      runId: 'pre-fix',
-      hypothesisId: 'H3',
-      location: 'backend/src/routes/dashboard.ts:recentCompletedAppointments',
-      message: 'Recent completed payload',
-      data: {
-        total: recentCompletedAppointmentsRaw.length,
-        withTransaction: recentCompletedAppointmentsRaw.filter(
-          (item) => (item.transactions?.[0]?.id ?? null) !== null,
-        ).length,
-      },
-      timestamp: Date.now(),
-    });
-    // #endregion
 
     const recentCompletedAppointments = recentCompletedAppointmentsRaw.map((appointment) => {
       const transaction = appointment.transactions[0];
@@ -202,10 +305,7 @@ router.get('/overview', async (req, res) => {
         date: appointment.date,
         startTime: appointment.startTime,
         price: appointment.price,
-        customer: {
-          id: appointment.customer.id,
-          name: appointment.customer.name,
-        },
+        customer: { id: appointment.customer.id, name: appointment.customer.name },
         transactionStatus: (transaction?.status ?? 'PENDENTE') as 'PENDENTE' | 'PAGO',
         transactionId: transaction?.id ?? null,
       };
@@ -214,11 +314,26 @@ router.get('/overview', async (req, res) => {
     res.json({
       totalRevenueMonth,
       pendingPaymentsMonth,
+
       activeClientsCount,
-      scheduledServicesCount,
-      revenueByWeek,
+      activeClientsComparison: calcComparison(activeClientsCount, activeClientsCount - (newClientsCurrent - newClientsPrev), 'vs mês anterior'), // rough proxy
+
+      newClientsCount: newClientsCurrent,
+      newClientsComparison: calcComparison(newClientsCurrent, newClientsPrev),
+
+      scheduledServicesCount: jobsCurrent,
+      scheduledServicesComparison: calcComparison(jobsCurrent, jobsPrev),
+
+      cancellationsCount: cancelsCurrent,
+      cancellationsComparison: calcComparison(cancelsCurrent, cancelsPrev),
+
+      averageTicket: Number(averageTicket.toFixed(2)),
+      averageTicketComparison: calcComparison(averageTicket, averageTicketPrev),
+
+      revenueByWeek: chartData, // mapped to day comparison
       upcomingAppointments,
       recentCompletedAppointments,
+      activityFeed: activityFeed.slice(0, 10) // Limit to 10
     });
   } catch (error) {
     console.error(error);

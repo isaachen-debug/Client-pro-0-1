@@ -424,15 +424,53 @@ export interface Transaction {
   confirmationNotes?: string;
 }
 
+export interface MetricComparison {
+  value: number | string;
+  percent: number;
+  label: string;
+}
+
+export type ActivityType = 'contract' | 'payment' | 'job_completed' | 'invoice' | 'new_client';
+
+export interface ActivityItem {
+  id: string;
+  type: ActivityType;
+  title: string;
+  description: string;
+  time: string;
+  user?: string;
+  amount?: string;
+  link?: string;
+}
+
 export interface DashboardOverview {
   totalRevenueMonth: number;
   pendingPaymentsMonth: number;
+
+  // KPIs with comparisons
   activeClientsCount: number;
+  activeClientsComparison: MetricComparison;
+
+  newClientsCount: number;
+  newClientsComparison: MetricComparison;
+
   scheduledServicesCount: number;
+  scheduledServicesComparison: MetricComparison;
+
+  cancellationsCount: number;
+  cancellationsComparison: MetricComparison;
+
+  averageTicket: number;
+  averageTicketComparison: MetricComparison;
+
   revenueByWeek: {
     label: string;
     value: number;
+    income: number;
+    expense: number;
+    balance: number;
   }[];
+
   upcomingAppointments: Appointment[];
   recentCompletedAppointments: Array<{
     id: string;
@@ -446,4 +484,6 @@ export interface DashboardOverview {
     transactionStatus: TransactionStatus;
     transactionId: string | null;
   }>;
+
+  activityFeed: ActivityItem[];
 }
