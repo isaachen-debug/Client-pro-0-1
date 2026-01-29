@@ -18,13 +18,13 @@ const GradientHeader: React.FC<GradientHeaderProps> = ({ title, actions, childre
             <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-b -z-10 ${isDarkTheme ? 'from-slate-800/50 to-transparent' : 'from-slate-50/50 to-transparent'}`} />
 
             {/* Top Bar */}
-            <div className="flex items-center justify-between mb-8 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 relative z-10">
                 <div className="flex items-center gap-3">
                     {breadcrumbs}
-                    <h1 className={`text-3xl font-black tracking-tight flex items-center gap-3 ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>{title}</h1>
+                    <h1 className={`text-2xl md:text-3xl font-black tracking-tight flex items-center gap-3 ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>{title}</h1>
                 </div>
                 {actions && (
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 w-full md:w-auto">
                         {actions}
                     </div>
                 )}
