@@ -19,7 +19,12 @@ import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import RoleRoute from './components/RoleRoute';
+import ServiceCatalog from './pages/ServiceCatalog';
 import Team from './pages/Team';
+
+// ...
+
+
 import Plans from './pages/Plans';
 import HelperLayout from './pages/helper/HelperLayout';
 import HelperToday from './pages/helper/Today';
@@ -30,7 +35,10 @@ import ClientLayout from './pages/client/Layout';
 import ClientSettings from './pages/client/Settings';
 import OwnerSettings from './pages/OwnerSettings';
 import AddMember from './pages/team/AddMember';
+import TeamEdit from './pages/TeamEdit';
 import Vendas from './pages/Vendas';
+import InvoicePage from './pages/InvoicePage';
+import PaymentSettings from './pages/PaymentSettings';
 
 const AppIndexRedirect = () => <Navigate to="agenda" replace />;
 
@@ -42,7 +50,8 @@ function App() {
       <AuthProvider>
         <PreferencesProvider>
           <Routes>
-            {/* Public Magic Link Portal Route */}
+            {/* Public Routes */}
+            <Route path="/invoice/:token" element={<InvoicePage />} />
             <Route path="/portal/:token" element={<PortalAccess />} />
 
             <Route path="/login" element={<Login />} />
@@ -69,9 +78,12 @@ function App() {
               <Route path="rotas" element={<RoutePlanner />} />
               <Route path="plans" element={<Plans />} />
               <Route path="empresa" element={<Empresa />} />
+              <Route path="services" element={<ServiceCatalog />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<OwnerSettings />} />
+              <Route path="settings/payments" element={<PaymentSettings />} />
               <Route path="team" element={<Team />} />
+              <Route path="team/edit/:id" element={<TeamEdit />} />
               <Route path="team/add" element={<AddMember />} />
               <Route path="apps" element={<Apps />} />
               <Route path="helper-resources" element={<HelperResources />} />

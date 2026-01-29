@@ -370,7 +370,8 @@ const Team = () => {
                 return (
                   <div
                     key={member.id}
-                    className="rounded-[22px] border border-gray-100 bg-white/90 p-4 md:p-5 shadow-sm space-y-4"
+                    onClick={() => navigate(`/app/team/edit/${member.id}`)}
+                    className="rounded-[22px] border border-gray-100 bg-white/90 p-4 md:p-5 shadow-sm space-y-4 cursor-pointer hover:border-indigo-100 transition-colors"
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>

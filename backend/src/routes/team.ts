@@ -3,7 +3,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import prisma from '../db';
-import { authenticate } from '../middleware/auth';
+import { authenticate, generateToken } from '../middleware/auth';
 import {
   fetchHelperAppointmentsForDay,
   mapHelperAppointment,
@@ -1091,5 +1091,74 @@ router.patch('/appointments/:appointmentId/notes', async (req, res) => {
   }
 });
 
+router.post('/customers/:customerId/portal-link', async (req, res) => {
+  try {
+    const owner = await ensureOwner(req.user!.id);
+    const { customerId } = req.params;
+
+    const customer = await prisma.customer.findFirst({
+      where: { id: customerId, userId: owner.id },
+    });
+
+    if (!customer) {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+
+    if (!customer.email) {
+      return res.status(400).json({ error: 'Cliente precisa ter um email cadastrado.' });
+    }
+
+    // Find or create user for this customer
+    let user = await prisma.user.findUnique({
+      where: { email: customer.email },
+    });
+
+    if (user) {
+      // Security check
+      if (user.companyId !== owner.id || user.role !== 'CLIENT') {
+        return res.status(400).json({ error: 'Este email já está associado a outra conta.' });
+      }
+    } else {
+      // Create new client user
+      const passwordHash = await bcrypt.hash(randomBytes(8).toString('hex'), 10);
+      user = await prisma.user.create({
+        data: {
+          name: customer.name,
+          email: customer.email,
+          passwordHash,
+          role: 'CLIENT',
+          companyId: owner.id,
+          planStatus: owner.planStatus,
+          isActive: true, // Auto-activate for magic link
+        },
+      });
+    }
+
+    const token = generateToken(user.id); // Import this from middleware/auth
+
+    // Construct link
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
+    const link = `${baseUrl}/portal/${token}`;
+
+    res.json({
+      success: true,
+      link,
+      token,
+      customer: {
+        id: customer.id,
+        name: customer.name,
+      },
+    });
+
+  } catch (error: any) {
+    if (error.message === 'FORBIDDEN') {
+      return res.status(403).json({ error: 'Acesso restrito.' });
+    }
+    console.error('Error generating portal link:', error);
+    res.status(500).json({ error: 'Erro ao gerar link de acesso.' });
+  }
+});
+
 export default router;
+
 

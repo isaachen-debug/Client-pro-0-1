@@ -24,7 +24,7 @@ export const analyzeOpportunity = async (base64Image: string) => {
         const payload = {
             contents: [{
                 parts: [
-                    { text: "Analise esta imagem. Identifique uma oportunidade de limpeza extra (ex: forno sujo, janelas, estofados). Retorne APENAS um JSON válido (sem markdown) no seguinte formato: { \"serviceName\": \"Nome do Serviço\", \"price\": 120.00, \"message\": \"Texto de venda curto e muito persuasivo usando gatilhos mentais.\" }" },
+                    { text: "Analise esta imagem para identificar qual serviço de limpeza é necessário (ex: Sofá, Forno, Banheiro, Pós-obra). Gere uma proposta curta e direta convidando o cliente a contratar a limpeza desse item específico. Evite apontar defeitos ou sujeira diretamente. Foco na solução e no resultado 'brilhando'. Retorne APENAS um JSON válido: { \"serviceName\": \"Nome do Serviço Identificado\", \"price\": 120.00, \"message\": \"Frase curta tipo: 'Que tal deixar seu [item identificado] novinho em folha? Contrate nossa [Nome do Serviço] hoje por apenas [preço] e relaxe!'\" }" },
                     { inline_data: { mime_type: mimeType, data: base64Data } }
                 ]
             }]

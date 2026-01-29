@@ -6,7 +6,7 @@ import {
   Calendar,
   DollarSign,
   X,
-  PlayCircle,
+
   UserCircle,
   LogOut,
   Building2,
@@ -31,6 +31,7 @@ import {
   Square,
   Navigation,
   Rocket,
+  List,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -354,11 +355,11 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
     { path: '/app/agenda', icon: Calendar, labelKey: 'nav.agenda' },
     { path: '/app/clientes', icon: Users, labelKey: 'nav.clients' },
     { path: '/app/financeiro', icon: DollarSign, labelKey: 'nav.finance' },
-    { path: '/app/start', icon: PlayCircle, labelKey: 'nav.today' },
   ];
   const workspaceMenuItems = [
     { path: '/app/empresa', icon: Building2, labelKey: 'nav.company' },
     { path: '/app/team', icon: Users, labelKey: 'nav.team' },
+    { path: '/app/services', icon: List, labelKey: 'Services' },
     { path: '/app/settings', icon: SettingsIcon, labelKey: 'nav.settings' },
     { path: '/app/profile', icon: UserCircle, labelKey: 'nav.profile' },
   ];
@@ -771,7 +772,6 @@ const Layout = ({ isTeamMode, setIsTeamMode }: LayoutProps) => {
   ];
   const extraMenuItems = [
     { key: 'dashboard', label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard, type: 'route' as const },
-    { key: 'start', label: 'Hoje', path: '/app/start', icon: PlayCircle, type: 'route' as const },
     { key: 'explore', label: 'Explorar', path: '/app/explore', icon: Grid, type: 'route' as const },
     { key: 'rotas', label: 'Rotas', path: '/app/rotas', icon: Navigation, type: 'route' as const },
     { key: 'empresa', label: 'Empresa', path: '/app/empresa', icon: Building2, type: 'route' as const },

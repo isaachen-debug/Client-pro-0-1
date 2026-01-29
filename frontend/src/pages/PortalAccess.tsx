@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { api } from '../services/http';
+import { api, storeToken } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export const PortalAccess = () => {
     const { token } = useParams<{ token: string }>();
     const navigate = useNavigate();
+    const { refreshUser } = useAuth();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [error, setError] = useState('');
 
@@ -21,7 +23,13 @@ export const PortalAccess = () => {
                 setStatus('loading');
                 const { data } = await api.get(`/portal/auth/${token}`);
 
-                if (data.success) {
+                if (data.success && data.token) {
+                    // Store the token so axios uses it for future requests
+                    storeToken(data.token);
+
+                    // Force auth context to reload user from this new token
+                    await refreshUser();
+
                     setStatus('success');
                     // Redirect to client portal home after short delay
                     setTimeout(() => {
@@ -32,13 +40,16 @@ export const PortalAccess = () => {
                     setError('Falha na autenticação');
                 }
             } catch (err: any) {
+                console.error(err);
                 setStatus('error');
                 setError(err?.response?.data?.error || 'Link inválido ou expirado');
             }
         };
 
-        authenticateWithToken();
-    }, [token, navigate]);
+        if (status === 'loading') {
+            authenticateWithToken();
+        }
+    }, [token, navigate, refreshUser, status]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">

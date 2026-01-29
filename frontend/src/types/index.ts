@@ -409,6 +409,19 @@ export interface Transaction {
   paidAt?: string;
   description?: string | null;
   createdAt: string;
+
+  // Invoice tracking fields
+  invoiceToken?: string;
+  paymentLink?: string;
+  paymentLinkId?: string;
+  paymentMethod?: string;
+  stripeSessionId?: string;
+  paymentMetadata?: string;
+
+  // Customer confirmation workflow
+  customerMarkedPaid?: boolean;
+  customerPaidAt?: string;
+  confirmationNotes?: string;
 }
 
 export interface DashboardOverview {

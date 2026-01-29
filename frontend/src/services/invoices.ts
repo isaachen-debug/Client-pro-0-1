@@ -39,5 +39,10 @@ export const invoicesApi = {
     const { data } = await api.post(`/invoices/send`, { appointmentId, method });
     return data;
   },
+
+  async generate(appointmentId: string) {
+    const { data } = await api.post<{ invoiceToken: string; transaction: Transaction }>(`/invoices/${appointmentId}/generate`);
+    return data;
+  },
 };
 

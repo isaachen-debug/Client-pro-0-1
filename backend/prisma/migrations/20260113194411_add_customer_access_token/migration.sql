@@ -1,1 +1,0 @@
--- No-op: baseline schema is created in the initial PostgreSQL migration.

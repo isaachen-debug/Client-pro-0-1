@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -50,6 +50,7 @@ model User {
   transactions      Transaction[]
   contractsOwned    Contract[]              @relation("OwnerContracts")
   contractsSigned   Contract[]              @relation("ClientContracts")
+  servicePackages   ServicePackage[]
   helperPayoutMode  String                  @default("FIXED")
   helperPayoutValue Float                   @default(0)
   helperExpenses    HelperExpense[]         @relation("HelperExpenses")
@@ -159,8 +160,29 @@ model Contract {
   updatedAt    DateTime  @updatedAt
   owner        User     @relation("OwnerContracts", fields: [ownerId], references: [id], onDelete: Cascade)
   client       User     @relation("ClientContracts", fields: [clientId], references: [id], onDelete: Cascade)
-
+  servicePackageId String?
+  servicePackage ServicePackage? @relation(fields: [servicePackageId], references: [id])
+  customItems  String?   // JSON string of custom checklist items
+  proposalStatus String  @default("DRAFT") // DRAFT, SENT, VIEWED, ACCEPTED, REJECTED
+  
   @@index([ownerId, clientId, status])
+}
+
+model ServicePackage {
+  id          String   @id @default(uuid())
+  ownerId     String
+  name        String
+  description String?
+  price       Float    @default(0)
+  items       String   // JSON string of included items e.g., ["Dusting", "Vacuuming"]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  contracts   Contract[]
+  
+  @@index([ownerId])
 }
 
 model Transaction {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { MOCK_TEAM, MOCK_APPOINTMENTS_UPDATE } from '../constants/mocks';
+
 import { AnimatePresence } from 'framer-motion';
 
 const slideVariants = {
@@ -39,6 +39,7 @@ import {
   Search,
   CheckCircle2,
   Users,
+  CalendarPlus,
 } from 'lucide-react';
 import { LayoutGroup, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -65,7 +66,7 @@ import { JobCardModal } from '../components/appointments/JobCardModal';
 import CreateModal, { CreateFormState } from '../components/appointments/CreateModal';
 import EditModal from '../components/appointments/EditModal';
 import CompletionModal from '../components/appointments/CompletionModal';
-import AgendaMensal from './AgendaMensal';
+
 import { getGoogleStatus, syncGoogleEvent } from '../services/googleCalendar';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { NavigationChoiceModal } from '../components/ui/NavigationChoiceModal';
@@ -153,13 +154,8 @@ const EmptyState = ({ title, subtitle, onClick }: { title: string; subtitle: str
     onClick={onClick}
     className="w-full rounded-3xl border border-purple-100 dark:border-purple-900/30 bg-white dark:bg-slate-800 px-4 py-6 text-center shadow-sm"
   >
-    <div className="mx-auto mb-4 h-32 w-32 rounded-[28px] bg-white dark:bg-slate-900 border border-purple-100 dark:border-purple-900/30 shadow-sm flex items-center justify-center overflow-hidden">
-      <img
-        src="/images/empty-state-cleanup.svg"
-        alt="Mascote vassoura limpando com nuvem e check"
-        loading="lazy"
-        className="h-full w-full object-contain"
-      />
+    <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 dark:text-slate-500">
+      <CalendarPlus size={48} strokeWidth={1.5} />
     </div>
     <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</p>
     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>
@@ -294,7 +290,12 @@ const AgendaSemanal = ({
       try {
         const [cData, tData] = await Promise.all([customersApi.list(), teamApi.list()]);
         setCustomers(cData);
-        setHelpers((tData as any).members || tData);
+        // Filter out CLIENTs, we only want Helpers and Owners for assignment
+        const allMembers = (tData as any).members || tData;
+        const activeHelpers = Array.isArray(allMembers)
+          ? allMembers.filter((m: any) => m.role !== 'CLIENT')
+          : [];
+        setHelpers(activeHelpers);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       }
@@ -737,7 +738,7 @@ const AgendaSemanal = ({
 
     // Team Mode Logic
     if (isTeamMode) {
-      filtered = MOCK_APPOINTMENTS_UPDATE(filtered);
+      // Logic for real team member filtering will go here when integrated
       if (selectedMemberId) {
         filtered = filtered.filter(a => a.assignedTo?.includes(selectedMemberId));
       }
@@ -795,7 +796,7 @@ const AgendaSemanal = ({
               </div>
               <div>
                 <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{selectedChatCustomer.name}</h3>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Online agora</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Cliente Frequente</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -811,8 +812,8 @@ const AgendaSemanal = ({
             </div>
             <div className="flex justify-start">
               <div className={`max-w-[80%] rounded-2xl rounded-tl-none px-4 py-3 shadow-sm ${isDark ? 'bg-slate-800 text-slate-200' : 'bg-white text-slate-800'}`}>
-                <p className="text-sm">Olá, {selectedChatCustomer.name.split(' ')[0]}! Tudo certo para o serviço?</p>
-                <span className={`text-[10px] block mt-1 text-right ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>09:41</span>
+                <p className="text-sm">🔔 Lembrete automático enviado para {selectedChatCustomer.name.split(' ')[0]}: "Olá! Sua visita está agendada para amanhã."</p>
+                <span className={`text-[10px] block mt-1 text-right ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>09:00</span>
               </div>
             </div>
           </div>
@@ -855,7 +856,13 @@ const AgendaSemanal = ({
           {customers.map((customer, i) => (
             <button
               key={customer.id}
-              onClick={() => setSelectedChatCustomer(customer)}
+              onClick={() => {
+                if (customer.phone) {
+                  window.location.href = `sms:${customer.phone.replace(/\D/g, '')}`;
+                } else {
+                  alert('Cliente sem telefone cadastrado');
+                }
+              }}
               className={`w-full flex items-center gap-4 p-4 border-b transition-colors ${isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-50 hover:bg-slate-50'}`}
             >
               <div className="relative">
@@ -863,22 +870,17 @@ const AgendaSemanal = ({
                   }`}>
                   {getInitials(customer.name)}
                 </div>
-                {i < 2 && (
-                  <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[10px] font-bold text-white">
-                    {2 - i}
-                  </div>
-                )}
               </div>
 
               <div className="flex-1 text-left min-w-0">
                 <div className="flex justify-between items-baseline mb-1">
                   <h3 className={`font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{customer.name}</h3>
                   <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {['09:41', 'Ontem', 'Seg', 'Dom'][i % 4]}
+                    SMS
                   </span>
                 </div>
                 <p className={`text-sm truncate ${i < 2 ? (isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>
-                  {['Oi! Tudo confirmado para amanhã?', 'Pode me enviar o comprovante?', 'Precisamos remarcar a próxima visita.', 'Ótimo trabalho hoje, obrigada!'][i % 4]}
+                  {customer.phone || 'Toque para enviar mensagem'}
                 </p>
               </div>
             </button>
@@ -1032,11 +1034,7 @@ const AgendaSemanal = ({
                                       <p className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{ag.customer.serviceType || 'Limpeza Padrão'}</p>
                                       {isTeamMode && ag.assignedTo && ag.assignedTo.length > 0 ? (
                                         <div className="flex -space-x-1.5 mt-1.5">
-                                          {MOCK_TEAM.filter(m => ag.assignedTo?.includes(m.id)).map(member => (
-                                            <div key={member.id} className={`h-5 w-5 rounded-full ring-2 ${isDark ? 'ring-slate-900' : 'ring-white'} flex items-center justify-center text-[8px] font-bold text-white shadow-sm ${member.avatarColor}`} title={member.name}>
-                                              {member.name.substring(0, 1)}
-                                            </div>
-                                          ))}
+                                          {/* Real team data rendering to be implemented or removed if unused */}
                                         </div>
                                       ) : ag.assignedHelper && (
                                         <div className="mt-1">
@@ -1130,11 +1128,7 @@ const AgendaSemanal = ({
                               <p className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{ag.customer.serviceType || 'Limpeza Padrão'}</p>
                               {isTeamMode && ag.assignedTo && ag.assignedTo.length > 0 ? (
                                 <div className="flex -space-x-1.5 mt-1.5">
-                                  {MOCK_TEAM.filter(m => ag.assignedTo?.includes(m.id)).map(member => (
-                                    <div key={member.id} className={`h-5 w-5 rounded-full ring-2 ${isDark ? 'ring-slate-900' : 'ring-white'} flex items-center justify-center text-[8px] font-bold text-white shadow-sm ${member.avatarColor}`} title={member.name}>
-                                      {member.name.substring(0, 1)}
-                                    </div>
-                                  ))}
+                                  {/* Real team data rendering to be implemented or removed if unused */}
                                 </div>
                               ) : ag.assignedHelper && (
                                 <div className="mt-1">
@@ -1310,26 +1304,7 @@ const AgendaSemanal = ({
                   Todos
                 </button>
                 <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
-                {MOCK_TEAM.map((member) => (
-                  <button
-                    key={member.id}
-                    onClick={() => setSelectedMemberId(selectedMemberId === member.id ? null : member.id)}
-                    className={`relative group flex items-center gap-2 pr-3 pl-1 py-1 rounded-full border transition-all ${selectedMemberId === member.id
-                      ? 'bg-indigo-500/10 border-indigo-500/50 pr-4'
-                      : isDark ? 'border-slate-800 hover:bg-slate-800' : 'border-slate-100 hover:bg-slate-50'
-                      }`}
-                  >
-                    <div className={`h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm ${member.avatarColor}`}>
-                      {member.name.substring(0, 2)}
-                    </div>
-                    <span className={`text-xs font-semibold ${selectedMemberId === member.id ? 'text-indigo-600 dark:text-indigo-400' : (isDark ? 'text-slate-400' : 'text-slate-600')}`}>
-                      {member.name.split(' ')[0]}
-                    </span>
-                    {selectedMemberId === member.id && (
-                      <span className="absolute right-1.5 top-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                    )}
-                  </button>
-                ))}
+                {/* Real team list mapping will be implemented here */}
               </div>
             )}
             <div className="flex items-center justify-between gap-3">
@@ -1379,7 +1354,7 @@ const AgendaSemanal = ({
             </div>
             <div className={`flex items-center rounded-full border p-1 gap-1 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
               {['today', 'week', 'month', 'chat'].map((mode) => {
-                const label = mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Chat';
+                const label = mode === 'today' ? 'Hoje' : mode === 'week' ? 'Semana' : mode === 'month' ? 'Mês' : 'Mensagens';
                 const active = viewMode === mode;
                 return (
                   <button
@@ -1478,15 +1453,8 @@ const AgendaSemanal = ({
               </LayoutGroup>
             )}
             {viewMode === 'month' && (
-              <div className={`mt-2 rounded-2xl border shadow-sm overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                <AgendaMensal
-                  embedded
-                  externalDate={currentDate}
-                  onDateChange={(date) => {
-                    setCurrentDate(date);
-                    setSelectedDay(date);
-                  }}
-                />
+              <div className={`mt-2 rounded-2xl border shadow-sm overflow-hidden p-8 text-center ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <p className="text-slate-500">Visualização mensal em manutenção</p>
               </div>
             )}
           </div>
@@ -1730,7 +1698,7 @@ const AgendaSemanal = ({
         onClose={() => setNavigationModal({ isOpen: false, address: null })}
         address={navigationModal.address}
       />
-    </div>
+    </div >
   );
 };
 

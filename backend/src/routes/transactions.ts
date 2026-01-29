@@ -95,6 +95,10 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Generate invoice token for payment
+    const { randomBytes } = await import('crypto');
+    const invoiceToken = randomBytes(32).toString('hex');
+
     const transaction = await prisma.transaction.create({
       data: {
         userId: req.user!.id,
@@ -105,6 +109,7 @@ router.post('/', async (req, res) => {
         dueDate: new Date(dueDate),
         paidAt: paidAt ? new Date(paidAt) : null,
         description: description ? String(description) : null,
+        invoiceToken, // Auto-generate invoice token
       },
     });
 

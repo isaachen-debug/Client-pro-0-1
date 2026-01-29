@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import prisma from '../db';
 
@@ -58,23 +59,74 @@ router.post('/customers/:customerId/portal-link', async (req: Request, res: Resp
  * Authenticate customer via magic link token
  * GET /portal/:token
  */
+
 router.get('/auth/:token', async (req: Request, res: Response) => {
     try {
         const { token } = req.params;
+        let customer = null;
+        let decodedUserId = null;
 
-        // Find customer by access token
-        const customer = await prisma.customer.findUnique({
-            where: { accessToken: token },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        companyName: true,
-                        primaryColor: true
+        // 1. Try to verify as JWT (New System)
+        try {
+            // We need the secret. Ideally imported, but for now using process.env matching auth.ts
+            const JWT_SECRET = process.env.JWT_SECRET || 'clientepro-secret';
+            const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+            decodedUserId = decoded.userId;
+        } catch (e) {
+            // Not a valid JWT, proceed to check as legacy access token
+        }
+
+        if (decodedUserId) {
+            // It's a valid JWT. Find the Client User.
+            const user = await prisma.user.findUnique({
+                where: { id: decodedUserId },
+                include: {
+                    company: {
+                        select: {
+                            id: true,
+                            companyName: true,
+                            primaryColor: true
+                        }
                     }
                 }
+            });
+
+            if (user && user.role === 'CLIENT') {
+                // Find the corresponding Customer record for this user (by email & owner)
+                // This ensures we return the strict 'Customer' data the frontend expects
+                customer = await prisma.customer.findFirst({
+                    where: {
+                        email: user.email,
+                        userId: user.companyId
+                    },
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                companyName: true,
+                                primaryColor: true
+                            }
+                        }
+                    }
+                });
             }
-        });
+        }
+
+        // 2. If not found via JWT, try legacy Access Token
+        if (!customer) {
+            customer = await prisma.customer.findUnique({
+                where: { accessToken: token },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            companyName: true,
+                            primaryColor: true
+                        }
+                    }
+                }
+            });
+        }
 
         if (!customer) {
             return res.status(404).json({ error: 'Link inválido ou expirado' });
@@ -84,17 +136,17 @@ router.get('/auth/:token', async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Acesso ao portal desativado' });
         }
 
-        // Set session data for authenticated customer
-        (req as any).session = {
-            ...((req as any).session || {}),
-            customerId: customer.id,
-            customerName: customer.name,
-            ownerId: customer.userId,
-            role: 'CLIENT'
-        };
+        // Return token to be used in subsequent requests (if frontend needs it)
+        // For the new system, we should probably return a fresh JWT or the same one.
+        // The frontend stores the token from the URL usually or expects a token in payload.
+        // Looking at PortalAccess.tsx, it just redirects to /client/home. 
+        // ClientHome.tsx likely uses the stored token.
+        // We will send a fresh token if it was a legacy login, or the current one.
 
+        // Return JSON structure expected by PortalAccess.tsx
         res.json({
             success: true,
+            token: token, // Pass back the working token
             customer: {
                 id: customer.id,
                 name: customer.name,

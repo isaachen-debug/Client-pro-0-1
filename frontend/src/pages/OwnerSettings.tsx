@@ -22,6 +22,7 @@ import { pageGutters } from '../styles/uiTokens';
 import { getGoogleAuthUrl, getGoogleStatus, importGoogleEvents } from '../services/googleCalendar';
 
 const QUICK_ACTIONS = [
+  { title: 'Métodos de Pagamento', subtitle: 'Zelle, Venmo, Cash App', to: '/app/settings/payments' },
   { title: 'Identidade visual', subtitle: 'Logo, cores e tipografia', to: '/app/empresa' },
   { title: 'Permissões de equipe', subtitle: 'Helpers e admins', to: '/app/team' },
   { title: 'Notificações e alertas', subtitle: 'SMS, push e e-mail', to: '/app/agenda' },
@@ -160,8 +161,8 @@ const OwnerSettings = () => {
               type="button"
               onClick={handleToggleNotifications}
               className={`w-12 h-6 rounded-full border transition ${notificationsEnabled
-                  ? (isDark ? 'bg-emerald-600 border-emerald-600' : 'bg-slate-900 border-slate-900')
-                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
+                ? (isDark ? 'bg-emerald-600 border-emerald-600' : 'bg-slate-900 border-slate-900')
+                : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
                 } ${pushNotifications.status === 'loading' ? 'opacity-60' : ''}`}
               aria-pressed={notificationsEnabled}
             >
@@ -185,8 +186,8 @@ const OwnerSettings = () => {
               type="button"
               onClick={handleToggleTheme}
               className={`w-12 h-6 rounded-full border transition ${isDark
-                  ? (isDark ? 'bg-purple-600 border-purple-600' : 'bg-slate-900 border-slate-900')
-                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
+                ? (isDark ? 'bg-purple-600 border-purple-600' : 'bg-slate-900 border-slate-900')
+                : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
                 } ${savingTheme ? 'opacity-60' : ''}`}
               aria-pressed={isDark}
             >
@@ -210,8 +211,8 @@ const OwnerSettings = () => {
               type="button"
               onClick={handleToggleSounds}
               className={`w-12 h-6 rounded-full border transition ${soundsEnabled
-                  ? (isDark ? 'bg-orange-600 border-orange-600' : 'bg-slate-900 border-slate-900')
-                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
+                ? (isDark ? 'bg-orange-600 border-orange-600' : 'bg-slate-900 border-slate-900')
+                : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
                 }`}
               aria-pressed={soundsEnabled}
             >
@@ -241,8 +242,8 @@ const OwnerSettings = () => {
                 await updateProfile({ teamEnabled: nextTeam });
               }}
               className={`w-12 h-6 rounded-full border transition ${user.teamEnabled
-                  ? (isDark ? 'bg-emerald-600 border-emerald-600' : 'bg-slate-900 border-slate-900')
-                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
+                ? (isDark ? 'bg-emerald-600 border-emerald-600' : 'bg-slate-900 border-slate-900')
+                : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
                 }`}
               aria-pressed={user.teamEnabled}
             >
@@ -272,8 +273,8 @@ const OwnerSettings = () => {
                 await updateProfile({ clientPortalEnabled: nextVal });
               }}
               className={`w-12 h-6 rounded-full border transition ${user.clientPortalEnabled
-                  ? (isDark ? 'bg-sky-600 border-sky-600' : 'bg-slate-900 border-slate-900')
-                  : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
+                ? (isDark ? 'bg-sky-600 border-sky-600' : 'bg-slate-900 border-slate-900')
+                : (isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-200')
                 }`}
               aria-pressed={user.clientPortalEnabled}
             >
@@ -365,8 +366,8 @@ const OwnerSettings = () => {
           <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Integrações</p>
           <span
             className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${googleStatus.connected
-                ? (isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-50 text-emerald-700')
-                : (isDark ? 'bg-amber-900/30 text-amber-400' : 'bg-amber-50 text-amber-700')
+              ? (isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-50 text-emerald-700')
+              : (isDark ? 'bg-amber-900/30 text-amber-400' : 'bg-amber-50 text-amber-700')
               }`}
           >
             {googleStatus.connected ? 'Conectado' : 'Desconectado'}
@@ -382,8 +383,8 @@ const OwnerSettings = () => {
               onClick={handleGoogleConnect}
               disabled={googleLoading}
               className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${isDark
-                  ? 'border-emerald-800 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30'
-                  : 'border-primary-100 bg-white text-primary-700 hover:bg-primary-50'
+                ? 'border-emerald-800 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30'
+                : 'border-primary-100 bg-white text-primary-700 hover:bg-primary-50'
                 }`}
             >
               <Link2 size={16} />
@@ -394,8 +395,8 @@ const OwnerSettings = () => {
               onClick={handleGoogleImport}
               disabled={importingGoogle || !googleStatus.connected}
               className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${isDark
-                  ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-                  : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
             >
               {importingGoogle ? 'Importando...' : 'Importar eventos'}
@@ -403,8 +404,8 @@ const OwnerSettings = () => {
             <button
               type="button"
               className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${isDark
-                  ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-                  : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
             >
               <Sparkles size={16} className="text-amber-500" />

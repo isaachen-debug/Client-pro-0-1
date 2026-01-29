@@ -6,7 +6,7 @@ const {
   GOOGLE_CLIENT_ID = '',
   GOOGLE_CLIENT_SECRET = '',
   GOOGLE_REDIRECT_URI = '',
-  GOOGLE_RETURN_URL = 'http://localhost:5173/app/settings',
+  GOOGLE_RETURN_URL = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/app/settings`,
 } = process.env;
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar'];
@@ -252,11 +252,11 @@ export const importCalendarEvents = async (userId: string, options: ImportOption
 
       const customerByEmail = attendeeEmails.length
         ? await prisma.customer.findFirst({
-            where: {
-              userId,
-              OR: attendeeEmails.map((email) => ({ email: { equals: email, mode: 'insensitive' } })),
-            },
-          })
+          where: {
+            userId,
+            OR: attendeeEmails.map((email) => ({ email: { equals: email, mode: 'insensitive' } })),
+          },
+        })
         : null;
 
       const customerByName = await prisma.customer.findFirst({

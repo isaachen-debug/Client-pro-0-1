@@ -158,9 +158,9 @@ const scheduleRecurringAppointments = async (appointment: AppointmentModel) => {
               connect: { id: appointment.assignedHelperId },
             }
             : undefined,
-          checklistSnapshot: appointment.checklistSnapshot 
-            ? (typeof appointment.checklistSnapshot === 'string' 
-              ? appointment.checklistSnapshot 
+          checklistSnapshot: appointment.checklistSnapshot
+            ? (typeof appointment.checklistSnapshot === 'string'
+              ? appointment.checklistSnapshot
               : JSON.stringify(appointment.checklistSnapshot))
             : undefined,
         },
@@ -772,9 +772,9 @@ router.patch('/:id/status', async (req, res) => {
                     assignedHelper: updated.assignedHelperId
                       ? { connect: { id: updated.assignedHelperId } }
                       : undefined,
-                    checklistSnapshot: updated.checklistSnapshot 
-                      ? (typeof updated.checklistSnapshot === 'string' 
-                        ? updated.checklistSnapshot 
+                    checklistSnapshot: updated.checklistSnapshot
+                      ? (typeof updated.checklistSnapshot === 'string'
+                        ? updated.checklistSnapshot
                         : JSON.stringify(updated.checklistSnapshot))
                       : undefined,
                   },
@@ -796,7 +796,7 @@ router.patch('/:id/status', async (req, res) => {
 
     const response: any = updated;
     if (sendInvoice) {
-      response.invoiceUrl = `${process.env.APP_URL ?? 'http://localhost:5174'}/invoice/${updated.id}`;
+      response.invoiceUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:5174'}/invoice/${updated.id}`;
     }
 
     res.json(response);

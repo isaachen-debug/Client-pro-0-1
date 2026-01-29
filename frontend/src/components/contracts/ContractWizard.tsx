@@ -117,6 +117,28 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
   const [specialtyOptions, setSpecialtyOptions] = useState<Array<{ id: string; label: string; helper: string }>>([]);
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [specialtyAddonDrafts, setSpecialtyAddonDrafts] = useState<Record<string, string>>({});
+
+  // Service Packages
+  const [servicePackages, setServicePackages] = useState<any[]>([]);
+  const [selectedPackageId, setSelectedPackageId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:3000/api/services', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setServicePackages(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch service packages', error);
+      }
+    };
+    fetchPackages();
+  }, []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -417,11 +439,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
             {(['contemporary', 'modern', 'classic'] as ContractTemplateStyle[]).map((template) => (
               <label
                 key={template}
-                className={`border rounded-xl px-4 py-3 cursor-pointer text-sm font-semibold capitalize ${
-                  blueprint.brand.template === template
-                    ? 'border-primary-500 text-primary-700 bg-primary-50'
-                    : 'border-gray-200 text-gray-600 hover:border-primary-200'
-                }`}
+                className={`border rounded-xl px-4 py-3 cursor-pointer text-sm font-semibold capitalize ${blueprint.brand.template === template
+                  ? 'border-primary-500 text-primary-700 bg-primary-50'
+                  : 'border-gray-200 text-gray-600 hover:border-primary-200'
+                  }`}
               >
                 <input
                   type="radio"
@@ -468,11 +489,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
             {frequencyOptions.map((option) => (
               <label
                 key={option.value}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl border cursor-pointer ${
-                  blueprint.client.frequency === option.value
-                    ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-200 hover:border-primary-200'
-                }`}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl border cursor-pointer ${blueprint.client.frequency === option.value
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-200 hover:border-primary-200'
+                  }`}
               >
                 <span>
                   <span className="font-semibold text-gray-900">{option.label}</span>
@@ -487,9 +507,8 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
                   onChange={() => updateClient({ frequency: option.value })}
                 />
                 <span
-                  className={`w-4 h-4 rounded-full border ${
-                    blueprint.client.frequency === option.value ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
-                  }`}
+                  className={`w-4 h-4 rounded-full border ${blueprint.client.frequency === option.value ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
+                    }`}
                 />
               </label>
             ))}
@@ -512,8 +531,64 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
     </div>
   );
 
+  const handlePackageSelect = (packageId: string) => {
+    setSelectedPackageId(packageId);
+    const pkg = servicePackages.find(p => p.id === packageId);
+    if (!pkg) return;
+
+    let items: string[] = [];
+    try { items = JSON.parse(pkg.items); } catch (e) { }
+
+    // Reset current selections
+    const newStandard = Object.fromEntries(standardServices.map(s => [s.key, false]));
+    const newDeep = Object.fromEntries(deepServices.map(s => [s.key, false]));
+    const newCustom: string[] = [];
+
+    // Map items to standard/deep or custom
+    items.forEach(item => {
+      const stdKey = standardServices.find(s => s.label === item)?.key;
+      const deepKey = deepServices.find(s => s.label === item)?.key;
+
+      if (stdKey) newStandard[stdKey] = true;
+      else if (deepKey) newDeep[deepKey] = true;
+      else newCustom.push(item);
+    });
+
+    updateServices({
+      standard: newStandard,
+      deep: newDeep,
+      custom: newCustom
+    });
+
+    // Update price if package has one
+    if (pkg.price > 0) {
+      updatePayment({ amount: pkg.price });
+    }
+  };
+
   const renderServicesStep = () => (
     <div className="grid gap-6 lg:grid-cols-2">
+
+      {/* Package Selector */}
+      {servicePackages.length > 0 && (
+        <div className="lg:col-span-2 border border-emerald-100 bg-emerald-50/50 rounded-2xl p-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-emerald-900">Quick Fill from Package</p>
+            <p className="text-xs text-emerald-700">Select a service package to auto-fill items and price.</p>
+          </div>
+          <select
+            value={selectedPackageId}
+            onChange={(e) => handlePackageSelect(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-emerald-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="">Select a package...</option>
+            {servicePackages.map(pkg => (
+              <option key={pkg.id} value={pkg.id}>{pkg.name} - ${pkg.price}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="border border-gray-200 rounded-2xl p-4 space-y-4">
         <div>
           <p className="text-sm font-semibold text-gray-900">Standard Cleaning</p>
@@ -523,11 +598,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
           {standardServices.map((service) => (
             <label
               key={service.key}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm cursor-pointer ${
-                blueprint.services.standard[service.key]
-                  ? 'border-primary-300 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 text-gray-700 hover:border-primary-200'
-              }`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm cursor-pointer ${blueprint.services.standard[service.key]
+                ? 'border-primary-300 bg-primary-50 text-primary-700'
+                : 'border-gray-200 text-gray-700 hover:border-primary-200'
+                }`}
             >
               <input
                 type="checkbox"
@@ -553,11 +627,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
           {deepServices.map((service) => (
             <label
               key={service.key}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm cursor-pointer ${
-                blueprint.services.deep[service.key]
-                  ? 'border-primary-300 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 text-gray-700 hover:border-primary-200'
-              }`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm cursor-pointer ${blueprint.services.deep[service.key]
+                ? 'border-primary-300 bg-primary-50 text-primary-700'
+                : 'border-gray-200 text-gray-700 hover:border-primary-200'
+                }`}
             >
               <input
                 type="checkbox"
@@ -681,11 +754,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
               return (
                 <div
                   key={specialty.id}
-                  className={`border rounded-xl p-3 transition ${
-                    isActive
-                      ? 'border-primary-300 bg-primary-50 text-primary-900'
-                      : 'border-gray-200 text-gray-700 hover:border-primary-200'
-                  }`}
+                  className={`border rounded-xl p-3 transition ${isActive
+                    ? 'border-primary-300 bg-primary-50 text-primary-900'
+                    : 'border-gray-200 text-gray-700 hover:border-primary-200'
+                    }`}
                 >
                   <button
                     type="button"
@@ -775,11 +847,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
               {billingOptions.map((option) => (
                 <label
                   key={option.value}
-                  className={`flex items-start gap-3 px-3 py-2 rounded-xl border cursor-pointer ${
-                    blueprint.payment.billingType === option.value
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-primary-200'
-                  }`}
+                  className={`flex items-start gap-3 px-3 py-2 rounded-xl border cursor-pointer ${blueprint.payment.billingType === option.value
+                    ? 'border-primary-500 bg-primary-50'
+                    : 'border-gray-200 hover:border-primary-200'
+                    }`}
                 >
                   <input
                     type="radio"
@@ -812,9 +883,8 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
                 key={method}
                 type="button"
                 onClick={() => togglePaymentMethod(method)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold border ${
-                  active ? 'bg-primary-50 text-primary-700 border-primary-200' : 'border-gray-200 text-gray-600'
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-semibold border ${active ? 'bg-primary-50 text-primary-700 border-primary-200' : 'border-gray-200 text-gray-600'
+                  }`}
               >
                 {method}
               </button>
@@ -865,11 +935,10 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
           {accessOptions.map((option) => (
             <label
               key={option.value}
-              className={`flex items-center justify-between px-3 py-2 rounded-xl border cursor-pointer ${
-                blueprint.access.method === option.value
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-primary-200'
-              }`}
+              className={`flex items-center justify-between px-3 py-2 rounded-xl border cursor-pointer ${blueprint.access.method === option.value
+                ? 'border-primary-500 bg-primary-50'
+                : 'border-gray-200 hover:border-primary-200'
+                }`}
             >
               <span>
                 <span className="block text-sm font-semibold text-gray-900">{option.label}</span>
@@ -883,9 +952,8 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
                 onChange={() => updateAccess({ method: option.value })}
               />
               <span
-                className={`w-4 h-4 rounded-full border ${
-                  blueprint.access.method === option.value ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
-                }`}
+                className={`w-4 h-4 rounded-full border ${blueprint.access.method === option.value ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
+                  }`}
               />
             </label>
           ))}
@@ -1063,9 +1131,8 @@ const ContractWizard = ({ clients, ownerLogo, ownerAccentColor, saving, onSubmit
           return (
             <div key={item.id} className="flex items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                  active ? 'bg-primary-600 text-white' : completed ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${active ? 'bg-primary-600 text-white' : completed ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'
+                  }`}
               >
                 {completed ? <CheckCircle2 size={16} /> : index + 1}
               </div>

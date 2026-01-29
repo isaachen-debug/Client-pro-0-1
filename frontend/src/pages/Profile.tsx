@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { MOCK_TEAM } from '../constants/mocks';
-import { Bell, LogOut, Moon, Settings, HelpCircle, Crown, ChevronRight, Mail, CheckCircle2, X, Phone, Users, MessageCircle, Link2 } from 'lucide-react';
+
+import { Bell, LogOut, Moon, Settings, HelpCircle, Crown, ChevronRight, Mail, CheckCircle2, X, Phone, Users, MessageCircle, Link2, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import usePushNotifications from '../hooks/usePushNotifications';
@@ -9,6 +9,7 @@ import { pageGutters } from '../styles/uiTokens';
 import { teamApi, customersApi } from '../services/api';
 import { Customer } from '../types';
 import OwnerSettings from './OwnerSettings';
+import GradientHeader from '../components/ui/GradientHeader';
 
 const APP_VERSION = '1.0.0';
 
@@ -28,6 +29,8 @@ const Profile = () => {
   // Portal Access State
   const [portalOpen, setPortalOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]); // Using any for simplicity or import User type
+  const [loadingTeam, setLoadingTeam] = useState(false);
   const [portalForm, setPortalForm] = useState({ customerId: '', name: '', email: '', password: '' });
   const [portalSaving, setPortalSaving] = useState(false);
   const [portalMessage, setPortalMessage] = useState<{ email: string; password: string } | null>(null);
@@ -46,6 +49,26 @@ const Profile = () => {
       setCustomers(data);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (isTeamMode) {
+      loadTeam();
+    }
+  }, [isTeamMode]);
+
+  const loadTeam = async () => {
+    try {
+      setLoadingTeam(true);
+      const data = await teamApi.list();
+      // Filter out CLIENT role for the team display (Helpers + Admins only)
+      const helpers = data.members.filter((m: any) => m.role !== 'CLIENT');
+      setTeamMembers(helpers);
+    } catch (err) {
+      console.error('Error loading team', err);
+    } finally {
+      setLoadingTeam(false);
     }
   };
 
@@ -123,13 +146,10 @@ const Profile = () => {
     <>
       <div className={`min-h-full ${isDarkTheme ? 'bg-[#0f172a]' : 'bg-[#f6f7fb]'}`}>
         {/* Header Premium com Curva Suave */}
-        <div className={`pt-12 pb-12 px-6 rounded-b-[2.5rem] shadow-sm border-b relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
-          <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-b -z-10 ${isDarkTheme ? 'from-slate-800/50 to-transparent' : 'from-slate-50/50 to-transparent'}`} />
-
-          {/* Top Bar */}
-          <div className="flex items-center justify-between mb-8 relative z-10">
-            <h1 className={`text-3xl font-black tracking-tight ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>Meu Perfil</h1>
-            <div className="flex gap-3">
+        <GradientHeader
+          title="Meu Perfil"
+          actions={
+            <>
               <button
                 onClick={() => setSettingsOpen(true)}
                 className={`h-11 w-11 rounded-2xl border shadow-sm flex items-center justify-center transition-all active:scale-95 ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
@@ -144,9 +164,9 @@ const Profile = () => {
               >
                 <HelpCircle size={20} />
               </button>
-            </div>
-          </div>
-
+            </>
+          }
+        >
           {/* Profile Info Centralizado */}
           <div className="flex flex-col items-center relative z-10">
             <div className="relative mb-4 group cursor-pointer">
@@ -180,7 +200,7 @@ const Profile = () => {
               <Crown size={24} />
             </button>
           </div>
-        </div>
+        </GradientHeader>
 
         <div className={`${pageGutters} max-w-3xl mx-auto space-y-6 pb-24 pt-6`}>
           {/* Card de Plano - Novo Destaque */}
@@ -248,33 +268,44 @@ const Profile = () => {
                 <div className="overflow-hidden">
                   <div className="space-y-3">
                     <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDarkTheme ? 'text-indigo-300' : 'text-indigo-600'}`}>Minha Equipe</p>
-                    {MOCK_TEAM.map((member) => (
-                      <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${isDarkTheme ? 'bg-slate-800/80 border-slate-700/50 hover:bg-slate-800' : 'bg-white border-slate-200/60 hover:bg-white hover:border-indigo-100'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm ${member.avatarColor}`}>
-                            {member.name.substring(0, 2)}
+                    {loadingTeam ? (
+                      <div className="p-4 text-center text-sm text-slate-500">Carregando equipe...</div>
+                    ) : teamMembers.length > 0 ? (
+                      teamMembers.map((member) => (
+                        <div
+                          key={member.id}
+                          onClick={() => navigate(`/app/team/edit/${member.id}`)}
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-colors cursor-pointer ${isDarkTheme ? 'bg-slate-800/80 border-slate-700/50 hover:bg-slate-800' : 'bg-white border-slate-200/60 hover:bg-white hover:border-indigo-100'}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm ${member.role === 'OWNER' ? 'bg-purple-500' : 'bg-pink-500' // Default colors
+                              }`}>
+                              {member.name?.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className={`text-sm font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{member.name}</p>
+                              <p className={`text-[10px] uppercase font-bold tracking-wide ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>{member.role === 'OWNER' ? 'Administradora' : 'Helper'}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className={`text-sm font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{member.name}</p>
-                            <p className={`text-[10px] uppercase font-bold tracking-wide ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>{member.role}</p>
-                          </div>
-                        </div>
-                        <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 ${member.status === 'Working'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : member.status === 'Available'
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 ${member.isActive
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                          }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${member.status === 'Working'
-                            ? 'bg-emerald-500 animate-pulse'
-                            : member.status === 'Available'
-                              ? 'bg-blue-500'
+                            }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${member.isActive
+                              ? 'bg-emerald-500 animate-pulse'
                               : 'bg-amber-500'
-                            }`} />
-                          {member.status}
+                              }`} />
+                            {member.isActive ? 'Ativo' : 'Inativo'}
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center">
+                        <p className={`text-sm ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                          Nenhum membro encontrado.
+                        </p>
                       </div>
-                    ))}
+                    )}
 
                     <button
                       onClick={() => navigate('/app/team/add')}
@@ -286,6 +317,28 @@ const Profile = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+
+          {/* Service Catalog Card */}
+          <div className={`p-1 rounded-3xl ${isDarkTheme ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} border shadow-sm`}>
+            <button
+              onClick={() => navigate('/app/services')}
+              className="w-full text-left p-5 flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-colors ${isDarkTheme ? 'bg-indigo-900/30 text-indigo-500' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <Briefcase size={22} />
+                </div>
+                <div>
+                  <h3 className={`text-base font-bold ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>Catálogo de Serviços</h3>
+                  <p className={`text-xs font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Gerenciar seus serviços e preços</p>
+                </div>
+              </div>
+              <div className={`p-2 rounded-full transition-colors ${isDarkTheme ? 'bg-slate-800 group-hover:bg-slate-700' : 'bg-slate-50 group-hover:bg-slate-100'}`}>
+                <ChevronRight size={18} className={isDarkTheme ? 'text-slate-400' : 'text-slate-500'} />
+              </div>
+            </button>
           </div>
 
           {/* Portal Access Card */}

@@ -5,6 +5,7 @@ import { AIOpportunityModal } from '../components/sales/AIOpportunityModal';
 import { CleaningTrackerModal } from '../components/sales/CleaningTrackerModal';
 import { SocialMediaModal } from '../components/sales/SocialMediaModal';
 import { FlashOfferModal } from '../components/sales/FlashOfferModal';
+import GradientHeader from '../components/ui/GradientHeader';
 
 const Vendas = () => {
     const { isTrackerActive, setIsTrackerActive } = useOutletContext<any>();
@@ -30,13 +31,13 @@ const Vendas = () => {
             <SocialMediaModal isOpen={showSocialModal} onClose={() => setShowSocialModal(false)} />
             <FlashOfferModal isOpen={showFlashModal} onClose={() => setShowFlashModal(false)} />
 
-            <div className="p-6 pb-24 space-y-6 animate-fade-in font-sans">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Ferramentas de Venda</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Transforme serviços em experiências e lucre mais.
-                    </p>
-                </div>
+            <GradientHeader title="Ferramentas de Venda">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4 text-center sm:text-left">
+                    Transforme serviços em experiências e lucre mais.
+                </p>
+            </GradientHeader>
+
+            <div className="p-6 pb-24 space-y-6 animate-fade-in font-sans max-w-6xl mx-auto">
 
                 <div className="space-y-4">
                     {/* Flash Offer Card - Featured */}

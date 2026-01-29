@@ -49,6 +49,9 @@ export const teamApi = {
     });
     return data;
   },
+  async delete(helperId: string) {
+    await api.delete(`/team/helpers/${helperId}`);
+  },
   async addChecklistItem(appointmentId: string, title: string) {
     const { data } = await api.post<HelperChecklistItem[]>(`/team/appointments/${appointmentId}/checklist`, { title });
     return data;

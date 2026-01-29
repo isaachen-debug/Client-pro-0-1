@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Appointment, AppointmentStatus } from '../../types';
 import { teamApi } from '../../services/team';
-import { X, Calendar, Clock, DollarSign, FileText, Trash2 } from 'lucide-react';
+import { X, Calendar, Clock, DollarSign, FileText, Trash2, CheckCircle2, Users, PencilLine } from 'lucide-react';
 
 const getInitials = (name: string) => {
   return name
@@ -315,10 +315,10 @@ const EditModal = ({
                 {/* Toggle Header */}
                 <div className="flex items-center justify-between cursor-pointer" onClick={toggleTeamMode}>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">👥</span>
-                    <span className={`font-semibold ${isTeamModeEnabled ? 'text-emerald-900 dark:text-emerald-100' : 'text-slate-600 dark:text-slate-400'}`}>Escala da Equipe</span>
+                    <Users size={18} className={isTeamModeEnabled ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
+                    <span className={`font-semibold ${isTeamModeEnabled ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>Escala da Equipe</span>
                   </div>
-                  <div className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${isTeamModeEnabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
+                  <div className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${isTeamModeEnabled ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-slate-700'}`}>
                     <div className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${isTeamModeEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                   </div>
                 </div>
@@ -327,35 +327,46 @@ const EditModal = ({
                 <div className={`transition-all duration-300 ${isTeamModeEnabled ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} space-y-5`}>
 
                   {/* Avatar Selection */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-emerald-800 dark:text-emerald-200 uppercase tracking-wider">Quem vai realizar?</label>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="space-y-3">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quem vai realizar?</label>
+                    <div className="flex flex-wrap gap-3">
                       {helpers.map((helper) => {
                         const isSelected = formData.assignedHelperId === helper.id;
+                        // Default to pink for helpers to match profile style (or purple if owner, but we don't have role here yet easily, so default nice pink/purple)
                         return (
                           <button
                             key={helper.id}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, assignedHelperId: helper.id }))}
-                            className={`group relative flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${isSelected ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-900 bg-white dark:bg-slate-800' : 'border-transparent bg-white dark:bg-slate-700 hover:scale-105'}`}
-                            title={helper.name}
+                            className="flex flex-col items-center gap-1 group"
                           >
-                            <span className={`text-xs font-bold ${isSelected ? 'text-emerald-600' : 'text-slate-500 dark:text-slate-300'}`}>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition-all relative ${isSelected
+                              ? 'bg-purple-600 text-white ring-2 ring-offset-2 ring-purple-500 dark:ring-offset-slate-900'
+                              : 'bg-pink-500 text-white hover:opacity-90'
+                              }`}>
                               {getInitials(helper.name)}
+                              {isSelected && (
+                                <div className="absolute -bottom-1 -right-1 bg-white text-purple-600 rounded-full p-0.5 border-2 border-white dark:border-slate-900">
+                                  <CheckCircle2 size={12} strokeWidth={3} />
+                                </div>
+                              )}
+                            </div>
+                            <span className={`text-[10px] font-semibold max-w-[60px] truncate ${isSelected ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                              {helper.name.split(' ')[0]}
                             </span>
-                            {isSelected && (
-                              <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full border border-white dark:border-slate-900">✓</span>
-                            )}
                           </button>
                         );
                       })}
                     </div>
+                    {helpers.length === 0 && (
+                      <p className="text-xs text-slate-400 italic p-2">Nenhum helper disponível na equipe.</p>
+                    )}
                   </div>
 
                   {/* Helper Fee Display */}
-                  <div className="flex items-end justify-between bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30 shadow-sm">
+                  <div className="flex items-end justify-between bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div className="space-y-1">
-                      <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200">Pagamento da Helper</p>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Pagamento da Helper</p>
                       <div className="flex items-center gap-2">
                         <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                           {isCalculatingFee ? (
@@ -365,7 +376,7 @@ const EditModal = ({
                           )}
                         </span>
                         {feeExplanation && (
-                          <span className="text-[10px] px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-full">
+                          <span className="text-[10px] px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-900">
                             {feeExplanation}
                           </span>
                         )}
@@ -379,7 +390,7 @@ const EditModal = ({
                           <input
                             autoFocus
                             type="number"
-                            className="w-20 px-2 py-1 text-right text-sm border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                            className="w-20 px-2 py-1 text-right text-sm border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                             value={formData.helperFee}
                             onChange={(e) => setFormData(prev => ({ ...prev, helperFee: e.target.value }))}
                             onBlur={() => { if (!formData.helperFee) setManuallyEditedFee(false) }}
@@ -388,19 +399,19 @@ const EditModal = ({
                             type="button"
                             onClick={() => setManuallyEditedFee(false)}
                             title="Restaurar automático"
-                            className="text-slate-400 hover:text-emerald-600"
+                            className="text-slate-400 hover:text-indigo-600"
                           >
-                            ↺
+                            <div className="w-4 h-4 rounded-full border flex items-center justify-center text-[10px]">R</div>
                           </button>
                         </div>
                       ) : (
                         <button
                           type="button"
                           onClick={() => setManuallyEditedFee(true)}
-                          className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-slate-400 hover:text-emerald-600 transition-colors flex items-center justify-center"
+                          className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-500 transition-colors flex items-center justify-center border border-transparent hover:border-slate-200"
                           title="Editar valor manualmente"
                         >
-                          ✏️
+                          <PencilLine size={14} />
                         </button>
                       )}
                     </div>

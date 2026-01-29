@@ -13,3 +13,4 @@ backend/prisma/*.db-journal
 frontend/dist
 backend/dist
 
+Backup PostgreSQL 2026-01-16/
